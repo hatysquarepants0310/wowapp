@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,14 +36,24 @@ import com.azeroth.companion.feature.roster.RosterScreen
 import com.azeroth.companion.feature.seasonal.SeasonalScreen
 import com.azeroth.companion.feature.settings.SettingsScreen
 import com.azeroth.companion.feature.weekly.WeeklyScreen
+import com.azeroth.companion.sync.SyncScheduler
 import com.azeroth.companion.ui.theme.AzerothTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @javax.inject.Inject
+    lateinit var authManager: com.azeroth.companion.core.network.AuthManager
+
+    @javax.inject.Inject
+    lateinit var settingsRepository: com.azeroth.companion.core.datastore.SettingsRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleOAuthRedirect(intent)
         // Al tocar una notificación de evento se abre directo su checklist (§5.4).
         val eventIdFromNotification = intent?.getStringExtra(AlarmReceiver.EXTRA_EVENT_ID)
         setContent {
@@ -55,6 +66,19 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleOAuthRedirect(intent)
+    }
+
+    /** Deep link azerothcompanion://oauth?code=... del flujo PKCE (§2.1). */
+    private fun handleOAuthRedirect(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme != "azerothcompanion" || data.host != "oauth") return
+        val code = data.getQueryParameter("code") ?: return
+        lifecycleScope.launch {
+            val region = settingsRepository.settings.first().region
+            authManager.handleRedirect(code, region)
+            SyncScheduler.syncNow(this@MainActivity)
+        }
     }
 }
 

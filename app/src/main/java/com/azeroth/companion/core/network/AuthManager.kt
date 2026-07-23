@@ -54,8 +54,10 @@ class AuthManager @Inject constructor(
 
     val redirectUri = "azerothcompanion://oauth"
 
-    /** Registrado en el Blizzard Developer Portal; se inyecta por BuildConfig o ajustes. */
-    var clientId: String = ""
+    /** Registrado en el Blizzard Developer Portal; viene de BuildConfig (gradle -PblizzardClientId). */
+    var clientId: String = com.azeroth.companion.BuildConfig.BLIZZARD_CLIENT_ID
+
+    val isConfigured: Boolean get() = clientId.isNotBlank()
 
     suspend fun restore() {
         val prefs = context.authStore.data.first()
