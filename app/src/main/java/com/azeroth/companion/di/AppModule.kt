@@ -36,7 +36,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, "azeroth.db").build()
+        Room.databaseBuilder(context, AppDatabase::class.java, "azeroth.db")
+            // Pre-1.0: el esquema puede cambiar entre versiones; el estado semanal
+            // es regenerable (sync + overrides) así que la migración destructiva es aceptable.
+            .fallbackToDestructiveMigration()
+            .build()
 
     @Provides
     fun provideTaskStateDao(db: AppDatabase) = db.taskStateDao()
@@ -49,6 +53,9 @@ object AppModule {
 
     @Provides
     fun provideSnapshotDao(db: AppDatabase) = db.snapshotDao()
+
+    @Provides
+    fun provideProgressionDao(db: AppDatabase) = db.progressionDao()
 
     @Provides
     @Singleton
