@@ -99,12 +99,27 @@ fun DashboardScreen(
         }
 
         SectionCard(stringResource(R.string.great_vault)) {
-            // Sin sesión de Battle.net el progreso es manual (modo degradado, §11).
-            VaultRow("Banda", 0, listOf(2, 4, 6))
-            VaultRow("Mythic+", 0, listOf(1, 4, 8))
-            VaultRow("Mundo", 0, listOf(2, 4, 8))
-            Spacer(Modifier.height(4.dp))
-            ConfidenceBadge(com.azeroth.companion.core.model.Confidence.ESTIMATED)
+            val vault = state.vault
+            if (vault != null) {
+                VaultRow("Banda", vault.raidSlots.current, vault.raidSlots.thresholds)
+                VaultRow("Mythic+", vault.mythicPlusSlots.current, vault.mythicPlusSlots.thresholds)
+                VaultRow("Mundo", vault.worldSlots.current, vault.worldSlots.thresholds)
+                val unlockedIlvls = (vault.raidSlots.predictedRewardIlvl +
+                    vault.mythicPlusSlots.predictedRewardIlvl +
+                    vault.worldSlots.predictedRewardIlvl).filterNotNull()
+                if (unlockedIlvls.isNotEmpty()) {
+                    Text("Mejor recompensa prevista: ilvl ${unlockedIlvls.max()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary)
+                }
+                Spacer(Modifier.height(4.dp))
+                ConfidenceBadge(vault.confidence)
+            } else {
+                // Sin datos aún: la Bóveda se estima tras el primer sync o con la checklist manual.
+                VaultRow("Banda", 0, listOf(2, 4, 6))
+                VaultRow("Mythic+", 0, listOf(1, 4, 8))
+                VaultRow("Mundo", 0, listOf(2, 4, 8))
+            }
         }
 
         SectionCard("Pendientes de alta prioridad") {

@@ -21,10 +21,38 @@ data class Catalog(
     val weeklyTasks: List<TrackedTask>,
     val seasonalRewards: List<SeasonalReward>,
     val zones: List<ZoneInfo> = emptyList(),
+    val vault: VaultRules = VaultRules(),
+    val economy: EconomyRules = EconomyRules(),
 )
 
 @Serializable
 data class ZoneInfo(
     val id: String,
     val name: Map<String, String>,
+)
+
+/** Umbrales de la Gran Bóveda e ilvl previsto por slot (§7.3). Datos de parche → catálogo. */
+@Serializable
+data class VaultRules(
+    val raidThresholds: List<Int> = listOf(2, 4, 6),
+    val mythicPlusThresholds: List<Int> = listOf(1, 4, 8),
+    val worldThresholds: List<Int> = listOf(2, 4, 8),
+    val raidSlotIlvl: List<Int> = listOf(619, 622, 626),
+    val mythicPlusSlotIlvl: List<Int> = listOf(619, 623, 626),
+    val worldSlotIlvl: List<Int> = listOf(610, 616, 619),
+    /** IDs de tareas del catálogo que aportan al slot de mundo. */
+    val worldContributingTaskIds: List<String> = listOf(
+        "delves_bountiful", "prey_eversong", "prey_zulaman", "prey_harandar",
+        "prey_voidstorm", "weekly_world_boss",
+    ),
+)
+
+/** Costos de mejora de equipo (§7.3): calculadora de crests. */
+@Serializable
+data class EconomyRules(
+    val crestName: Map<String, String> = mapOf("es_MX" to "Dawncrests", "en_US" to "Dawncrests"),
+    val crestCostPerUpgrade: Int = 15,
+    val ilvlPerUpgrade: Int = 3,
+    val weeklyCrestCap: Int = 90,
+    val maxUpgradeStepsPerItem: Int = 6,
 )
