@@ -23,6 +23,16 @@ data class Catalog(
     val zones: List<ZoneInfo> = emptyList(),
     val vault: VaultRules = VaultRules(),
     val economy: EconomyRules = EconomyRules(),
+    val season: SeasonInfo = SeasonInfo(),
+)
+
+/** Temporada en curso. La fecha de cierre es SIEMPRE estimada (§8.3). */
+@Serializable
+data class SeasonInfo(
+    val id: String = "midnight_s1",
+    val name: Map<String, String> = mapOf("es_MX" to "Midnight Temporada 1"),
+    /** Estimación; Blizzard rara vez confirma la fecha con antelación. */
+    val endEstimateUtc: String? = null,
 )
 
 @Serializable
