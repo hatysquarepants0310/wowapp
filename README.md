@@ -68,6 +68,12 @@ contenido de la expansión está en [`catalog.json`](app/src/main/assets/catalog
 corregible por el usuario y marcado con nivel de confianza. Ver la
 [especificación completa](docs/AZEROTH_COMPANION_SPEC.md).
 
+## Descargar
+
+📦 **APK listo para instalar:** en la sección [Releases](https://github.com/hatysquarepants0310/wowapp/releases)
+del repositorio. Descarga el `.apk` del último release e instálalo en tu Android (8.0+).
+Cada push también genera un APK como artifact del [CI](https://github.com/hatysquarepants0310/wowapp/actions).
+
 ## Compilar
 
 ```bash
