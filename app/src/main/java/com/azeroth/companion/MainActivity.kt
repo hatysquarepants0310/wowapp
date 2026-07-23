@@ -127,7 +127,10 @@ private fun AppScaffold(startEventId: String?) {
             modifier = Modifier.padding(padding),
         ) {
             composable("dashboard") {
-                DashboardScreen(onOpenChecklist = { navController.navigate("event/$it") })
+                DashboardScreen(
+                    onOpenChecklist = { navController.navigate("event/$it") },
+                    onOpenRoster = { navController.navigate("roster") },
+                )
             }
             composable("events") {
                 EventsScreen(onOpenDetail = { navController.navigate("event/$it") })

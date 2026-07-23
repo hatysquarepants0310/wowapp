@@ -58,6 +58,9 @@ object AppModule {
     fun provideProgressionDao(db: AppDatabase) = db.progressionDao()
 
     @Provides
+    fun provideSeasonalGoalDao(db: AppDatabase) = db.seasonalGoalDao()
+
+    @Provides
     @Singleton
     fun provideAnchorCalibrator() = AnchorCalibrator()
 

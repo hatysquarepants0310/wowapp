@@ -60,6 +60,15 @@ data class CharacterEntity(
     val lastSyncedAt: Instant?,
 )
 
+/** Objetivos de temporada marcados por el usuario (§8.2). */
+@Entity(tableName = "seasonal_goal")
+data class SeasonalGoalEntity(
+    @PrimaryKey val rewardId: String,
+    val targeted: Boolean,
+    val obtained: Boolean = false,
+    val updatedAt: Instant = Instant.EPOCH,
+)
+
 /** Estado de progresión editable por personaje (§7.3): Folio, Presas, Delves, monedas. */
 @Entity(tableName = "progression_state")
 data class ProgressionStateEntity(
@@ -125,6 +134,18 @@ interface CharacterDao {
 }
 
 @Dao
+interface SeasonalGoalDao {
+    @Upsert
+    suspend fun upsert(goal: SeasonalGoalEntity)
+
+    @Query("SELECT * FROM seasonal_goal")
+    fun observeAll(): Flow<List<SeasonalGoalEntity>>
+
+    @Query("SELECT * FROM seasonal_goal WHERE targeted = 1 AND obtained = 0")
+    suspend fun pendingTargets(): List<SeasonalGoalEntity>
+}
+
+@Dao
 interface ProgressionDao {
     @Upsert
     suspend fun upsert(state: ProgressionStateEntity)
@@ -158,8 +179,9 @@ interface SnapshotDao {
         CharacterEntity::class,
         SnapshotEntity::class,
         ProgressionStateEntity::class,
+        SeasonalGoalEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -169,4 +191,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun characterDao(): CharacterDao
     abstract fun snapshotDao(): SnapshotDao
     abstract fun progressionDao(): ProgressionDao
+    abstract fun seasonalGoalDao(): SeasonalGoalDao
 }
