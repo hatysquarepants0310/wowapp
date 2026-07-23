@@ -77,6 +77,27 @@ fun DashboardScreen(
             }
         }
 
+        state.activeCharacterName?.let { name ->
+            SectionCard("Personaje activo") {
+                Text("$name · ${state.activeCharacterClass ?: ""} · ilvl ${state.activeCharacterIlvl}",
+                    style = MaterialTheme.typography.titleMedium)
+                val syncedAt = state.lastSyncedAt
+                if (syncedAt != null) {
+                    val minutes = java.time.Duration.between(syncedAt, java.time.Instant.now()).toMinutes()
+                    Text(
+                        if (minutes > 30) "⚠ Datos de hace $minutes min — pueden no reflejar acciones recientes in-game"
+                        else "Sincronizado hace $minutes min",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (minutes > 30) MaterialTheme.colorScheme.secondary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Text("Aún sin sincronizar", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
         SectionCard(stringResource(R.string.great_vault)) {
             // Sin sesión de Battle.net el progreso es manual (modo degradado, §11).
             VaultRow("Banda", 0, listOf(2, 4, 6))
