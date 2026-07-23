@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Azeroth Companion</string>
+    <string name="nav_dashboard">Inicio</string>
+    <string name="nav_events">Eventos</string>
+    <string name="nav_weekly">Semanal</string>
+    <string name="nav_progression">Progresión</string>
+    <string name="nav_seasonal">Temporada</string>
+    <string name="nav_roster">Roster</string>
+    <string name="nav_settings">Ajustes</string>
+
+    <string name="confidence_confirmed">CONFIRMADO</string>
+    <string name="confidence_estimated">ESTIMADO</string>
+    <string name="confidence_predicted">PREDICHO</string>
+
+    <string name="next_event">Próximo evento</string>
+    <string name="weekly_reset">Reset semanal</string>
+    <string name="great_vault">Gran Bóveda</string>
+    <string name="prepare">Prepararme</string>
+    <string name="event_just_started">El evento acaba de empezar</string>
+    <string name="mark_done_manually">Corregir a mano</string>
+
+    <string name="auth_broken_banner">La sesión de Battle.net no responde. Los temporizadores, el catálogo y la checklist manual siguen funcionando.</string>
+    <string name="stale_data_warning">Datos con más de 30 minutos de antigüedad. Última sincronización: %1$s</string>
+    <string name="season_deadline_disclaimer">Las fechas de fin de temporada son estimaciones basadas en cronogramas de parches anunciados. Blizzard rara vez confirma la fecha exacta con antelación. Trata los deadlines como aproximados y con margen.</string>
+    <string name="blizzard_trademark">World of Warcraft® y Battle.net® son marcas registradas de Blizzard Entertainment, Inc. Esta aplicación no está afiliada ni respaldada por Blizzard Entertainment.</string>
+
+    <string name="channel_events">Eventos de mundo</string>
+    <string name="channel_resets">Resets</string>
+    <string name="channel_vault">Gran Bóveda</string>
+    <string name="channel_seasonal">Fin de temporada</string>
+    <string name="channel_progression">Progresión</string>
+
+    <string name="exact_alarm_rationale">Para avisarte con precisión de segundos antes de cada evento, la app necesita permiso de alarmas exactas. Sin él, los avisos pueden llegar con minutos de retraso.</string>
+</resources>
