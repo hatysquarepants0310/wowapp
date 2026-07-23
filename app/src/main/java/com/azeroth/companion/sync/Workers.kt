@@ -11,6 +11,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.azeroth.companion.core.catalog.CatalogRepository
 import com.azeroth.companion.data.EventsRepository
+import com.azeroth.companion.data.SyncRepository
+import com.azeroth.companion.data.SyncResult
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import okhttp3.OkHttpClient
@@ -63,10 +65,47 @@ class CatalogUpdateWorker @AssistedInject constructor(
     }
 }
 
+/** Sync del personaje activo cada 30 min con red disponible (§10). */
+@HiltWorker
+class SyncActiveCharacterWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+    private val syncRepository: SyncRepository,
+    private val eventsRepository: EventsRepository,
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result = when (syncRepository.syncActiveCharacter()) {
+        is SyncResult.Success -> {
+            eventsRepository.rescheduleEventAlarms()
+            Result.success()
+        }
+        is SyncResult.NotLoggedIn -> Result.success() // modo degradado: no es un error
+        is SyncResult.Failed -> if (runAttemptCount < 4) Result.retry() else Result.success()
+    }
+}
+
+/** Sync del roster completo cada 6 h, sin batería baja (§10). */
+@HiltWorker
+class SyncRosterWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+    private val syncRepository: SyncRepository,
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result = when (syncRepository.syncRoster()) {
+        is SyncResult.Success, is SyncResult.NotLoggedIn -> Result.success()
+        is SyncResult.Failed -> if (runAttemptCount < 4) Result.retry() else Result.success()
+    }
+}
+
 object SyncScheduler {
     fun scheduleAll(context: Context) {
         val wm = WorkManager.getInstance(context)
         val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+        val networkNotLowBattery = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(true)
+            .build()
 
         wm.enqueueUniquePeriodicWork(
             "reschedule_alarms",
@@ -80,5 +119,26 @@ object SyncScheduler {
                 .setConstraints(network)
                 .build(),
         )
+        wm.enqueueUniquePeriodicWork(
+            "sync_active_character",
+            ExistingPeriodicWorkPolicy.KEEP,
+            PeriodicWorkRequestBuilder<SyncActiveCharacterWorker>(30, TimeUnit.MINUTES)
+                .setConstraints(network)
+                .build(),
+        )
+        wm.enqueueUniquePeriodicWork(
+            "sync_roster",
+            ExistingPeriodicWorkPolicy.KEEP,
+            PeriodicWorkRequestBuilder<SyncRosterWorker>(6, TimeUnit.HOURS)
+                .setConstraints(networkNotLowBattery)
+                .build(),
+        )
+    }
+
+    /** Sync inmediato tras login o pull-to-refresh. */
+    fun syncNow(context: Context) {
+        val wm = WorkManager.getInstance(context)
+        wm.enqueue(androidx.work.OneTimeWorkRequestBuilder<SyncRosterWorker>().build())
+        wm.enqueue(androidx.work.OneTimeWorkRequestBuilder<SyncActiveCharacterWorker>().build())
     }
 }

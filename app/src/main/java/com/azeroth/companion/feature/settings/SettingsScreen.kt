@@ -27,7 +27,9 @@ import com.azeroth.companion.R
 import com.azeroth.companion.core.catalog.CatalogRepository
 import com.azeroth.companion.core.datastore.Settings
 import com.azeroth.companion.core.datastore.SettingsRepository
+import com.azeroth.companion.core.model.AuthState
 import com.azeroth.companion.core.model.Region
+import com.azeroth.companion.core.network.AuthManager
 import com.azeroth.companion.core.notifications.AlarmScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,12 +49,17 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val catalogRepository: CatalogRepository,
     private val alarmScheduler: AlarmScheduler,
+    private val authManager: AuthManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state
+    val authState = authManager.state
+
+    val isAuthConfigured: Boolean get() = authManager.isConfigured
 
     init {
+        viewModelScope.launch { authManager.restore() }
         viewModelScope.launch {
             val catalog = catalogRepository.load()
             settingsRepository.settings.collect {
@@ -68,17 +75,68 @@ class SettingsViewModel @Inject constructor(
 
     fun setRegion(region: Region) = viewModelScope.launch { settingsRepository.setRegion(region) }
     fun setShowLegacy(show: Boolean) = viewModelScope.launch { settingsRepository.setShowLegacy(show) }
+    fun logout() = viewModelScope.launch { authManager.logout() }
+
+    /** URL de autorización PKCE, o null si no hay client_id configurado. */
+    suspend fun buildLoginUri(): android.net.Uri? {
+        if (!authManager.isConfigured) return null
+        val region = _state.value.settings?.region ?: Region.US
+        return authManager.buildAuthorizationUri(region)
+    }
 }
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
     val settings = state.settings ?: return
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        Text("Cuenta de Battle.net", style = MaterialTheme.typography.titleMedium)
+        when (val auth = authState) {
+            is AuthState.LoggedIn -> {
+                Text("Sesión iniciada${auth.battleTag?.let { " · $it" } ?: ""}",
+                    style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.Button(onClick = {
+                        com.azeroth.companion.sync.SyncScheduler.syncNow(context)
+                    }) { Text("Sincronizar ahora") }
+                    androidx.compose.material3.OutlinedButton(onClick = viewModel::logout) {
+                        Text("Cerrar sesión")
+                    }
+                }
+            }
+            is AuthState.Broken -> {
+                Text("⚠ ${auth.reason}", color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall)
+                LoginButton(viewModel, scope, context)
+            }
+            AuthState.LoggedOut -> {
+                Text(
+                    "Solo lectura, scope wow.profile. Tus datos nunca salen del dispositivo.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (viewModel.isAuthConfigured) {
+                    LoginButton(viewModel, scope, context)
+                } else {
+                    Text(
+                        "Compilación sin client_id de Blizzard: el login está deshabilitado. " +
+                            "La app funciona completa en modo manual.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                }
+            }
+        }
+
+        HorizontalDivider()
+
         Text("Región", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Region.entries.forEach { region ->
@@ -127,4 +185,21 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/** Abre el flujo OAuth en Custom Tab, nunca en WebView embebido (§2.1). */
+@Composable
+private fun LoginButton(
+    viewModel: SettingsViewModel,
+    scope: kotlinx.coroutines.CoroutineScope,
+    context: android.content.Context,
+) {
+    androidx.compose.material3.Button(onClick = {
+        scope.launch {
+            viewModel.buildLoginUri()?.let { uri ->
+                androidx.browser.customtabs.CustomTabsIntent.Builder().build()
+                    .launchUrl(context, uri)
+            }
+        }
+    }) { Text("Iniciar sesión con Battle.net") }
 }

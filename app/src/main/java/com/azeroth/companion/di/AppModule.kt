@@ -53,4 +53,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAnchorCalibrator() = AnchorCalibrator()
+
+    @Provides
+    @Singleton
+    fun provideDetectionEngine() = com.azeroth.companion.core.detection.DetectionEngine()
 }
