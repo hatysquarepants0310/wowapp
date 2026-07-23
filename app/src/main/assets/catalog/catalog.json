@@ -118,6 +118,11 @@
     { "id": "pvp_elite_set_s1", "name": { "es_MX": "Apariencia élite de PvP (temporada actual)", "en_US": "Elite PvP appearance (current season)" }, "type": "TRANSMOG", "source": { "es_MX": "Rating de PvP 1800+", "en_US": "PvP rating 1800+" }, "estimatedDifficulty": "HARD" },
     { "id": "season_title_s1", "name": { "es_MX": "Título de temporada", "en_US": "Season title" }, "type": "TITLE", "source": { "es_MX": "Top 0.1% de rating M+/PvP", "en_US": "Top 0.1% M+/PvP rating" }, "estimatedDifficulty": "EXTREME" }
   ],
+  "season": {
+    "id": "midnight_s1",
+    "name": { "es_MX": "Midnight Temporada 1", "en_US": "Midnight Season 1" },
+    "endEstimateUtc": "2026-11-03T15:00:00Z"
+  },
   "zones": [
     { "id": "eversong", "name": { "es_MX": "Bosques de Canción Eterna", "en_US": "Eversong Woods" } },
     { "id": "zulaman", "name": { "es_MX": "Zul'Aman", "en_US": "Zul'Aman" } },

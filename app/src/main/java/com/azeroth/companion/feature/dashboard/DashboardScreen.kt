@@ -30,6 +30,7 @@ import com.azeroth.companion.ui.components.SectionCard
 @Composable
 fun DashboardScreen(
     onOpenChecklist: (String) -> Unit,
+    onOpenRoster: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -79,6 +80,7 @@ fun DashboardScreen(
 
         state.activeCharacterName?.let { name ->
             SectionCard("Personaje activo") {
+                androidx.compose.material3.TextButton(onClick = onOpenRoster) { Text("Ver roster →") }
                 Text("$name · ${state.activeCharacterClass ?: ""} · ilvl ${state.activeCharacterIlvl}",
                     style = MaterialTheme.typography.titleMedium)
                 val syncedAt = state.lastSyncedAt

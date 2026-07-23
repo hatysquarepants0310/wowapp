@@ -26,6 +26,7 @@ class EventsRepository @Inject constructor(
     private val catalogRepository: CatalogRepository,
     private val settingsRepository: SettingsRepository,
     private val calibrationDao: CalibrationDao,
+    private val seasonalGoalDao: com.azeroth.companion.core.database.SeasonalGoalDao,
     private val alarmScheduler: AlarmScheduler,
     private val calibrator: AnchorCalibrator,
 ) {
@@ -110,6 +111,40 @@ class EventsRepository @Inject constructor(
             "Nueva semana de juego. Bóveda lista para reclamar.",
             NotificationChannels.RESETS,
         )
+        rescheduleSeasonalDeadlines(now)
+    }
+
+    /**
+     * Avisos escalados de fin de temporada (§5.2, §8.2): 30/14/7/3/1 días antes
+     * del cierre estimado, más avisos específicos si hay objetivos marcados sin
+     * conseguir. La fecha viene del catálogo y es siempre estimada (§8.3).
+     */
+    private suspend fun rescheduleSeasonalDeadlines(now: Instant) {
+        val raw = catalogRepository.load().season.endEstimateUtc ?: return
+        val end = runCatching { Instant.parse(raw) }.getOrNull() ?: return
+        if (end.isBefore(now)) return
+
+        listOf(30L, 14L, 7L, 3L, 1L).forEach { days ->
+            alarmScheduler.schedule(
+                NotificationId("season_deadline_$days", "season"),
+                end.minus(Duration.ofDays(days)),
+                "Fin de temporada (estimado)",
+                "Quedan ~$days día(s). Revisa tus objetivos de temporada.",
+                NotificationChannels.SEASONAL,
+            )
+        }
+        val pending = seasonalGoalDao.pendingTargets()
+        if (pending.isNotEmpty()) {
+            listOf(14L, 7L, 3L).forEach { days ->
+                alarmScheduler.schedule(
+                    NotificationId("season_reward_at_risk_$days", "season"),
+                    end.minus(Duration.ofDays(days)),
+                    "Objetivos de temporada en riesgo",
+                    "${pending.size} objetivo(s) marcados sin conseguir y quedan ~$days día(s).",
+                    NotificationChannels.SEASONAL,
+                )
+            }
+        }
     }
 
     private fun applyCalibration(def: WorldEventDefinition): WorldEventDefinition {
