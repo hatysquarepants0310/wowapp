@@ -60,6 +60,21 @@ data class CharacterEntity(
     val lastSyncedAt: Instant?,
 )
 
+/** Estado de progresión editable por personaje (§7.3): Folio, Presas, Delves, monedas. */
+@Entity(tableName = "progression_state")
+data class ProgressionStateEntity(
+    @PrimaryKey val characterId: Long,
+    val folioUnlockedRows: Int = 0,
+    val folioCatchUpPending: Int = 0,
+    /** JSON: mapa zona -> % de progreso de la presa (0..100). */
+    val preyProgressJson: String = "{}",
+    val delveKeysAvailable: Int = 0,
+    val delvesDoneThisWeek: Int = 0,
+    val crestsThisWeek: Int = 0,
+    val crestsTotal: Int = 0,
+    val updatedAt: Instant = Instant.EPOCH,
+)
+
 /** Snapshot inmutable por sync (§6): permite detectar "hecho esta semana" por delta. */
 @Entity(tableName = "snapshot")
 data class SnapshotEntity(
@@ -110,6 +125,18 @@ interface CharacterDao {
 }
 
 @Dao
+interface ProgressionDao {
+    @Upsert
+    suspend fun upsert(state: ProgressionStateEntity)
+
+    @Query("SELECT * FROM progression_state WHERE characterId = :characterId")
+    fun observe(characterId: Long): Flow<ProgressionStateEntity?>
+
+    @Query("SELECT * FROM progression_state WHERE characterId = :characterId")
+    suspend fun get(characterId: Long): ProgressionStateEntity?
+}
+
+@Dao
 interface SnapshotDao {
     @Insert
     suspend fun insert(snapshot: SnapshotEntity)
@@ -130,8 +157,9 @@ interface SnapshotDao {
         CalibrationObservationEntity::class,
         CharacterEntity::class,
         SnapshotEntity::class,
+        ProgressionStateEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -140,4 +168,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun calibrationDao(): CalibrationDao
     abstract fun characterDao(): CharacterDao
     abstract fun snapshotDao(): SnapshotDao
+    abstract fun progressionDao(): ProgressionDao
 }

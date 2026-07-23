@@ -30,6 +30,7 @@ data class DashboardState(
     val activeCharacterIlvl: Int = 0,
     val activeCharacterClass: String? = null,
     val lastSyncedAt: Instant? = null,
+    val vault: com.azeroth.companion.core.model.GreatVaultProgress? = null,
 )
 
 @HiltViewModel
@@ -38,6 +39,7 @@ class DashboardViewModel @Inject constructor(
     private val weeklyRepository: WeeklyRepository,
     private val authManager: AuthManager,
     private val characterDao: com.azeroth.companion.core.database.CharacterDao,
+    private val progressionRepository: com.azeroth.companion.data.ProgressionRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -58,6 +60,7 @@ class DashboardViewModel @Inject constructor(
                     .sortedByDescending { it.priorityWeight }
                     .take(5)
                 val active = characterDao.observeAll().first().firstOrNull()
+                val vault = progressionRepository.computeVault(active?.id ?: 0L)
                 eventsRepository.rescheduleEventAlarms()
                 _state.value = DashboardState(
                     loading = false,
@@ -74,6 +77,7 @@ class DashboardViewModel @Inject constructor(
                     activeCharacterIlvl = active?.equippedItemLevel ?: 0,
                     activeCharacterClass = active?.playableClass,
                     lastSyncedAt = active?.lastSyncedAt,
+                    vault = vault,
                 )
             }.onFailure {
                 _state.value = _state.value.copy(loading = false)
