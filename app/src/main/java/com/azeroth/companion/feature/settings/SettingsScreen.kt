@@ -51,13 +51,36 @@ class SettingsViewModel @Inject constructor(
     private val alarmScheduler: AlarmScheduler,
     private val authManager: AuthManager,
     private val backupRepository: com.azeroth.companion.data.BackupRepository,
+    private val updateChecker: com.azeroth.companion.core.update.UpdateChecker,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state
     val authState = authManager.state
 
+    private val _updateStatus =
+        MutableStateFlow<com.azeroth.companion.core.update.UpdateStatus?>(null)
+    val updateStatus: StateFlow<com.azeroth.companion.core.update.UpdateStatus?> = _updateStatus
+
     val isAuthConfigured: Boolean get() = authManager.isConfigured
+
+    fun checkForUpdate() {
+        viewModelScope.launch {
+            _updateStatus.value = com.azeroth.companion.core.update.UpdateStatus.Checking
+            _updateStatus.value = updateChecker.check()
+        }
+    }
+
+    fun downloadUpdate(apkUrl: String, version: String) {
+        viewModelScope.launch {
+            _updateStatus.value = com.azeroth.companion.core.update.UpdateStatus.Downloading(version)
+            val result = updateChecker.downloadAndInstall(apkUrl)
+            // Solo refleja el error; si tuvo éxito, el instalador del sistema toma el control.
+            if (result is com.azeroth.companion.core.update.UpdateStatus.Error) {
+                _updateStatus.value = result
+            }
+        }
+    }
 
     init {
         viewModelScope.launch { authManager.restore() }
@@ -171,13 +194,42 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
         HorizontalDivider()
 
-        Text("Diagnóstico", style = MaterialTheme.typography.titleMedium)
+        Text("Actualización", style = MaterialTheme.typography.titleMedium)
+        val updateStatus by viewModel.updateStatus.collectAsStateWithLifecycle()
         Text(
             "App: v${com.azeroth.companion.BuildConfig.VERSION_NAME} " +
                 "(build ${com.azeroth.companion.BuildConfig.VERSION_CODE})",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
         )
+        when (val s = updateStatus) {
+            is com.azeroth.companion.core.update.UpdateStatus.Checking ->
+                Text("Buscando…", style = MaterialTheme.typography.bodySmall)
+            is com.azeroth.companion.core.update.UpdateStatus.UpToDate ->
+                Text("Ya tienes la última versión. ✓", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary)
+            is com.azeroth.companion.core.update.UpdateStatus.Available -> {
+                Text("¡Nueva versión v${s.version} disponible!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary)
+                androidx.compose.material3.Button(onClick = {
+                    viewModel.downloadUpdate(s.apkUrl, s.version)
+                }) { Text("Descargar e instalar v${s.version}") }
+            }
+            is com.azeroth.companion.core.update.UpdateStatus.Downloading ->
+                Text("Descargando v${s.version}…", style = MaterialTheme.typography.bodySmall)
+            is com.azeroth.companion.core.update.UpdateStatus.Error ->
+                Text("⚠ ${s.reason}", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error)
+            null -> {}
+        }
+        androidx.compose.material3.OutlinedButton(onClick = { viewModel.checkForUpdate() }) {
+            Text("Buscar actualización")
+        }
+
+        HorizontalDivider()
+
+        Text("Diagnóstico", style = MaterialTheme.typography.titleMedium)
         Text("Catálogo: v${state.catalogVersion} (${state.catalogSource})",
             style = MaterialTheme.typography.bodySmall)
         Text("Alarmas exactas: ${if (state.exactAlarms) "sí" else "no — modo ventana"}",
