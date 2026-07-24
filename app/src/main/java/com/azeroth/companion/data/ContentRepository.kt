@@ -15,6 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class InstanceSummary(val id: Int, val name: String)
+data class Boss(val id: Int, val name: String)
 data class ExpansionRef(val id: Int, val name: String, val isCurrent: Boolean)
 data class ExpansionContent(
     val name: String,
@@ -44,7 +45,8 @@ class ContentRepository @Inject constructor(
         .build()
         .create(RaiderIoApi::class.java)
 
-    private val bossCache = mutableMapOf<Int, List<String>>()
+    private val bossCache = mutableMapOf<Int, List<Boss>>()
+    private val lootCache = mutableMapOf<Int, List<String>>()
     private val expansionCache = mutableMapOf<Int, ExpansionContent>()
     private var expansionsRefCache: List<ExpansionRef>? = null
 
@@ -89,15 +91,27 @@ class ContentRepository @Inject constructor(
         }.getOrNull()
     }
 
-    /** Jefes de una instancia (cacheado). Lista vacía si la API no responde. */
-    suspend fun bosses(instanceId: Int): List<String> {
+    /** Jefes de una instancia (id + nombre, cacheado). Vacío si la API no responde. */
+    suspend fun bosses(instanceId: Int): List<Boss> {
         bossCache[instanceId]?.let { return it }
         val region = settingsRepository.settings.first().region
         val api = apiFactory.forRegion(region)
         return runCatching {
             api.journalInstance(instanceId, region.namespaceStatic)
-                .encounters.mapNotNull { it.name }
+                .encounters.filter { it.name != null }
+                .map { Boss(it.id, it.name!!) }
         }.getOrDefault(emptyList()).also { bossCache[instanceId] = it }
+    }
+
+    /** Botín (nombres de objetos) de un jefe. Responde "¿qué looteo aquí?". */
+    suspend fun bossLoot(encounterId: Int): List<String> {
+        lootCache[encounterId]?.let { return it }
+        val region = settingsRepository.settings.first().region
+        val api = apiFactory.forRegion(region)
+        return runCatching {
+            api.journalEncounter(encounterId, region.namespaceStatic)
+                .items.mapNotNull { it.item?.name }
+        }.getOrDefault(emptyList()).also { lootCache[encounterId] = it }
     }
 
     private fun AffixDto.toAffix() = Affix(name, description)

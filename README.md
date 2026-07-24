@@ -147,6 +147,11 @@ nueva pantalla **Personaje** con selector de alt, equipo y monturas; **historial
 de Mythic+**; **botón de actualización dentro de la app** (descarga e instala el último release
 sin abrir GitHub); y un rediseño visual **oscuro amaderado con acentos morados** de Midnight.
 
+**v1.5.0** — **Botín de cada jefe** (toca un jefe y ve qué suelta), **iconos reales de tu equipo**,
+eventos con **cadencia legible** ("cada 30 min") y **recompensas** ("qué te da"), y corrección del
+bug por el que Inicio mostraba un personaje distinto al seleccionado. La checklist manual de
+Voidstorm se sustituyó por requisitos informativos.
+
 ## Contribuir
 
 El catálogo (`catalog.json`) es el corazón comunitario del proyecto: cadencias, IDs de quest

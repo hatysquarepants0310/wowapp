@@ -120,6 +120,19 @@ interface BlizzardApi {
         @Query("namespace") namespace: String,
         @Query("locale") locale: String = "es_MX",
     ): JournalInstanceDto
+
+    @GET("/data/wow/journal-encounter/{id}")
+    suspend fun journalEncounter(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): JournalEncounterDto
+
+    @GET("/data/wow/media/item/{id}")
+    suspend fun itemMedia(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+    ): MediaDto
 }
 
 // ---- DTOs mínimos (solo los campos que la app consume) ----
@@ -232,6 +245,22 @@ data class JournalInstanceDto(
 data class JournalCategoryDto(val type: String? = null)
 
 @Serializable
+data class JournalEncounterDto(
+    val id: Int = 0,
+    val name: String = "",
+    val items: List<JournalLootDto> = emptyList(),
+)
+
+@Serializable
+data class JournalLootDto(val item: KeyedNameDto? = null)
+
+@Serializable
+data class MediaDto(val assets: List<MediaAssetDto> = emptyList())
+
+@Serializable
+data class MediaAssetDto(val key: String = "", val value: String = "")
+
+@Serializable
 data class JournalExpansionIndexDto(val tiers: List<KeyedNameDto> = emptyList())
 
 @Serializable
@@ -239,6 +268,7 @@ data class EquipmentDto(val equipped_items: List<EquippedItemDto> = emptyList())
 
 @Serializable
 data class EquippedItemDto(
+    val item: KeyedNameDto? = null,
     val slot: TypedNameDto? = null,
     val name: String? = null,
     val quality: TypedNameDto? = null,
