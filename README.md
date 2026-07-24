@@ -11,6 +11,19 @@
 
 ---
 
+## 💜 Apoya el proyecto
+
+> **Azeroth Companion es gratis, sin anuncios y sin telemetría.** Si te salvó un cofre
+> semanal y quieres invitar un café, cualquier aporte ayuda a mantenerlo vivo para toda
+> la comunidad. ¡Gracias! 🙌
+
+| Cripto | Dirección |
+|---|---|
+| ₿ **Bitcoin** | `bc1qa2r0gufynr7g05mjxlnp4hc9e7r3nkyc7w9u68jjrlzjnllc6n9se064zm` |
+| Ξ **Ethereum** | `0x6A0cb583AcE01561D9d12d4625Ee4c1DcAF0f275` |
+
+---
+
 ## ¿Por qué existe?
 
 Blizzard retiró la WoW Companion App oficial con el parche 11.0 y nunca la reemplazó. Los
@@ -127,13 +140,6 @@ no debe usarse para Play Store; para distribución en tienda genera una clave pr
 El catálogo (`catalog.json`) es el corazón comunitario del proyecto: cadencias, IDs de quest
 y fechas provienen de observación de jugadores y cambian entre parches. Los PRs que corrijan
 o amplíen el catálogo son los más valiosos que puedes enviar.
-
-## Donaciones
-
-Si la app te salvó un cofre semanal y quieres invitar un café:
-
-- **Bitcoin:** `bc1qa2r0gufynr7g05mjxlnp4hc9e7r3nkyc7w9u68jjrlzjnllc6n9se064zm`
-- **Ethereum:** `0x6A0cb583AcE01561D9d12d4625Ee4c1DcAF0f275`
 
 ## Aviso legal
 
