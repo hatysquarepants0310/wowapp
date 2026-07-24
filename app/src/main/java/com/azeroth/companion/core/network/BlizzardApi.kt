@@ -133,6 +133,19 @@ interface BlizzardApi {
         @Path("id") id: Int,
         @Query("namespace") namespace: String,
     ): MediaDto
+
+    @GET("/data/wow/quest/area/index")
+    suspend fun questAreaIndex(
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): QuestAreaIndexDto
+
+    @GET("/data/wow/quest/area/{id}")
+    suspend fun questArea(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): QuestAreaDto
 }
 
 // ---- DTOs mínimos (solo los campos que la app consume) ----
@@ -259,6 +272,16 @@ data class MediaDto(val assets: List<MediaAssetDto> = emptyList())
 
 @Serializable
 data class MediaAssetDto(val key: String = "", val value: String = "")
+
+@Serializable
+data class QuestAreaIndexDto(val areas: List<KeyedNameDto> = emptyList())
+
+@Serializable
+data class QuestAreaDto(
+    val id: Int = 0,
+    val name: String? = null,
+    val quests: List<KeyedNameDto> = emptyList(),
+)
 
 @Serializable
 data class JournalExpansionIndexDto(val tiers: List<KeyedNameDto> = emptyList())
