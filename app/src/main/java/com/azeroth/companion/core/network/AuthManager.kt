@@ -119,13 +119,15 @@ class AuthManager @Inject constructor(
             _state.value = AuthState.Broken("El parámetro state no coincide (posible CSRF). Reintenta el login.")
             return
         }
+        // client_id NO va en el cuerpo: ya se envía por HTTP Basic auth en exchange().
+        // Enviar ambos hace que Blizzard rechace con invalid_client (RFC 6749 §2.3:
+        // un cliente no puede usar más de un método de autenticación por petición).
         exchange(
             region,
             FormBody.Builder()
                 .add("grant_type", "authorization_code")
                 .add("code", code)
                 .add("redirect_uri", redirectUri)
-                .add("client_id", clientId)
                 .add("code_verifier", verifier)
                 .build(),
         )
@@ -141,12 +143,12 @@ class AuthManager @Inject constructor(
             _state.value = AuthState.Broken("Token expirado y sin refresh token. Vuelve a iniciar sesión.")
             return null
         }
+        // Igual que en el login: client_id solo por Basic auth, nunca también en el cuerpo.
         exchange(
             region,
             FormBody.Builder()
                 .add("grant_type", "refresh_token")
                 .add("refresh_token", refresh)
-                .add("client_id", clientId)
                 .build(),
         )
         return context.authStore.data.first()[Keys.ACCESS_TOKEN]
