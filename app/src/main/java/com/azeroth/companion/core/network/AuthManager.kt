@@ -64,7 +64,15 @@ class AuthManager @Inject constructor(
     /** Registrado en el Blizzard Developer Portal; viene de BuildConfig (gradle -PblizzardClientId). */
     var clientId: String = com.azeroth.companion.BuildConfig.BLIZZARD_CLIENT_ID
 
-    val isConfigured: Boolean get() = clientId.isNotBlank()
+    /**
+     * Blizzard NO acepta clientes públicos: su endpoint de token exige
+     * client_secret (invalid_client con PKCE puro). Sin backend propio, la
+     * única vía es incluirlo en el APK; el riesgo queda acotado por el scope
+     * de solo lectura y el redirect fijado.
+     */
+    private val clientSecret: String = com.azeroth.companion.BuildConfig.BLIZZARD_CLIENT_SECRET
+
+    val isConfigured: Boolean get() = clientId.isNotBlank() && clientSecret.isNotBlank()
 
     suspend fun restore() {
         val prefs = context.authStore.data.first()
@@ -154,7 +162,11 @@ class AuthManager @Inject constructor(
     // que era el "fallo desconocido" reportado en el login.
     private suspend fun exchange(region: Region, body: FormBody) =
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            val request = Request.Builder().url("${region.oauthHost}/token").post(body).build()
+            val request = Request.Builder()
+                .url("${region.oauthHost}/token")
+                .header("Authorization", okhttp3.Credentials.basic(clientId, clientSecret))
+                .post(body)
+                .build()
             runCatching {
                 okHttpClient.newCall(request).execute().use { response ->
                     val raw = response.body?.string().orEmpty()
