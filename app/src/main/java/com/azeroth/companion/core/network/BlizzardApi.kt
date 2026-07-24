@@ -67,6 +67,41 @@ interface BlizzardApi {
         @Query("namespace") namespace: String,
     ): MountsDto
 
+    @GET("/profile/wow/character/{realm}/{name}/equipment")
+    suspend fun equipment(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): EquipmentDto
+
+    @GET("/profile/wow/character/{realm}/{name}/collections/mounts")
+    suspend fun mountsNamed(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): MountsDto
+
+    @GET("/profile/wow/character/{realm}/{name}/mythic-keystone-profile/season/{seasonId}")
+    suspend fun mythicSeason(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Path("seasonId") seasonId: Int,
+        @Query("namespace") namespace: String,
+    ): MythicSeasonDto
+
+    @GET("/data/wow/mythic-keystone/season/index")
+    suspend fun mythicSeasonIndex(
+        @Query("namespace") namespace: String,
+    ): MythicSeasonIndexDto
+
+    @GET("/data/wow/journal-expansion/index")
+    suspend fun journalExpansions(
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): JournalExpansionIndexDto
+
     @GET("/data/wow/token/index")
     suspend fun tokenIndex(@Query("namespace") namespace: String): TokenIndexDto
 
@@ -195,3 +230,38 @@ data class JournalInstanceDto(
 
 @Serializable
 data class JournalCategoryDto(val type: String? = null)
+
+@Serializable
+data class JournalExpansionIndexDto(val tiers: List<KeyedNameDto> = emptyList())
+
+@Serializable
+data class EquipmentDto(val equipped_items: List<EquippedItemDto> = emptyList())
+
+@Serializable
+data class EquippedItemDto(
+    val slot: TypedNameDto? = null,
+    val name: String? = null,
+    val quality: TypedNameDto? = null,
+    val level: ItemLevelDto? = null,
+)
+
+@Serializable
+data class ItemLevelDto(val value: Int = 0)
+
+@Serializable
+data class MythicSeasonIndexDto(
+    val seasons: List<SeasonRefDto> = emptyList(),
+    val current_season: SeasonRefDto? = null,
+)
+
+@Serializable
+data class SeasonRefDto(val id: Int = 0)
+
+@Serializable
+data class MythicSeasonDto(
+    val best_runs: List<MythicRunDto> = emptyList(),
+    val mythic_rating: MythicRatingDto? = null,
+)
+
+@Serializable
+data class MythicRatingDto(val rating: Double = 0.0)
