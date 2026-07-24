@@ -5,15 +5,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -22,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -94,12 +101,10 @@ private fun AppScaffold(startEventId: String?) {
     val navController: NavHostController = rememberNavController()
     val destinations = listOf(
         Destination("dashboard", R.string.nav_dashboard, Icons.Filled.Home),
+        Destination("content", R.string.nav_content, Icons.AutoMirrored.Filled.MenuBook),
+        Destination("character", R.string.nav_character, Icons.Filled.Person),
         Destination("events", R.string.nav_events, Icons.Filled.Timer),
-        Destination("weekly", R.string.nav_weekly, Icons.Filled.Checklist),
-        Destination("content", R.string.nav_content, Icons.Filled.MenuBook),
-        Destination("progression", R.string.nav_progression, Icons.Filled.TrendingUp),
-        Destination("seasonal", R.string.nav_seasonal, Icons.Filled.CalendarMonth),
-        Destination("settings", R.string.nav_settings, Icons.Filled.Settings),
+        Destination("more", R.string.nav_more, Icons.Filled.Menu),
     )
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -146,10 +151,43 @@ private fun AppScaffold(startEventId: String?) {
             }
             composable("weekly") { WeeklyScreen() }
             composable("content") { com.azeroth.companion.feature.content.ContentScreen() }
+            composable("character") { com.azeroth.companion.feature.character.CharacterScreen() }
+            composable("seasons") { com.azeroth.companion.feature.seasons.SeasonsScreen() }
             composable("progression") { ProgressionScreen() }
             composable("seasonal") { SeasonalScreen() }
             composable("roster") { RosterScreen() }
             composable("settings") { SettingsScreen() }
+            composable("more") {
+                MoreScreen(onNavigate = { route -> navController.navigate(route) })
+            }
+        }
+    }
+}
+
+private data class MoreItem(val route: String, val title: String, val subtitle: String)
+
+@Composable
+private fun MoreScreen(onNavigate: (String) -> Unit) {
+    val items = listOf(
+        MoreItem("weekly", "Semanal", "Tus pendientes de la semana, detectados automáticamente"),
+        MoreItem("progression", "Progresión", "Gran Bóveda, Folio, Presas y Delves"),
+        MoreItem("seasons", "Temporadas M+", "Tu historial y progreso por temporada de Mythic+"),
+        MoreItem("seasonal", "Recompensas de temporada", "Objetivos con fecha límite y viabilidad"),
+        MoreItem("roster", "Roster", "Todos tus personajes y sus intentos de montura"),
+        MoreItem("settings", "Ajustes", "Cuenta, región, actualización, datos y diagnóstico"),
+    )
+    LazyColumn(
+        Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+    ) {
+        items(items) { item ->
+            Card(Modifier.fillMaxWidth().clickable { onNavigate(item.route) }) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(item.title, style = MaterialTheme.typography.titleMedium)
+                    Text(item.subtitle, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }

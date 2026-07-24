@@ -15,6 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class InstanceSummary(val id: Int, val name: String)
+data class ExpansionRef(val id: Int, val name: String, val isCurrent: Boolean)
 data class ExpansionContent(
     val name: String,
     val dungeons: List<InstanceSummary>,
@@ -44,7 +45,11 @@ class ContentRepository @Inject constructor(
         .create(RaiderIoApi::class.java)
 
     private val bossCache = mutableMapOf<Int, List<String>>()
-    private var expansionCache: ExpansionContent? = null
+    private val expansionCache = mutableMapOf<Int, ExpansionContent>()
+    private var expansionsRefCache: List<ExpansionRef>? = null
+
+    /** ID de expansión actual definido por el catálogo (Midnight por defecto). */
+    suspend fun currentExpansionId(): Int = catalogRepository.load().journalExpansionId
 
     suspend fun currentAffixes(): Pair<String, List<Affix>>? {
         val region = settingsRepository.settings.first().region.name.lowercase()
@@ -54,10 +59,25 @@ class ContentRepository @Inject constructor(
         }.getOrNull()
     }
 
-    suspend fun expansionContent(): ExpansionContent? {
-        expansionCache?.let { return it }
+    /** Todas las expansiones del juego; la actual marcada, el resto son "anteriores". */
+    suspend fun allExpansions(): List<ExpansionRef> {
+        expansionsRefCache?.let { return it }
         val region = settingsRepository.settings.first().region
-        val expansionId = catalogRepository.load().journalExpansionId
+        val currentId = currentExpansionId()
+        val api = apiFactory.forRegion(region)
+        return runCatching {
+            api.journalExpansions(region.namespaceStatic).tiers
+                // "Temporada actual" (505) es un agrupador meta duplicado: se omite.
+                .filter { it.id != 505 && !it.name.isNullOrBlank() }
+                .map { ExpansionRef(it.id, it.name!!, it.id == currentId) }
+                .sortedByDescending { it.isCurrent }
+                .also { expansionsRefCache = it }
+        }.getOrDefault(emptyList())
+    }
+
+    suspend fun expansionContent(expansionId: Int): ExpansionContent? {
+        expansionCache[expansionId]?.let { return it }
+        val region = settingsRepository.settings.first().region
         val api = apiFactory.forRegion(region)
         return runCatching {
             val exp = api.journalExpansion(expansionId, region.namespaceStatic)
@@ -65,7 +85,7 @@ class ContentRepository @Inject constructor(
                 name = exp.name,
                 dungeons = exp.dungeons.map { InstanceSummary(it.id, it.name ?: "") },
                 raids = exp.raids.map { InstanceSummary(it.id, it.name ?: "") },
-            ).also { expansionCache = it }
+            ).also { expansionCache[expansionId] = it }
         }.getOrNull()
     }
 

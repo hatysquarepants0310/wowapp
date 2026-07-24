@@ -53,7 +53,9 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 | **Semanal** | Checklist agrupada por categoría con detección automática de progreso y override manual siempre disponible |
 | **Progresión** | Folio Omnium (con reglas de catch-up), Sistema de Presas, Campaña, Delves |
 | **Temporada** | Tracker de recompensas con fecha límite (FOMO) con filtro de viabilidad honesto |
-| **Contenido** | Afijos de Mythic+ de la semana + mazmorras y bandas de la expansión con sus jefes (fuentes oficiales, sin login) |
+| **Contenido** | Afijos de Mythic+ de la semana + mazmorras y bandas de **cualquier expansión** con sus jefes (actual destacada, anteriores aparte) |
+| **Personaje** | Elige cualquier alt: nivel, ilvl, equipo por slot y colección de monturas — una armería en el bolsillo |
+| **Temporadas M+** | Tu historial por temporada: rating, mejor llave y en cuáles participaste |
 | **Roster** | Alts con Bóveda, intentos de montura restantes y cambio de personaje activo |
 | **Widget** | Próximo evento en tu pantalla de inicio, sin abrir la app |
 | **Ajustes** | Cuenta Battle.net, región, legacy, exportar/importar datos, diagnóstico |
@@ -139,6 +141,11 @@ no debe usarse para Play Store; para distribución en tienda genera una clave pr
 **v1.3.0** — nueva sección **Contenido**: afijos de Mythic+ de la semana (Raider.IO) y el
 journal de mazmorras/bandas con sus jefes (API oficial de Datos de Juego de Blizzard). Sin
 scraping de Wowhead —que no tiene API pública— y funciona sin iniciar sesión.
+
+**v1.4.0** — Contenido de **todas las expansiones** (las pasadas separadas para no confundir);
+nueva pantalla **Personaje** con selector de alt, equipo y monturas; **historial de temporadas
+de Mythic+**; **botón de actualización dentro de la app** (descarga e instala el último release
+sin abrir GitHub); y un rediseño visual **oscuro amaderado con acentos morados** de Midnight.
 
 ## Contribuir
 
