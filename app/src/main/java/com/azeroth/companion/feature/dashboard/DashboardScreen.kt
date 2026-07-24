@@ -81,8 +81,11 @@ fun DashboardScreen(
         state.activeCharacterName?.let { name ->
             SectionCard("Personaje activo") {
                 androidx.compose.material3.TextButton(onClick = onOpenRoster) { Text("Ver roster →") }
-                Text("$name · ${state.activeCharacterClass ?: ""} · ilvl ${state.activeCharacterIlvl}",
+                Text("$name${state.activeCharacterRealm?.let { " · $it" } ?: ""}",
                     style = MaterialTheme.typography.titleMedium)
+                Text("${state.activeCharacterClass ?: ""} · ilvl ${state.activeCharacterIlvl}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 val syncedAt = state.lastSyncedAt
                 if (syncedAt != null) {
                     val minutes = java.time.Duration.between(syncedAt, java.time.Instant.now()).toMinutes()
