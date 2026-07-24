@@ -1,6 +1,5 @@
 package com.azeroth.companion.feature.weekly
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,18 +37,22 @@ private val categoryLabels = mapOf(
     TaskCategory.SEASONAL_REWARD to "Temporada",
 )
 
+/**
+ * Checklist semanal 100% automática: el estado sale de la detección sobre los
+ * snapshots del sync con Battle.net (§6). Sin entrada manual — solo lectura,
+ * con badge de confianza en cada dato inferido.
+ */
 @Composable
 fun WeeklyScreen(viewModel: WeeklyViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        item(key = "auto_header") {
+        item {
             Text(
-                "Detección automática activa: el progreso se marca solo al sincronizar con tu cuenta. " +
-                    "Toca una tarea únicamente si necesitas corregirla.",
+                "Detección automática desde tu cuenta de Battle.net. " +
+                    "Los datos se actualizan con cada sincronización.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 8.dp),
             )
         }
         state.groups.forEach { (category, rows) ->
@@ -70,10 +73,7 @@ fun WeeklyScreen(viewModel: WeeklyViewModel = hiltViewModel()) {
                 val completions = row.state?.completions ?: 0
                 val complete = completions >= row.task.maxCompletions
                 Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.cycle(row) }
-                        .padding(vertical = 8.dp),
+                    Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {

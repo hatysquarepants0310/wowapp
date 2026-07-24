@@ -52,12 +52,4 @@ class WeeklyViewModel @Inject constructor(
         }
     }
 
-    /** Ciclo de completaciones al tocar: 0 → 1 → … → max → 0 (override manual). */
-    fun cycle(row: TaskWithState) {
-        viewModelScope.launch {
-            val current = row.state?.completions ?: 0
-            val next = if (current >= row.task.maxCompletions) 0 else current + 1
-            weeklyRepository.setManualCompletions(_state.value.characterId, row.task, next)
-        }
-    }
 }

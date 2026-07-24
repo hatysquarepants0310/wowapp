@@ -105,26 +105,6 @@ class SeasonalViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setViabilityFilter(enabled) }
     }
 
-    fun setTargeted(rewardId: String, targeted: Boolean) = upsertGoal(rewardId) {
-        it.copy(targeted = targeted)
-    }
-
-    fun setObtained(rewardId: String, obtained: Boolean) = upsertGoal(rewardId) {
-        it.copy(obtained = obtained)
-    }
-
-    private fun upsertGoal(rewardId: String, transform: (SeasonalGoalEntity) -> SeasonalGoalEntity) {
-        viewModelScope.launch {
-            val row = _state.value.rows.firstOrNull { it.reward.id == rewardId }
-            val current = SeasonalGoalEntity(
-                rewardId = rewardId,
-                targeted = row?.targeted ?: false,
-                obtained = row?.obtained ?: false,
-            )
-            seasonalGoalDao.upsert(transform(current).copy(updatedAt = Instant.now()))
-        }
-    }
-
     /**
      * Filtro de viabilidad (§8.2): un recién llegado a nivel máximo no debe ver
      * el Cutting Edge Mítico como "pendiente". Con ilvl sincronizado la
@@ -181,25 +161,11 @@ fun SeasonalScreen(viewModel: SeasonalViewModel = hiltViewModel()) {
             items(visible, key = { it.reward.id }) { row ->
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(row.reward.name["es_MX"] ?: row.reward.name.values.first(),
-                                    style = MaterialTheme.typography.titleSmall)
-                                row.reward.source["es_MX"]?.let {
-                                    Text(it, style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Meta", style = MaterialTheme.typography.labelSmall)
-                                Checkbox(checked = row.targeted,
-                                    onCheckedChange = { viewModel.setTargeted(row.reward.id, it) })
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Logrado", style = MaterialTheme.typography.labelSmall)
-                                Checkbox(checked = row.obtained,
-                                    onCheckedChange = { viewModel.setObtained(row.reward.id, it) })
-                            }
+                        Text(row.reward.name["es_MX"] ?: row.reward.name.values.first(),
+                            style = MaterialTheme.typography.titleSmall)
+                        row.reward.source["es_MX"]?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Spacer(Modifier.height(4.dp))
                         Text(
