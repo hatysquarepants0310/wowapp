@@ -70,6 +70,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             AzerothTheme {
                 AppScaffold(startEventId = eventIdFromNotification)
+                // Pop-up de actualización al abrir (instalar ahora / después).
+                com.azeroth.companion.feature.update.UpdateGate()
             }
         }
     }
@@ -153,6 +155,7 @@ private fun AppScaffold(startEventId: String?) {
             composable("content") { com.azeroth.companion.feature.content.ContentScreen() }
             composable("character") { com.azeroth.companion.feature.character.CharacterScreen() }
             composable("seasons") { com.azeroth.companion.feature.seasons.SeasonsScreen() }
+            composable("quests") { com.azeroth.companion.feature.quests.QuestTrackerScreen() }
             composable("progression") { ProgressionScreen() }
             composable("seasonal") { SeasonalScreen() }
             composable("roster") { RosterScreen() }
@@ -170,6 +173,7 @@ private data class MoreItem(val route: String, val title: String, val subtitle: 
 private fun MoreScreen(onNavigate: (String) -> Unit) {
     val items = listOf(
         MoreItem("weekly", "Semanal", "Tus pendientes de la semana, detectados automáticamente"),
+        MoreItem("quests", "Misiones por zona", "Cada zona con tus misiones completadas ✓ automáticamente"),
         MoreItem("progression", "Progresión", "Gran Bóveda, Folio, Presas y Delves"),
         MoreItem("seasons", "Temporadas M+", "Tu historial y progreso por temporada de Mythic+"),
         MoreItem("seasonal", "Recompensas de temporada", "Objetivos con fecha límite y viabilidad"),

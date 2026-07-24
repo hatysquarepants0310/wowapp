@@ -54,7 +54,8 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 | **Progresión** | Folio Omnium (con reglas de catch-up), Sistema de Presas, Campaña, Delves |
 | **Temporada** | Tracker de recompensas con fecha límite (FOMO) con filtro de viabilidad honesto |
 | **Contenido** | Afijos de Mythic+ de la semana + mazmorras y bandas de **cualquier expansión** con sus jefes (actual destacada, anteriores aparte) |
-| **Personaje** | Elige cualquier alt: nivel, ilvl, equipo por slot y colección de monturas — una armería en el bolsillo |
+| **Misiones por zona** | Cada zona con todas sus misiones marcadas ✓/○ según tu cuenta, automáticamente |
+| **Personaje** | Elige cualquier alt: nivel, ilvl, equipo por slot con iconos y colección de monturas |
 | **Temporadas M+** | Tu historial por temporada: rating, mejor llave y en cuáles participaste |
 | **Roster** | Alts con Bóveda, intentos de montura restantes y cambio de personaje activo |
 | **Widget** | Próximo evento en tu pantalla de inicio, sin abrir la app |
@@ -151,6 +152,11 @@ sin abrir GitHub); y un rediseño visual **oscuro amaderado con acentos morados*
 eventos con **cadencia legible** ("cada 30 min") y **recompensas** ("qué te da"), y corrección del
 bug por el que Inicio mostraba un personaje distinto al seleccionado. La checklist manual de
 Voidstorm se sustituyó por requisitos informativos.
+
+**v1.6.0** — **Rastreador de misiones por zona**: las 432 zonas del juego, y al abrir una ves todas
+sus misiones marcadas ✓/○ cruzando el catálogo oficial con las misiones completadas de tu cuenta
+(igual que Wowhead, con API oficial). Además, **aviso de actualización al abrir la app** con opción
+de instalar en el momento o después.
 
 ## Contribuir
 
