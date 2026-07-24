@@ -15,6 +15,8 @@ data class SnapshotView(
     val mythicPlusRunsThisWeek: Int,
     val raidKills: Map<Int, Int>,
     val currencies: Map<Int, Int> = emptyMap(),
+    val achievementIds: Set<Int> = emptySet(),
+    val mountIds: Set<Int> = emptySet(),
 )
 
 data class DetectionResult(val completions: Int, val confidence: Confidence)
@@ -40,10 +42,14 @@ class DetectionEngine {
                 estimated(if (gained >= rule.minDelta) gained / rule.minDelta else 0)
             }
 
-            is DetectionRule.AchievementCriteria ->
-                // La API expone criterios pero el matching fino requiere metadatos estáticos;
-                // hasta cablearlo, esta regla no aporta señal automática.
-                DetectionResult(0, Confidence.PREDICTED)
+            is DetectionRule.AchievementCriteria -> {
+                // Logro completo presente en el perfil → tarea hecha. El matching por
+                // criterio individual requiere metadatos estáticos; el logro entero basta
+                // para la mayoría de semanales con logro asociado.
+                val done = current?.achievementIds?.contains(rule.achievementId) == true
+                val before = baseline?.achievementIds?.contains(rule.achievementId) == true
+                estimated(if (done && !before) 1 else 0)
+            }
 
             is DetectionRule.MythicPlusRuns ->
                 estimated((current?.mythicPlusRunsThisWeek ?: 0).takeIf { it >= rule.minRuns } ?: 0)

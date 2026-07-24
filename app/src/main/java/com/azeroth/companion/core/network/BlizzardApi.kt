@@ -53,6 +53,20 @@ interface BlizzardApi {
         @Query("namespace") namespace: String,
     ): RaidEncountersDto
 
+    @GET("/profile/wow/character/{realm}/{name}/achievements")
+    suspend fun achievements(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Query("namespace") namespace: String,
+    ): AchievementsDto
+
+    @GET("/profile/wow/character/{realm}/{name}/collections/mounts")
+    suspend fun mounts(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Query("namespace") namespace: String,
+    ): MountsDto
+
     @GET("/data/wow/token/index")
     suspend fun tokenIndex(@Query("namespace") namespace: String): TokenIndexDto
 }
@@ -133,3 +147,15 @@ data class ProgressDto(val completed_count: Int = 0, val total_count: Int = 0)
 
 @Serializable
 data class TokenIndexDto(val price: Long = 0, val last_updated_timestamp: Long = 0)
+
+@Serializable
+data class AchievementsDto(val achievements: List<AchievementEntryDto> = emptyList())
+
+@Serializable
+data class AchievementEntryDto(val id: Int, val completed_timestamp: Long? = null)
+
+@Serializable
+data class MountsDto(val mounts: List<MountEntryDto> = emptyList())
+
+@Serializable
+data class MountEntryDto(val mount: KeyedNameDto)
