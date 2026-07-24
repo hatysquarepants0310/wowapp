@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TrendingUp
@@ -95,6 +96,7 @@ private fun AppScaffold(startEventId: String?) {
         Destination("dashboard", R.string.nav_dashboard, Icons.Filled.Home),
         Destination("events", R.string.nav_events, Icons.Filled.Timer),
         Destination("weekly", R.string.nav_weekly, Icons.Filled.Checklist),
+        Destination("content", R.string.nav_content, Icons.Filled.MenuBook),
         Destination("progression", R.string.nav_progression, Icons.Filled.TrendingUp),
         Destination("seasonal", R.string.nav_seasonal, Icons.Filled.CalendarMonth),
         Destination("settings", R.string.nav_settings, Icons.Filled.Settings),
@@ -143,6 +145,7 @@ private fun AppScaffold(startEventId: String?) {
                 EventDetailScreen(eventId = entry.arguments?.getString("eventId").orEmpty())
             }
             composable("weekly") { WeeklyScreen() }
+            composable("content") { com.azeroth.companion.feature.content.ContentScreen() }
             composable("progression") { ProgressionScreen() }
             composable("seasonal") { SeasonalScreen() }
             composable("roster") { RosterScreen() }
