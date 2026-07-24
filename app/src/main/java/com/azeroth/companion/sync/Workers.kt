@@ -9,6 +9,7 @@ import androidx.work.Constraints
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.glance.appwidget.updateAll
 import com.azeroth.companion.core.catalog.CatalogRepository
 import com.azeroth.companion.data.EventsRepository
 import com.azeroth.companion.data.SyncRepository
@@ -33,6 +34,8 @@ class RescheduleAlarmsWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = runCatching {
         eventsRepository.refreshCalibrations()
         eventsRepository.rescheduleEventAlarms()
+        // Refresca el widget de pantalla de inicio con el próximo evento (§9.8).
+        com.azeroth.companion.widget.NextEventWidget().updateAll(applicationContext)
     }.fold(onSuccess = { Result.success() }, onFailure = { Result.retry() })
 }
 
