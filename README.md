@@ -15,7 +15,7 @@
 
 > **Azeroth Companion es gratis, sin anuncios y sin telemetría.** Si te salvó un cofre
 > semanal y quieres invitar un café, cualquier aporte ayuda a mantenerlo vivo para toda
-> la comunidad. ¡Gracias! 🙌
+> la comunidad. ¡Gracias! 🙌 queremos poner la app en la PLAYSTORE pero necesitamos pagar las licencias de Google, aunque sea 1 dólar es bienvenido 
 
 | Cripto | Dirección |
 |---|---|
