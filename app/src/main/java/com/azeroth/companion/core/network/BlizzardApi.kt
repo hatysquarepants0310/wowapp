@@ -69,6 +69,22 @@ interface BlizzardApi {
 
     @GET("/data/wow/token/index")
     suspend fun tokenIndex(@Query("namespace") namespace: String): TokenIndexDto
+
+    // ---- Journal: contenido de mazmorras y bandas (datos estáticos) ----
+
+    @GET("/data/wow/journal-expansion/{id}")
+    suspend fun journalExpansion(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): JournalExpansionDto
+
+    @GET("/data/wow/journal-instance/{id}")
+    suspend fun journalInstance(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): JournalInstanceDto
 }
 
 // ---- DTOs mínimos (solo los campos que la app consume) ----
@@ -159,3 +175,23 @@ data class MountsDto(val mounts: List<MountEntryDto> = emptyList())
 
 @Serializable
 data class MountEntryDto(val mount: KeyedNameDto)
+
+@Serializable
+data class JournalExpansionDto(
+    val id: Int = 0,
+    val name: String = "",
+    val dungeons: List<KeyedNameDto> = emptyList(),
+    val raids: List<KeyedNameDto> = emptyList(),
+)
+
+@Serializable
+data class JournalInstanceDto(
+    val id: Int = 0,
+    val name: String = "",
+    val minimum_level: Int = 0,
+    val encounters: List<KeyedNameDto> = emptyList(),
+    val category: JournalCategoryDto? = null,
+)
+
+@Serializable
+data class JournalCategoryDto(val type: String? = null)

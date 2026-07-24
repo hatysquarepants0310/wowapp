@@ -24,6 +24,8 @@ data class Catalog(
     val vault: VaultRules = VaultRules(),
     val economy: EconomyRules = EconomyRules(),
     val season: SeasonInfo = SeasonInfo(),
+    /** ID de expansión en el journal de Blizzard para listar mazmorras y bandas. */
+    val journalExpansionId: Int = 516,
 )
 
 /** Temporada en curso. La fecha de cierre es SIEMPRE estimada (§8.3). */

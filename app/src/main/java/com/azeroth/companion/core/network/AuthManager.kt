@@ -159,6 +159,33 @@ class AuthManager @Inject constructor(
         _state.value = AuthState.LoggedOut
     }
 
+    // Token de aplicación (client_credentials) para datos de juego públicos
+    // (journal de mazmorras/bandas, etc.): NO requiere sesión del usuario, así
+    // que el contenido de la app funciona para cualquiera. Cacheado hasta expirar.
+    @Volatile private var appToken: String? = null
+    @Volatile private var appTokenExpiry: Long = 0
+
+    suspend fun appAccessToken(region: Region): String? =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            appToken?.let { if (Instant.now().epochSecond < appTokenExpiry - 60) return@withContext it }
+            if (clientId.isBlank() || clientSecret.isBlank()) return@withContext null
+            val request = Request.Builder()
+                .url("${region.oauthHost}/token")
+                .header("Authorization", okhttp3.Credentials.basic(clientId, clientSecret))
+                .post(FormBody.Builder().add("grant_type", "client_credentials").build())
+                .build()
+            runCatching {
+                okHttpClient.newCall(request).execute().use { response ->
+                    val raw = response.body?.string().orEmpty()
+                    if (!response.isSuccessful) return@withContext null
+                    val payload = json.decodeFromString(TokenResponse.serializer(), raw)
+                    appToken = payload.access_token
+                    appTokenExpiry = Instant.now().epochSecond + payload.expires_in
+                    payload.access_token
+                }
+            }.getOrNull()
+        }
+
     // La petición de token es red síncrona: SIEMPRE en Dispatchers.IO. Llamarla
     // desde el hilo principal lanza NetworkOnMainThreadException (sin mensaje),
     // que era el "fallo desconocido" reportado en el login.

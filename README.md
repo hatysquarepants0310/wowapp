@@ -53,6 +53,7 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 | **Semanal** | Checklist agrupada por categoría con detección automática de progreso y override manual siempre disponible |
 | **Progresión** | Folio Omnium (con reglas de catch-up), Sistema de Presas, Campaña, Delves |
 | **Temporada** | Tracker de recompensas con fecha límite (FOMO) con filtro de viabilidad honesto |
+| **Contenido** | Afijos de Mythic+ de la semana + mazmorras y bandas de la expansión con sus jefes (fuentes oficiales, sin login) |
 | **Roster** | Alts con Bóveda, intentos de montura restantes y cambio de personaje activo |
 | **Widget** | Próximo evento en tu pantalla de inicio, sin abrir la app |
 | **Ajustes** | Cuenta Battle.net, región, legacy, exportar/importar datos, diagnóstico |
@@ -134,6 +135,10 @@ no debe usarse para Play Store; para distribución en tienda genera una clave pr
 - ✅ **Fase 5 — Pulido:** widget de pantalla de inicio (próximo evento), exportación/importación de datos a JSON, catálogo bilingüe es_MX/en_US.
 
 **v1.0.0** — las 5 fases del plan completadas. Cada release lleva su APK adjunto.
+
+**v1.3.0** — nueva sección **Contenido**: afijos de Mythic+ de la semana (Raider.IO) y el
+journal de mazmorras/bandas con sus jefes (API oficial de Datos de Juego de Blizzard). Sin
+scraping de Wowhead —que no tiene API pública— y funciona sin iniciar sesión.
 
 ## Contribuir
 

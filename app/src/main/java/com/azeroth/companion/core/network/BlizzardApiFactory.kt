@@ -26,7 +26,11 @@ class BlizzardApiFactory @Inject constructor(
     fun forRegion(region: Region): BlizzardApi = cache.getOrPut(region) {
         val client = baseClient.newBuilder()
             .addInterceptor { chain ->
-                val token = runBlocking { authManager.validAccessToken(region) }
+                // Token del usuario para endpoints de perfil; si no hay sesión, cae al
+                // token de aplicación para que los datos de juego públicos funcionen igual.
+                val token = runBlocking {
+                    authManager.validAccessToken(region) ?: authManager.appAccessToken(region)
+                }
                 val request = if (token != null) {
                     chain.request().newBuilder().header("Authorization", "Bearer $token").build()
                 } else {
