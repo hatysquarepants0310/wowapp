@@ -77,9 +77,10 @@ class MainActivity : ComponentActivity() {
         val data = intent?.data ?: return
         if (data.scheme != "azerothcompanion" || data.host != "oauth") return
         val code = data.getQueryParameter("code") ?: return
+        val returnedState = data.getQueryParameter("state")
         lifecycleScope.launch {
             val region = settingsRepository.settings.first().region
-            authManager.handleRedirect(code, region)
+            authManager.handleRedirect(code, returnedState, region)
             SyncScheduler.syncNow(this@MainActivity)
         }
     }
