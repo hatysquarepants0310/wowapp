@@ -38,8 +38,10 @@ class SyncRepository @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val characterDao: CharacterDao,
     private val snapshotDao: SnapshotDao,
+    private val seasonalGoalDao: com.azeroth.companion.core.database.SeasonalGoalDao,
     private val weeklyRepository: WeeklyRepository,
     private val eventsRepository: EventsRepository,
+    private val catalogRepository: com.azeroth.companion.core.catalog.CatalogRepository,
     private val detectionEngine: DetectionEngine,
     private val json: Json,
 ) {
@@ -91,6 +93,8 @@ class SyncRepository @Inject constructor(
             val reps = runCatching { api.reputations(realm, name, namespace) }.getOrNull()
             val mythic = runCatching { api.mythicKeystoneProfile(realm, name, namespace) }.getOrNull()
             val raids = runCatching { api.raidEncounters(realm, name, namespace) }.getOrNull()
+            val achievements = runCatching { api.achievements(realm, name, namespace) }.getOrNull()
+            val mounts = runCatching { api.mounts(realm, name, namespace) }.getOrNull()
 
             val now = Instant.now()
             val clock = eventsRepository.resetClock()
@@ -131,11 +135,21 @@ class SyncRepository @Inject constructor(
                         MapSerializer(Int.serializer(), Int.serializer()),
                         raidKills,
                     ),
+                    achievementIdsJson = json.encodeToString(
+                        ListSerializer(Int.serializer()),
+                        achievements?.achievements?.filter { it.completed_timestamp != null }
+                            ?.map { it.id }.orEmpty(),
+                    ),
+                    mountIdsJson = json.encodeToString(
+                        ListSerializer(Int.serializer()),
+                        mounts?.mounts?.map { it.mount.id }.orEmpty(),
+                    ),
                 ),
             )
             snapshotDao.pruneOlderThan(now.minus(Duration.ofDays(21)))
 
             runDetection(character.id, lastReset)
+            crossCheckSeasonalRewards(character.id)
             SyncResult.Success
         }.getOrElse { error ->
             if ((error as? HttpException)?.code() == 404) {
@@ -160,6 +174,33 @@ class SyncRepository @Inject constructor(
         }
     }
 
+    /**
+     * Cross-check con colecciones (§8.2): recompensas de temporada con logro o
+     * montura asociada se marcan obtenidas automáticamente, sin tocar las que
+     * el usuario marcó a mano.
+     */
+    private suspend fun crossCheckSeasonalRewards(characterId: Long) {
+        val snapshot = snapshotDao.latest(characterId)?.toView() ?: return
+        catalogRepository.load().seasonalRewards.forEach { reward ->
+            val obtained =
+                (reward.achievementId != null && reward.achievementId in snapshot.achievementIds) ||
+                    (reward.mountId != null && reward.mountId in snapshot.mountIds)
+            if (obtained) {
+                val existing = seasonalGoalDao.get(reward.id)
+                if (existing?.obtained != true) {
+                    seasonalGoalDao.upsert(
+                        com.azeroth.companion.core.database.SeasonalGoalEntity(
+                            rewardId = reward.id,
+                            targeted = existing?.targeted ?: false,
+                            obtained = true,
+                            updatedAt = Instant.now(),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
     private suspend fun activeCharacter(activeId: Long?): CharacterEntity? {
         val all = characterDao.observeAll().first()
         return all.firstOrNull { it.id == activeId } ?: all.firstOrNull()
@@ -176,6 +217,12 @@ class SyncRepository @Inject constructor(
         raidKills = json.decodeFromString(
             MapSerializer(Int.serializer(), Int.serializer()), raidKillsJson,
         ),
+        achievementIds = json.decodeFromString(
+            ListSerializer(Int.serializer()), achievementIdsJson,
+        ).toSet(),
+        mountIds = json.decodeFromString(
+            ListSerializer(Int.serializer()), mountIdsJson,
+        ).toSet(),
     )
 
     private fun Throwable.toSyncFailure(): SyncResult.Failed = SyncResult.Failed(

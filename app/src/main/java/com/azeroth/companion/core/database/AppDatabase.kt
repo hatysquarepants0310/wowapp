@@ -98,6 +98,10 @@ data class SnapshotEntity(
     val mythicPlusRunsThisWeek: Int,
     /** JSON: mapa instanceId -> kills desde el último reset. */
     val raidKillsJson: String,
+    /** JSON: lista de achievement IDs completados. */
+    val achievementIdsJson: String = "[]",
+    /** JSON: lista de mount IDs de la colección. */
+    val mountIdsJson: String = "[]",
 )
 
 @Dao
@@ -143,6 +147,9 @@ interface SeasonalGoalDao {
 
     @Query("SELECT * FROM seasonal_goal WHERE targeted = 1 AND obtained = 0")
     suspend fun pendingTargets(): List<SeasonalGoalEntity>
+
+    @Query("SELECT * FROM seasonal_goal WHERE rewardId = :rewardId")
+    suspend fun get(rewardId: String): SeasonalGoalEntity?
 }
 
 @Dao
@@ -181,7 +188,7 @@ interface SnapshotDao {
         ProgressionStateEntity::class,
         SeasonalGoalEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

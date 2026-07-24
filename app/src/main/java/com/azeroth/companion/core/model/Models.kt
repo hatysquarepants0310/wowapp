@@ -269,6 +269,10 @@ data class SeasonalReward(
     val realisticForItemLevel: Int? = null,
     /** Rating M+ mínimo realista, si aplica. */
     val realisticForMythicRating: Int? = null,
+    /** Cross-check automático (§8.2): logro que marca esta recompensa como obtenida. */
+    val achievementId: Int? = null,
+    /** Cross-check automático (§8.2): montura de colección que la marca como obtenida. */
+    val mountId: Int? = null,
 )
 
 enum class Viability { ACHIEVABLE, TIGHT, UNREALISTIC }
