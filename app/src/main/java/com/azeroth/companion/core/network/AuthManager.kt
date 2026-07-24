@@ -46,6 +46,7 @@ class AuthManager @Inject constructor(
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
         val EXPIRES_AT = longPreferencesKey("expires_at_epoch_s")
         val CODE_VERIFIER = stringPreferencesKey("pending_code_verifier")
+        val OAUTH_STATE = stringPreferencesKey("pending_oauth_state")
         val BATTLE_TAG = stringPreferencesKey("battle_tag")
     }
 
@@ -73,10 +74,15 @@ class AuthManager @Inject constructor(
         }
     }
 
-    /** Construye la URL de autorización y guarda el code_verifier pendiente. */
+    /** Construye la URL de autorización y guarda code_verifier + state pendientes. */
     suspend fun buildAuthorizationUri(region: Region): Uri {
         val verifier = randomUrlSafe(64)
-        context.authStore.edit { it[Keys.CODE_VERIFIER] = verifier }
+        // Blizzard exige el parámetro state (anti-CSRF); se valida en el retorno.
+        val oauthState = randomUrlSafe(16)
+        context.authStore.edit {
+            it[Keys.CODE_VERIFIER] = verifier
+            it[Keys.OAUTH_STATE] = oauthState
+        }
         val challenge = Base64.encodeToString(
             MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray()),
             Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP,
@@ -86,16 +92,23 @@ class AuthManager @Inject constructor(
             .appendQueryParameter("client_id", clientId)
             .appendQueryParameter("redirect_uri", redirectUri)
             .appendQueryParameter("scope", "wow.profile")
+            .appendQueryParameter("state", oauthState)
             .appendQueryParameter("code_challenge", challenge)
             .appendQueryParameter("code_challenge_method", "S256")
             .build()
     }
 
     /** Intercambia el authorization code recibido en el deep link. */
-    suspend fun handleRedirect(code: String, region: Region) {
-        val verifier = context.authStore.data.first()[Keys.CODE_VERIFIER]
+    suspend fun handleRedirect(code: String, returnedState: String?, region: Region) {
+        val prefs = context.authStore.data.first()
+        val verifier = prefs[Keys.CODE_VERIFIER]
+        val expectedState = prefs[Keys.OAUTH_STATE]
         if (verifier == null) {
             _state.value = AuthState.Broken("Flujo OAuth sin code_verifier pendiente. Reintenta el login.")
+            return
+        }
+        if (expectedState != null && returnedState != expectedState) {
+            _state.value = AuthState.Broken("El parámetro state no coincide (posible CSRF). Reintenta el login.")
             return
         }
         exchange(
