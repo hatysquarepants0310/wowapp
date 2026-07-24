@@ -72,9 +72,14 @@ corregible por el usuario y marcado con nivel de confianza. Ver la
 
 ## Descargar
 
-📦 **APK listo para instalar:** en la sección [Releases](https://github.com/hatysquarepants0310/wowapp/releases)
-del repositorio. Descarga el `.apk` del último release e instálalo en tu Android (8.0+).
-Cada push también genera un APK como artifact del [CI](https://github.com/hatysquarepants0310/wowapp/actions).
+📦 **APK listo para instalar:** descarga el `.apk` del **último release** en
+[Releases](https://github.com/hatysquarepants0310/wowapp/releases) e instálalo en tu
+Android (8.0+). El login de Battle.net viene configurado de fábrica: conecta tu cuenta
+y todo se llena solo — sin checklists manuales, sin escribir nada.
+
+> Verifica qué versión tienes en **Ajustes → Diagnóstico**. Si vienes de una versión
+> anterior a v1.1.x, desinstala una vez (cambió la firma); desde v1.1.x en adelante las
+> actualizaciones instalan encima.
 
 > ⚠️ **Si vienes de v1.0.0 o anterior:** desinstala la app una única vez antes de instalar
 > v1.1.0+. Desde v1.1.0 todos los APKs comparten una firma comunitaria estable, así que las
@@ -92,11 +97,16 @@ como corrección opcional para lo que la API de Blizzard no expone.
 ./gradlew :app:testDebugUnitTest    # tests del motor de tiempo y detección
 ```
 
-Requisitos: JDK 17+, Android SDK 35. El CI compila y publica el APK como artifact en cada push.
+Requisitos: JDK 17+, Android SDK 35. El CI compila, testea y publica el APK en cada
+release. Los APK se firman con el keystore comunitario del repo para que las
+actualizaciones siempre instalen encima.
 
-El `client_id` público de Battle.net (flujo PKCE, redirect `azerothcompanion://oauth`) vive en
-`gradle.properties`; para usar el tuyo propio, cámbialo ahí o pasa `-PblizzardClientId=...`.
-**El client secret nunca se usa ni se incluye** — un cliente público PKCE no lo necesita.
+**OAuth:** Blizzard no admite clientes públicos (su endpoint de token exige
+client_secret), así que las credenciales van en la compilación (`gradle.properties`) y
+el redirect pasa por una página puente estática en GitHub Pages (`web/oauth.html`) —
+cero backend. Para un fork propio: registra tu cliente en el
+[Blizzard Developer Portal](https://develop.battle.net/) con redirect a tu propia
+página puente y reemplaza `blizzardClientId`/`blizzardClientSecret`.
 
 La firma de los APKs usa `signing/community.keystore`, un keystore comunitario versionado a
 propósito: garantiza que las actualizaciones instalen sin desinstalar. No acredita autoría y
@@ -117,6 +127,13 @@ no debe usarse para Play Store; para distribución en tienda genera una clave pr
 El catálogo (`catalog.json`) es el corazón comunitario del proyecto: cadencias, IDs de quest
 y fechas provienen de observación de jugadores y cambian entre parches. Los PRs que corrijan
 o amplíen el catálogo son los más valiosos que puedes enviar.
+
+## Donaciones
+
+Si la app te salvó un cofre semanal y quieres invitar un café:
+
+- **Bitcoin:** `bc1qa2r0gufynr7g05mjxlnp4hc9e7r3nkyc7w9u68jjrlzjnllc6n9se064zm`
+- **Ethereum:** `0x6A0cb583AcE01561D9d12d4625Ee4c1DcAF0f275`
 
 ## Aviso legal
 
