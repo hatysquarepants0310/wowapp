@@ -161,9 +161,12 @@ fun SeasonalScreen(viewModel: SeasonalViewModel = hiltViewModel()) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (state.playerItemLevel > 0) {
-            Text("Viabilidad calculada con tu ilvl sincronizado: ${state.playerItemLevel}",
+            Text(
+                "Viabilidad calculada con tu ilvl sincronizado (${state.playerItemLevel}). " +
+                    "Lo conseguido se marca solo al sincronizar tus logros y monturas.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary)
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,

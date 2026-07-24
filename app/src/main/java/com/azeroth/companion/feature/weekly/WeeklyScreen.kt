@@ -43,6 +43,15 @@ fun WeeklyScreen(viewModel: WeeklyViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        item(key = "auto_header") {
+            Text(
+                "Detección automática activa: el progreso se marca solo al sincronizar con tu cuenta. " +
+                    "Toca una tarea únicamente si necesitas corregirla.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
         state.groups.forEach { (category, rows) ->
             val done = rows.sumOf { it.state?.completions ?: 0 }
             val total = rows.sumOf { it.task.maxCompletions }

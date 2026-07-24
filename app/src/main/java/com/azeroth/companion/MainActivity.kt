@@ -54,6 +54,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleOAuthRedirect(intent)
+        // Automático primero: cada apertura refresca los datos de la cuenta
+        // sin que el usuario tenga que pedirlo (trabajo único, no se acumula).
+        SyncScheduler.syncNow(this)
         // Al tocar una notificación de evento se abre directo su checklist (§5.4).
         val eventIdFromNotification = intent?.getStringExtra(AlarmReceiver.EXTRA_EVENT_ID)
         setContent {

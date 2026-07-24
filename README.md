@@ -76,6 +76,15 @@ corregible por el usuario y marcado con nivel de confianza. Ver la
 del repositorio. Descarga el `.apk` del último release e instálalo en tu Android (8.0+).
 Cada push también genera un APK como artifact del [CI](https://github.com/hatysquarepants0310/wowapp/actions).
 
+> ⚠️ **Si vienes de v1.0.0 o anterior:** desinstala la app una única vez antes de instalar
+> v1.1.0+. Desde v1.1.0 todos los APKs comparten una firma comunitaria estable, así que las
+> actualizaciones futuras instalan directamente sin desinstalar.
+
+**El login de Battle.net funciona de fábrica** desde v1.1.0 (client ID público PKCE incluido
+en la compilación). Conecta tu cuenta en Ajustes y el roster, ilvl, Bóveda, semanales
+detectables, logros y monturas se sincronizan solos — la checklist manual queda únicamente
+como corrección opcional para lo que la API de Blizzard no expone.
+
 ## Compilar
 
 ```bash
@@ -85,9 +94,13 @@ Cada push también genera un APK como artifact del [CI](https://github.com/hatys
 
 Requisitos: JDK 17+, Android SDK 35. El CI compila y publica el APK como artifact en cada push.
 
-Para habilitar el login de Battle.net registra un cliente OAuth (público, PKCE) en el
-[Blizzard Developer Portal](https://develop.battle.net/) con redirect
-`azerothcompanion://oauth` y configura el `client_id` en la app.
+El `client_id` público de Battle.net (flujo PKCE, redirect `azerothcompanion://oauth`) vive en
+`gradle.properties`; para usar el tuyo propio, cámbialo ahí o pasa `-PblizzardClientId=...`.
+**El client secret nunca se usa ni se incluye** — un cliente público PKCE no lo necesita.
+
+La firma de los APKs usa `signing/community.keystore`, un keystore comunitario versionado a
+propósito: garantiza que las actualizaciones instalen sin desinstalar. No acredita autoría y
+no debe usarse para Play Store; para distribución en tienda genera una clave privada propia.
 
 ## Estado y roadmap
 

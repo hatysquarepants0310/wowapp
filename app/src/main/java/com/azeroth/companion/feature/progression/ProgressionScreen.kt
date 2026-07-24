@@ -78,6 +78,11 @@ private fun FolioTab(state: ProgressionUiState, viewModel: ProgressionViewModel)
         Spacer(Modifier.height(8.dp))
         LinearProgressIndicator(progress = { state.folioRows / state.folioTotalRows.toFloat() })
         Spacer(Modifier.height(12.dp))
+        Text(
+            "La API de Blizzard no expone el Folio: ajusta aquí solo si el dato difiere de tu juego.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Stepper("Filas desbloqueadas", state.folioRows, state.folioTotalRows, viewModel::setFolioRows)
         Stepper("Semanas de catch-up pendientes", state.folioCatchUp, 5, viewModel::setFolioCatchUp)
         if (state.folioCatchUp > 0) {
