@@ -15,8 +15,8 @@ android {
         applicationId = "com.azeroth.companion"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.0.0"
+        versionCode = 6
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Registrado en el Blizzard Developer Portal (cliente público PKCE).
         // Se inyecta con -PblizzardClientId=... o en gradle.properties local.
@@ -27,11 +27,28 @@ android {
         )
     }
 
+    signingConfigs {
+        // Keystore comunitario versionado en el repo: garantiza que TODOS los
+        // APK publicados (CI incluido) compartan firma, para que las
+        // actualizaciones instalen sin desinstalar. No acredita autoría (la
+        // clave es pública); solo da continuidad de firma. No usar para Play Store.
+        create("community") {
+            storeFile = rootProject.file("signing/community.keystore")
+            storePassword = "azeroth-community"
+            keyAlias = "azeroth"
+            keyPassword = "azeroth-community"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("community")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("community")
         }
     }
 

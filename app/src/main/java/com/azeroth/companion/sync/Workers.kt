@@ -138,10 +138,21 @@ object SyncScheduler {
         )
     }
 
-    /** Sync inmediato tras login o pull-to-refresh. */
+    /**
+     * Sync inmediato (login, apertura de la app, botón manual). Trabajo único
+     * con KEEP: aperturas repetidas no acumulan peticiones (rate limit local, §10).
+     */
     fun syncNow(context: Context) {
         val wm = WorkManager.getInstance(context)
-        wm.enqueue(androidx.work.OneTimeWorkRequestBuilder<SyncRosterWorker>().build())
-        wm.enqueue(androidx.work.OneTimeWorkRequestBuilder<SyncActiveCharacterWorker>().build())
+        wm.enqueueUniqueWork(
+            "sync_now_roster",
+            androidx.work.ExistingWorkPolicy.KEEP,
+            androidx.work.OneTimeWorkRequestBuilder<SyncRosterWorker>().build(),
+        )
+        wm.enqueueUniqueWork(
+            "sync_now_character",
+            androidx.work.ExistingWorkPolicy.KEEP,
+            androidx.work.OneTimeWorkRequestBuilder<SyncActiveCharacterWorker>().build(),
+        )
     }
 }
