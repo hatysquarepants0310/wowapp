@@ -50,6 +50,7 @@ class SettingsViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
     private val alarmScheduler: AlarmScheduler,
     private val authManager: AuthManager,
+    private val backupRepository: com.azeroth.companion.data.BackupRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
@@ -83,6 +84,9 @@ class SettingsViewModel @Inject constructor(
         val region = _state.value.settings?.region ?: Region.US
         return authManager.buildAuthorizationUri(region)
     }
+
+    suspend fun exportJson(): String = backupRepository.exportJson()
+    suspend fun importJson(raw: String): Boolean = backupRepository.importJson(raw)
 }
 
 @Composable
@@ -175,6 +179,46 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         Text(
             "Avisos: ${settings.prewarnLongMinutes} min y ${settings.prewarnShortMinutes} min antes de cada evento; reset con ${settings.resetWarnHours} h de antelación.",
             style = MaterialTheme.typography.bodySmall,
+        )
+
+        HorizontalDivider()
+
+        Text("Tus datos", style = MaterialTheme.typography.titleMedium)
+        val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json"),
+        ) { uri ->
+            uri?.let {
+                scope.launch {
+                    val payload = viewModel.exportJson()
+                    context.contentResolver.openOutputStream(it)?.use { out ->
+                        out.write(payload.toByteArray())
+                    }
+                }
+            }
+        }
+        val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            uri?.let {
+                scope.launch {
+                    val raw = context.contentResolver.openInputStream(it)
+                        ?.bufferedReader()?.readText()
+                    if (raw != null) viewModel.importJson(raw)
+                }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.material3.OutlinedButton(onClick = {
+                exportLauncher.launch("azeroth-companion-backup.json")
+            }) { Text("Exportar a JSON") }
+            androidx.compose.material3.OutlinedButton(onClick = {
+                importLauncher.launch(arrayOf("application/json"))
+            }) { Text("Importar") }
+        }
+        Text(
+            "Progreso, overrides, calibraciones y objetivos. Todo local, nada se sube a ningún servidor.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         HorizontalDivider()
