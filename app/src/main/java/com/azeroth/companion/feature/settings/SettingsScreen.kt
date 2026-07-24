@@ -172,6 +172,12 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         HorizontalDivider()
 
         Text("Diagnóstico", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "App: v${com.azeroth.companion.BuildConfig.VERSION_NAME} " +
+                "(build ${com.azeroth.companion.BuildConfig.VERSION_CODE})",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
         Text("Catálogo: v${state.catalogVersion} (${state.catalogSource})",
             style = MaterialTheme.typography.bodySmall)
         Text("Alarmas exactas: ${if (state.exactAlarms) "sí" else "no — modo ventana"}",
