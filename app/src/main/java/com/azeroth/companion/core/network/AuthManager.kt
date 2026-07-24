@@ -52,7 +52,13 @@ class AuthManager @Inject constructor(
     private val _state = MutableStateFlow<AuthState>(AuthState.LoggedOut)
     val state: StateFlow<AuthState> = _state
 
-    val redirectUri = "azerothcompanion://oauth"
+    /**
+     * Blizzard solo acepta redirects HTTPS, no esquemas de app. Esta página
+     * estática (GitHub Pages, sin backend) rebota el code al esquema
+     * azerothcompanion://oauth que la app sí intercepta. Debe estar registrada
+     * EXACTAMENTE igual en el Blizzard Developer Portal.
+     */
+    val redirectUri = "https://hatysquarepants0310.github.io/wowapp/oauth.html"
 
     /** Registrado en el Blizzard Developer Portal; viene de BuildConfig (gradle -PblizzardClientId). */
     var clientId: String = com.azeroth.companion.BuildConfig.BLIZZARD_CLIENT_ID
