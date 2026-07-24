@@ -15,8 +15,8 @@ android {
         applicationId = "com.azeroth.companion"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.1.2"
+        versionCode = 9
+        versionName = "1.1.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Registrado en el Blizzard Developer Portal (cliente público PKCE).
         // Se inyecta con -PblizzardClientId=... o en gradle.properties local.

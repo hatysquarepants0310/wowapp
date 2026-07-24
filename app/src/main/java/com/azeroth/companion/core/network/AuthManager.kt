@@ -149,26 +149,32 @@ class AuthManager @Inject constructor(
         _state.value = AuthState.LoggedOut
     }
 
-    private suspend fun exchange(region: Region, body: FormBody) {
-        val request = Request.Builder().url("${region.oauthHost}/token").post(body).build()
-        runCatching {
-            okHttpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) error("HTTP ${response.code} del endpoint de token")
-                val payload = json.decodeFromString(
-                    TokenResponse.serializer(),
-                    response.body?.string().orEmpty(),
-                )
-                context.authStore.edit {
-                    it[Keys.ACCESS_TOKEN] = payload.access_token
-                    payload.refresh_token?.let { rt -> it[Keys.REFRESH_TOKEN] = rt }
-                    it[Keys.EXPIRES_AT] = Instant.now().epochSecond + payload.expires_in
+    // La petición de token es red síncrona: SIEMPRE en Dispatchers.IO. Llamarla
+    // desde el hilo principal lanza NetworkOnMainThreadException (sin mensaje),
+    // que era el "fallo desconocido" reportado en el login.
+    private suspend fun exchange(region: Region, body: FormBody) =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val request = Request.Builder().url("${region.oauthHost}/token").post(body).build()
+            runCatching {
+                okHttpClient.newCall(request).execute().use { response ->
+                    val raw = response.body?.string().orEmpty()
+                    if (!response.isSuccessful) {
+                        error("El endpoint de token respondió HTTP ${response.code}: ${raw.take(200)}")
+                    }
+                    val payload = json.decodeFromString(TokenResponse.serializer(), raw)
+                    context.authStore.edit {
+                        it[Keys.ACCESS_TOKEN] = payload.access_token
+                        payload.refresh_token?.let { rt -> it[Keys.REFRESH_TOKEN] = rt }
+                        it[Keys.EXPIRES_AT] = Instant.now().epochSecond + payload.expires_in
+                    }
+                    _state.value = AuthState.LoggedIn(null)
                 }
-                _state.value = AuthState.LoggedIn(null)
+            }.onFailure {
+                _state.value = AuthState.Broken(
+                    it.message ?: "${it::class.simpleName}: fallo al canjear el token",
+                )
             }
-        }.onFailure {
-            _state.value = AuthState.Broken(it.message ?: "Fallo desconocido al canjear el token")
         }
-    }
 
     private fun randomUrlSafe(bytes: Int): String {
         val buf = ByteArray(bytes)
