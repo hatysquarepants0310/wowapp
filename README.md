@@ -40,7 +40,9 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 | **Semanal** | Checklist agrupada por categoría con detección automática de progreso y override manual siempre disponible |
 | **Progresión** | Folio Omnium (con reglas de catch-up), Sistema de Presas, Campaña, Delves |
 | **Temporada** | Tracker de recompensas con fecha límite (FOMO) con filtro de viabilidad honesto |
-| **Ajustes** | Región, legacy, diagnóstico completo de la app |
+| **Roster** | Alts con Bóveda, intentos de montura restantes y cambio de personaje activo |
+| **Widget** | Próximo evento en tu pantalla de inicio, sin abrir la app |
+| **Ajustes** | Cuenta Battle.net, región, legacy, exportar/importar datos, diagnóstico |
 
 ## Arquitectura
 
@@ -90,10 +92,12 @@ Para habilitar el login de Battle.net registra un cliente OAuth (público, PKCE)
 ## Estado y roadmap
 
 - ✅ **Fase 1 — Núcleo offline:** motor de tiempo, catálogo, notificaciones, checklists, dashboard. *La app ya resuelve el problema de llegar tarde sin depender de nadie.*
-- 🚧 **Fase 2 — Integración Blizzard:** OAuth PKCE y capa de red listas; falta cablear el sync de roster y el motor de snapshots end-to-end.
-- 🚧 **Fase 3 — Progresión:** Bóveda con datos reales, Folio, Presas, calculadora de mejora.
-- 🔜 **Fase 4 — Temporada y alts:** viabilidad con datos del personaje, intentos de montura.
-- 🔜 **Fase 5 — Pulido:** widgets Glance, exportación de datos, localización completa.
+- ✅ **Fase 2 — Integración Blizzard:** login OAuth PKCE, sync de roster y personaje, motor de snapshots con detección automática de progreso.
+- ✅ **Fase 3 — Progresión:** Bóveda estimada desde datos reales, Folio Omnium con catch-up, Presas por zona, Delves y calculadora de mejora con crests.
+- ✅ **Fase 4 — Temporada y alts:** viabilidad con el ilvl real del personaje, lista de objetivos con alarmas escaladas de deadline, roster con intentos de montura por personaje.
+- ✅ **Fase 5 — Pulido:** widget de pantalla de inicio (próximo evento), exportación/importación de datos a JSON, catálogo bilingüe es_MX/en_US.
+
+**v1.0.0** — las 5 fases del plan completadas. Cada release lleva su APK adjunto.
 
 ## Contribuir
 
