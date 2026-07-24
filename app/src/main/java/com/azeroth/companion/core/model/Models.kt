@@ -115,6 +115,8 @@ data class WorldEventDefinition(
     val mountDropItemIds: List<Int> = emptyList(),
     val preconditions: List<PreconditionHint> = emptyList(),
     val knownIssues: List<Map<String, String>> = emptyList(),
+    /** Qué otorga el evento, legible por el jugador (localizable). */
+    val rewardSummary: Map<String, String> = emptyMap(),
     val defaultConfidence: Confidence = Confidence.PREDICTED,
 )
 

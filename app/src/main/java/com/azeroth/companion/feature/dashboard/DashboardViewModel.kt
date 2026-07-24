@@ -2,6 +2,7 @@ package com.azeroth.companion.feature.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.azeroth.companion.core.datastore.SettingsRepository
 import com.azeroth.companion.core.model.AuthState
 import com.azeroth.companion.core.model.Confidence
 import com.azeroth.companion.core.model.TrackedTask
@@ -11,7 +12,7 @@ import com.azeroth.companion.data.WeeklyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
@@ -27,6 +28,7 @@ data class DashboardState(
     val topPending: List<TrackedTask> = emptyList(),
     val authBroken: Boolean = false,
     val activeCharacterName: String? = null,
+    val activeCharacterRealm: String? = null,
     val activeCharacterIlvl: Int = 0,
     val activeCharacterClass: String? = null,
     val lastSyncedAt: Instant? = null,
@@ -40,6 +42,7 @@ class DashboardViewModel @Inject constructor(
     private val authManager: AuthManager,
     private val characterDao: com.azeroth.companion.core.database.CharacterDao,
     private val progressionRepository: com.azeroth.companion.data.ProgressionRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -47,6 +50,36 @@ class DashboardViewModel @Inject constructor(
 
     init {
         refresh()
+        observeActiveCharacter()
+    }
+
+    /**
+     * El personaje mostrado en Inicio es SIEMPRE el activo seleccionado en la
+     * pantalla Personaje (settings.activeCharacterId), no el primero del roster.
+     * Reactivo: al cambiar de personaje activo, Inicio se actualiza solo.
+     */
+    private fun observeActiveCharacter() {
+        viewModelScope.launch {
+            combine(
+                settingsRepository.settings,
+                characterDao.observeAll(),
+            ) { settings, roster ->
+                roster.firstOrNull { it.id == settings.activeCharacterId }
+                    ?: roster.firstOrNull()
+            }.collect { active ->
+                val vault = runCatching {
+                    progressionRepository.computeVault(active?.id ?: 0L)
+                }.getOrNull()
+                _state.value = _state.value.copy(
+                    activeCharacterName = active?.name,
+                    activeCharacterRealm = active?.realmName,
+                    activeCharacterIlvl = active?.equippedItemLevel ?: 0,
+                    activeCharacterClass = active?.playableClass,
+                    lastSyncedAt = active?.lastSyncedAt,
+                    vault = vault,
+                )
+            }
+        }
     }
 
     fun refresh() {
@@ -59,10 +92,8 @@ class DashboardViewModel @Inject constructor(
                 val pending = weeklyRepository.tasks(includeLegacy = false)
                     .sortedByDescending { it.priorityWeight }
                     .take(5)
-                val active = characterDao.observeAll().first().firstOrNull()
-                val vault = progressionRepository.computeVault(active?.id ?: 0L)
                 eventsRepository.rescheduleEventAlarms()
-                _state.value = DashboardState(
+                _state.value = _state.value.copy(
                     loading = false,
                     nextEventId = next?.first?.id,
                     nextEventName = next?.first?.name?.get("es_MX")
@@ -73,11 +104,6 @@ class DashboardViewModel @Inject constructor(
                     weeklyResetAt = reset,
                     topPending = pending,
                     authBroken = authManager.state.value is AuthState.Broken,
-                    activeCharacterName = active?.name,
-                    activeCharacterIlvl = active?.equippedItemLevel ?: 0,
-                    activeCharacterClass = active?.playableClass,
-                    lastSyncedAt = active?.lastSyncedAt,
-                    vault = vault,
                 )
             }.onFailure {
                 _state.value = _state.value.copy(loading = false)

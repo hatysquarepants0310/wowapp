@@ -43,7 +43,8 @@
       ],
       "knownIssues": [
         { "es_MX": "Existen reportes de que el evento no otorga crédito pese a completarse correctamente. Si ocurre, prueba /reload o salir y volver a entrar a la zona.", "en_US": "There are reports of the event not granting credit despite correct completion. If it happens, try /reload or leaving and re-entering the zone." }
-      ]
+      ],
+      "rewardSummary": { "es_MX": "1.ª vez de la semana: Victorious Stormarion Pinnacle Cache (equipo track Veteran). 2.ª: Victorious Stormarion Cache. Ambos cofres pueden dar la montura Contained Stormarion Defender. +2000 de reputación con La Singularidad. Más allá del tope: solo Núcleos, oro y Voidlight Marl.", "en_US": "1st weekly: Victorious Stormarion Pinnacle Cache (Veteran-track gear). 2nd: Victorious Stormarion Cache. Both caches can drop the Contained Stormarion Defender mount. +2000 reputation with The Singularity. Beyond the cap: only Cores, gold and Voidlight Marl." }
     },
     {
       "id": "saltheril_soiree",
@@ -53,7 +54,8 @@
       "cadence": { "type": "WeeklySchedule", "entries": [ { "dayOfWeek": "FRIDAY", "time": "18:00" }, { "dayOfWeek": "SATURDAY", "time": "18:00" } ] },
       "requiresLevel": 90,
       "maxWeeklyCompletions": 1,
-      "defaultConfidence": "PREDICTED"
+      "defaultConfidence": "PREDICTED",
+      "rewardSummary": { "es_MX": "Gran variedad de monedas de la temporada y reputación. Fiesta social con cofres por interactuar con los invitados.", "en_US": "A wide variety of season currencies and reputation. Social party with chests for interacting with guests." }
     },
     {
       "id": "abundance",

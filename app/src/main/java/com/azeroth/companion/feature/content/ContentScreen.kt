@@ -109,7 +109,7 @@ private fun InstancesTab(isRaid: Boolean, state: ContentState, viewModel: Conten
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(instances, key = { it.id }) { instance ->
-                InstanceCard(instance, state.bossesByInstance[instance.id], viewModel)
+                InstanceCard(instance, state, viewModel)
             }
             item { Spacer(Modifier.height(12.dp)) }
         }
@@ -157,7 +157,8 @@ private fun ExpansionSelector(state: ContentState, viewModel: ContentViewModel) 
 }
 
 @Composable
-private fun InstanceCard(instance: InstanceSummary, bosses: List<String>?, viewModel: ContentViewModel) {
+private fun InstanceCard(instance: InstanceSummary, state: ContentState, viewModel: ContentViewModel) {
+    val bosses = state.bossesByInstance[instance.id]
     Card(Modifier.fillMaxWidth().clickable { viewModel.loadBosses(instance.id) }) {
         Column(Modifier.padding(12.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -173,8 +174,41 @@ private fun InstanceCard(instance: InstanceSummary, bosses: List<String>?, viewM
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         bosses.forEachIndexed { i, boss ->
-                            Text("${i + 1}. $boss", style = MaterialTheme.typography.bodyMedium)
+                            BossRow(index = i + 1, boss = boss,
+                                loot = state.lootByBoss[boss.id],
+                                onClick = { viewModel.loadLoot(boss.id) })
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BossRow(
+    index: Int,
+    boss: com.azeroth.companion.data.Boss,
+    loot: List<String>?,
+    onClick: () -> Unit,
+) {
+    Column(Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 4.dp)) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Text("$index. ${boss.name}", style = MaterialTheme.typography.bodyMedium)
+            Text(if (loot == null) "ver botín" else "botín ▾",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary)
+        }
+        AnimatedVisibility(visible = loot != null) {
+            Column(Modifier.padding(start = 12.dp, top = 2.dp)) {
+                if (loot.isNullOrEmpty()) {
+                    Text("Sin botín listado en la API.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    loot.forEach { item ->
+                        Text("• $item", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary)
                     }
                 }
             }
