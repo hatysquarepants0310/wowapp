@@ -54,6 +54,8 @@ EXPANSION_NAMES = {
 }
 
 INTERNAL = re.compile(r'^[\[(](DNT|PH)[\])]|^\(?TEST|LAURA TEST|UI Testing', re.I)
+# Campañas técnicas para saltarse una introducción: no son contenido jugable.
+SKIP = re.compile(r'\bskip\b|saltar', re.I)
 
 
 def read(path):
@@ -193,13 +195,44 @@ def main(d):
     for cid, lines in camp_lines.items():
         nm = camp_en.get(cid, '')
         order = [lid for _, lid in sorted(lines) if lid in valid_lines]
-        if not nm or not order or INTERNAL.search(nm):
+        # Las campañas "skip" solo existen para saltarse la introducción: no son
+        # contenido, y en la lista de la temporada solo estorban.
+        if not nm or not order or INTERNAL.search(nm) or SKIP.search(nm):
             continue
         c = {"id": cid, "name": nm, "nameEs": camp_es.get(cid) or nm, "lines": order}
-        if camp_exp.get(cid) is not None:
-            c["exp"] = camp_exp[cid]
+        # Si ninguna misión de la campaña declaró expansión, se hereda la de sus
+        # capítulos (que sí pasaron por el clasificador por ID de misión).
+        e = camp_exp.get(cid)
+        if e is None:
+            c2 = Counter(line_exp[l] for l in order if line_exp.get(l) is not None)
+            e = c2.most_common(1)[0][0] if c2 else None
+        if e is not None:
+            c["exp"] = e
         campaigns.append(c)
-    campaigns.sort(key=lambda c: c["id"])
+
+    # Blizzard duplica algunas campañas por facción con el mismo título (dos
+    # "La maldición de Ula'tek"). Se funden en una: el jugador ve una campaña con
+    # todos sus capítulos, sin repetidos.
+    merged = {}
+    for c in sorted(campaigns, key=lambda x: x["id"]):
+        key = (c["name"], c.get("exp"))
+        if key in merged:
+            seen = set(merged[key]["lines"])
+            merged[key]["lines"] += [l for l in c["lines"] if l not in seen]
+        else:
+            merged[key] = c
+    campaigns = sorted(merged.values(), key=lambda c: c["id"])
+    kept = {c["id"] for c in campaigns}
+    absorbed = {}
+    for c in campaigns:
+        for lid in c["lines"]:
+            absorbed[lid] = c["id"]
+    for s in storylines:
+        cid = absorbed.get(s["id"])
+        if cid is not None:
+            s["camp"] = cid
+        elif s.get("camp") not in kept:
+            s.pop("camp", None)
 
     write(ASSETS, 'storylines.json', {
         "source": "wago.tools DB2 (QuestLine/QuestLineXQuest/Campaign/CampaignXQuestLine/"
