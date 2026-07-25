@@ -172,6 +172,14 @@ visible al sincronizar** (éxito o motivo del error); y **actualizador robusto**
 descarga, verificación de integridad del APK y ruta guiada si Android pide permiso para instalar
 (la causa del "error de paquete").
 
+**v1.9.0** — **Historias reorganizadas en jerarquía** estilo BtWQuests: temporada (con emblema y
+color propios) → categoría (campaña principal / historias de zona / otras) → historias **numeradas
+en orden** → misiones con ✓/○ y detalle al tocar (zona, nivel mínimo, recompensa, descripción).
+**Gran Bóveda como en el juego**: rejilla 3×3 con casillas bloqueadas/desbloqueadas e ilvl previsto.
+**Selector de idioma español/inglés** con autodetección en el primer arranque. **Botón atrás** en
+todas las subpantallas de "Más". Corregido el bug por el que los niveles e ilvl volvían a 0 (el
+refresco del roster los sobrescribía con ceros), y quitado el bloque de pendientes de Inicio.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json` y `mounts.json` a partir de las tablas DB2
 de wago.tools (datos del propio cliente del juego, la misma fuente que usa Wowhead) más la API

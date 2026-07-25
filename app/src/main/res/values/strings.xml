@@ -7,6 +7,9 @@
     <string name="nav_content">Contenido</string>
     <string name="nav_character">Personaje</string>
     <string name="nav_more">Más</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_region">Región</string>
+    <string name="language_system">Automático</string>
     <string name="nav_progression">Progresión</string>
     <string name="nav_seasonal">Temporada</string>
     <string name="nav_roster">Roster</string>
