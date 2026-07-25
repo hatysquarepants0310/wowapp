@@ -1,6 +1,7 @@
 package com.azeroth.companion.feature.storylines
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,12 +36,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class StorylineFilter(val label: String) {
+    CURRENT("Temporada actual"),
+    CAMPAIGN("Campañas"),
+    ALL("Todas"),
+}
+
 data class StorylinesState(
     val loading: Boolean = true,
     val hasAccount: Boolean = false,
     val all: List<StorylineProgress> = emptyList(),
     val query: String = "",
     val onlyStarted: Boolean = false,
+    val filter: StorylineFilter = StorylineFilter.CURRENT,
     val selected: StorylineProgress? = null,
     val selectedQuests: List<StorylineQuest> = emptyList(),
     val detailLoading: Boolean = false,
@@ -62,6 +70,7 @@ class StorylinesViewModel @Inject constructor(
 
     fun setQuery(q: String) { _state.value = _state.value.copy(query = q) }
     fun toggleStarted() { _state.value = _state.value.copy(onlyStarted = !_state.value.onlyStarted) }
+    fun setFilter(f: StorylineFilter) { _state.value = _state.value.copy(filter = f) }
 
     fun open(story: StorylineProgress) {
         _state.value = _state.value.copy(selected = story, selectedQuests = emptyList(), detailLoading = true)
@@ -92,26 +101,55 @@ fun StorylinesScreen(viewModel: StorylinesViewModel = hiltViewModel()) {
 @Composable
 private fun StorylineList(state: StorylinesState, viewModel: StorylinesViewModel) {
     val filtered = state.all.filter {
-        (state.query.isBlank() || it.name.contains(state.query, ignoreCase = true)) &&
-            (!state.onlyStarted || it.completed > 0)
+        (state.query.isBlank() || it.name.contains(state.query, ignoreCase = true) ||
+            (it.zone?.contains(state.query, ignoreCase = true) == true)) &&
+            (!state.onlyStarted || it.completed > 0) &&
+            when (state.filter) {
+                StorylineFilter.CURRENT -> it.currentExpansion
+                StorylineFilter.CAMPAIGN -> it.campaign
+                StorylineFilter.ALL -> true
+            }
     }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text("Buscar historia") },
+            label = { Text("Buscar historia o zona") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
-        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        Row(
+            Modifier.fillMaxWidth()
+                .horizontalScroll(androidx.compose.foundation.rememberScrollState())
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            StorylineFilter.entries.forEach { f ->
+                androidx.compose.material3.FilterChip(
+                    selected = state.filter == f,
+                    onClick = { viewModel.setFilter(f) },
+                    label = { Text(f.label) },
+                )
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
-            Text("${state.all.size} historias",
+            Text("${filtered.size} historias",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             TextButton(onClick = viewModel::toggleStarted) {
                 Text(if (state.onlyStarted) "Ver todas" else "Solo empezadas")
             }
+        }
+        if (filtered.isEmpty()) {
+            Text(
+                if (state.filter == StorylineFilter.CURRENT)
+                    "Sin historias de la temporada actual con este filtro. Prueba \"Todas\"."
+                else "Sin resultados.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         if (!state.hasAccount) {
             Text("Inicia sesión y sincroniza para ver tu progreso real en cada historia.",
@@ -134,6 +172,17 @@ private fun StorylineList(state: StorylinesState, viewModel: StorylinesViewModel
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.SemiBold,
                             )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            story.zone?.let {
+                                Text("📍 $it", style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (story.campaign) {
+                                Text("CAMPAÑA", style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontWeight = FontWeight.Bold)
+                            }
                         }
                         if (story.completed > 0 && !story.done) {
                             LinearProgressIndicator(

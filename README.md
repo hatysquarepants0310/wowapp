@@ -165,10 +165,18 @@ misión con su zona y recompensa. Además: **barra inferior simplificada a 3 bot
 Personaje · Más) y un **menú "Más" rediseñado con iconos** para que se sienta a funciones, no a
 ajustes.
 
+**v1.8.0** — **Monturas con imagen** en Personaje (cuadrícula con el render real de cada montura,
+sin coste de API); **Historias ordenadas por temporada actual → campañas → resto**, con su zona
+y filtros; **Mythic+ con las mazmorras de la temporada y el botín de cada jefe**; **feedback
+visible al sincronizar** (éxito o motivo del error); y **actualizador robusto**: progreso de
+descarga, verificación de integridad del APK y ruta guiada si Android pide permiso para instalar
+(la causa del "error de paquete").
+
 ### Pipeline de datos
-`tools/build_storylines.py` regenera `storylines.json` a partir de las tablas DB2 de wago.tools
-(datos del propio cliente del juego, la misma fuente que usa Wowhead). Se ejecuta por parche,
-offline; la app solo consume el JSON horneado.
+`tools/build_storylines.py` regenera `storylines.json` y `mounts.json` a partir de las tablas DB2
+de wago.tools (datos del propio cliente del juego, la misma fuente que usa Wowhead) más la API
+oficial de Blizzard para la zona de cada historia. Se ejecuta por parche, offline; la app solo
+consume los JSON horneados — cero dependencia de esas fuentes en tiempo de ejecución.
 
 ## Contribuir
 

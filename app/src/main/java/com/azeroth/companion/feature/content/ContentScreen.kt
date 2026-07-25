@@ -58,7 +58,7 @@ fun ContentScreen(viewModel: ContentViewModel = hiltViewModel()) {
         }
 
         when (tab) {
-            0 -> AffixesTab(state)
+            0 -> AffixesTab(state, viewModel)
             1 -> InstancesTab(isRaid = false, state = state, viewModel = viewModel)
             2 -> InstancesTab(isRaid = true, state = state, viewModel = viewModel)
         }
@@ -66,7 +66,7 @@ fun ContentScreen(viewModel: ContentViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun AffixesTab(state: ContentState) {
+private fun AffixesTab(state: ContentState, viewModel: ContentViewModel) {
     if (state.loading && state.affixes.isEmpty()) { Loading(); return }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
@@ -86,8 +86,21 @@ private fun AffixesTab(state: ContentState) {
                 }
             }
         }
+        // Mazmorras de la temporada actual con acceso a jefes y botín.
+        state.expansion?.dungeons?.takeIf { it.isNotEmpty() }?.let { dungeons ->
+            item {
+                Spacer(Modifier.height(6.dp))
+                Text("Mazmorras de la temporada", style = MaterialTheme.typography.titleMedium)
+                Text("Toca una mazmorra y luego un jefe para ver su botín.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            items(dungeons, key = { "mplus_${it.id}" }) { dungeon ->
+                InstanceCard(dungeon, state, viewModel)
+            }
+        }
         item {
-            Text("Fuente: Raider.IO · se actualiza cada reset semanal",
+            Text("Fuentes: Raider.IO (afijos) · Blizzard Game Data (mazmorras y botín)",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp))

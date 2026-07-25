@@ -91,15 +91,20 @@ fun CharacterScreen(viewModel: CharacterViewModel = hiltViewModel()) {
             items(equipment) { item -> EquipmentRow(item) }
         }
 
-        state.detail?.mountNames?.takeIf { it.isNotEmpty() }?.let { mounts ->
+        state.detail?.mounts?.takeIf { it.isNotEmpty() }?.let { mounts ->
             item {
                 Text("Monturas (${mounts.size})", style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(top = 8.dp))
             }
-            item {
-                Text(mounts.joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Cuadrícula con la imagen real de cada montura (3 por fila).
+            items(mounts.chunked(3)) { row ->
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    row.forEach { mount -> MountCell(mount, Modifier.weight(1f)) }
+                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                }
             }
         }
 
@@ -168,6 +173,31 @@ private fun EquipmentRow(item: EquippedItem) {
                 Text("ilvl ${item.itemLevel}", style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.secondary)
             }
+        }
+    }
+}
+
+@Composable
+private fun MountCell(mount: com.azeroth.companion.data.MountEntry, modifier: Modifier = Modifier) {
+    Card(modifier) {
+        Column(Modifier.padding(6.dp)) {
+            mount.imageUrl?.let { url ->
+                coil.compose.AsyncImage(
+                    model = url,
+                    contentDescription = mount.name,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(74.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
+                )
+            }
+            Text(
+                mount.name,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 2,
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
     }
 }
