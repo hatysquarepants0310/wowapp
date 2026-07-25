@@ -146,6 +146,26 @@ interface BlizzardApi {
         @Query("namespace") namespace: String,
         @Query("locale") locale: String = "es_MX",
     ): QuestAreaDto
+
+    @GET("/data/wow/quest/{id}")
+    suspend fun quest(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): QuestDto
+
+    @GET("/data/wow/mount/{id}")
+    suspend fun mount(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): MountDto
+
+    @GET("/data/wow/media/creature-display/{id}")
+    suspend fun creatureDisplayMedia(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+    ): MediaDto
 }
 
 // ---- DTOs mínimos (solo los campos que la app consume) ----
@@ -282,6 +302,33 @@ data class QuestAreaDto(
     val name: String? = null,
     val quests: List<KeyedNameDto> = emptyList(),
 )
+
+@Serializable
+data class QuestDto(
+    val id: Int = 0,
+    val title: String? = null,
+    val area: KeyedNameDto? = null,
+    val rewards: QuestRewardsDto? = null,
+)
+
+@Serializable
+data class QuestRewardsDto(val items: QuestRewardItemsDto? = null)
+
+@Serializable
+data class QuestRewardItemsDto(val items: List<QuestRewardItemDto> = emptyList())
+
+@Serializable
+data class QuestRewardItemDto(val item: KeyedNameDto? = null)
+
+@Serializable
+data class MountDto(
+    val id: Int = 0,
+    val name: String? = null,
+    val creature_displays: List<CreatureDisplayRefDto> = emptyList(),
+)
+
+@Serializable
+data class CreatureDisplayRefDto(val id: Int = 0)
 
 @Serializable
 data class JournalExpansionIndexDto(val tiers: List<KeyedNameDto> = emptyList())
