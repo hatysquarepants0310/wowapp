@@ -180,6 +180,14 @@ en orden** → misiones con ✓/○ y detalle al tocar (zona, nivel mínimo, rec
 todas las subpantallas de "Más". Corregido el bug por el que los niveles e ilvl volvían a 0 (el
 refresco del roster los sobrescribía con ceros), y quitado el bloque de pendientes de Inicio.
 
+**v1.9.1** — Corregida la clasificación por expansión de las historias: ahora usa la expansión
+**del contenido** de la zona (`AreaTable.ContentTuningID` → `ContentTuning.ExpansionID`) en lugar del
+continente, que clasificaba mal todo lo añadido después sobre los continentes antiguos (Monte Hyjal,
+Vashj'ir y las Tierras Altas Crepusculares salían como vanilla en vez de Cataclysm; Zul'Aman y la
+Isla de Quel'Danas, en vez de Midnight). Además, el grupo de expansión 0 se llama ahora
+**"Azeroth original"** para no confundirlo con el producto *WoW Classic*: son las zonas del juego
+base, que siguen existiendo en el WoW actual.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json` y `mounts.json` a partir de las tablas DB2
 de wago.tools (datos del propio cliente del juego, la misma fuente que usa Wowhead) más la API
