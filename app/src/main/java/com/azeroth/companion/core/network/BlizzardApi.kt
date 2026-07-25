@@ -308,7 +308,15 @@ data class QuestDto(
     val id: Int = 0,
     val title: String? = null,
     val area: KeyedNameDto? = null,
+    val description: String? = null,
+    val requirements: QuestRequirementsDto? = null,
     val rewards: QuestRewardsDto? = null,
+)
+
+@Serializable
+data class QuestRequirementsDto(
+    val min_character_level: Int = 0,
+    val max_character_level: Int = 0,
 )
 
 @Serializable

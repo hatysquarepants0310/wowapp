@@ -56,6 +56,22 @@ class CharacterDetailRepository @Inject constructor(
         val realm = character.realmSlug
         val name = character.name.lowercase()
 
+        // Refrescar nivel/ilvl/spec del personaje elegido: el endpoint de cuenta no
+        // los trae, así que sin esto un alt recién importado mostraría ceros.
+        runCatching {
+            val profile = api.characterProfile(realm, name, ns)
+            characterDao.upsert(
+                character.copy(
+                    level = profile.level.takeIf { it > 0 } ?: character.level,
+                    averageItemLevel = profile.average_item_level,
+                    equippedItemLevel = profile.equipped_item_level,
+                    activeSpec = profile.active_spec?.name ?: character.activeSpec,
+                    lastSyncedAt = java.time.Instant.now(),
+                    isInactive = false,
+                ),
+            )
+        }
+
         val equipment = runCatching {
             api.equipment(realm, name, ns).equipped_items.map { dto ->
                 // Icono real del objeto vía media (datos estáticos, token de app).

@@ -13,7 +13,7 @@ Uso:
 Se re-ejecuta por parche; la app consume los JSON horneados (cero dependencia
 de estas fuentes en tiempo de ejecución).
 """
-import csv, json, os, sys
+import csv, json, os, re, sys
 from collections import defaultdict
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
@@ -25,7 +25,8 @@ def build_storylines(ql_csv, qlxq_csv, zones_json=None):
         for r in csv.DictReader(f):
             nm = (r.get('Name_lang') or '').strip()
             # Excluir marcadores internos de Blizzard (Do Not Translate).
-            if nm and not nm.startswith('(DNT)') and not nm.startswith('[DNT]'):
+            # Excluir marcadores internos: (DNT)=Do Not Translate, [PH]=placeholder.
+            if nm and not re.match(r'^[\[(](DNT|PH)[\])]', nm):
                 names[r['ID']] = nm
 
     lines = defaultdict(list)

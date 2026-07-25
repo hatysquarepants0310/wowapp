@@ -128,6 +128,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setRegion(region: Region) = viewModelScope.launch { settingsRepository.setRegion(region) }
+
+    /**
+     * Cambia el idioma de la app. Se guarda también en SharedPreferences porque
+     * attachBaseContext lo necesita de forma síncrona en el arranque.
+     */
+    fun setLanguage(context: android.content.Context, tag: String?) {
+        com.azeroth.companion.core.datastore.LanguagePref.write(context, tag)
+        viewModelScope.launch { settingsRepository.setLanguage(tag) }
+    }
     fun setShowLegacy(show: Boolean) = viewModelScope.launch { settingsRepository.setShowLegacy(show) }
     fun logout() = viewModelScope.launch { authManager.logout() }
 
@@ -205,7 +214,29 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
         HorizontalDivider()
 
-        Text("Región", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val current = settings.language
+            listOf(
+                null to stringResource(R.string.language_system),
+                "es" to "Español",
+                "en" to "English",
+            ).forEach { (tag, label) ->
+                FilterChip(
+                    selected = current == tag,
+                    onClick = {
+                        viewModel.setLanguage(context, tag)
+                        // Recrear la actividad para que se apliquen los recursos.
+                        (context as? android.app.Activity)?.recreate()
+                    },
+                    label = { Text(label) },
+                )
+            }
+        }
+
+        HorizontalDivider()
+
+        Text(stringResource(R.string.settings_region), style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Region.entries.forEach { region ->
                 FilterChip(
