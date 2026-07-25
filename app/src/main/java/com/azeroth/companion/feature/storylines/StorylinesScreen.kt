@@ -103,9 +103,22 @@ class StorylinesViewModel @Inject constructor(
     }
 
     fun toggleQuest(id: Int) {
-        _state.value = _state.value.copy(
-            expandedQuest = if (_state.value.expandedQuest == id) null else id,
-        )
+        val opening = _state.value.expandedQuest != id
+        _state.value = _state.value.copy(expandedQuest = if (opening) id else null)
+        // La lista sale de los assets (instantánea y sin conexión); la
+        // descripción y la recompensa se piden solo al abrir el detalle.
+        if (!opening) return
+        val quest = _state.value.quests.firstOrNull { it.id == id } ?: return
+        if (quest.description != null || quest.reward != null) return
+        viewModelScope.launch {
+            val (description, reward) = repository.questDetail(id)
+            if (description == null && reward == null) return@launch
+            _state.value = _state.value.copy(
+                quests = _state.value.quests.map {
+                    if (it.id == id) it.copy(description = description, reward = reward) else it
+                },
+            )
+        }
     }
 
     /** Sube un nivel; devuelve false si ya estamos en la raíz. */
