@@ -41,6 +41,9 @@ def build_storylines(ql_csv, qlxq_csv, zones_json=None):
     zones = {}
     if zones_json and os.path.exists(zones_json):
         zones = {int(k): v for k, v in json.load(open(zones_json, encoding='utf-8')).items()}
+    # La expansión de cada zona sale de tools/build_zone_expansions.py, que usa
+    # AreaTable.ContentTuningID -> ContentTuning.ExpansionID (expansión DEL
+    # CONTENIDO). No usar el continente: clasifica mal Cataclysm y Quel'Thalas.
 
     out = []
     for qlid, name in names.items():
