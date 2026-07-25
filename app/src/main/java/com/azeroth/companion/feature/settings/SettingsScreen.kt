@@ -52,7 +52,35 @@ class SettingsViewModel @Inject constructor(
     private val authManager: AuthManager,
     private val backupRepository: com.azeroth.companion.data.BackupRepository,
     private val updateChecker: com.azeroth.companion.core.update.UpdateChecker,
+    private val syncRepository: com.azeroth.companion.data.SyncRepository,
 ) : ViewModel() {
+
+    /** Mensaje visible del resultado del último sync manual. */
+    private val _syncMessage = MutableStateFlow<Pair<Boolean, String>?>(null)
+    val syncMessage: StateFlow<Pair<Boolean, String>?> = _syncMessage
+
+    private val _syncing = MutableStateFlow(false)
+    val syncing: StateFlow<Boolean> = _syncing
+
+    fun syncNow() {
+        viewModelScope.launch {
+            _syncing.value = true
+            _syncMessage.value = null
+            val roster = syncRepository.syncRoster()
+            val character = syncRepository.syncActiveCharacter()
+            _syncing.value = false
+            _syncMessage.value = when {
+                character is com.azeroth.companion.data.SyncResult.Success ->
+                    true to "Sincronizado con éxito. Datos de tu personaje actualizados."
+                roster is com.azeroth.companion.data.SyncResult.Success &&
+                    character is com.azeroth.companion.data.SyncResult.Failed ->
+                    false to "Roster actualizado, pero el personaje falló: ${character.reason}"
+                roster is com.azeroth.companion.data.SyncResult.Failed ->
+                    false to roster.reason
+                else -> false to "No se pudo sincronizar. Revisa tu sesión y conexión."
+            }
+        }
+    }
 
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state
@@ -73,14 +101,16 @@ class SettingsViewModel @Inject constructor(
 
     fun downloadUpdate(apkUrl: String, version: String) {
         viewModelScope.launch {
-            _updateStatus.value = com.azeroth.companion.core.update.UpdateStatus.Downloading(version)
-            val result = updateChecker.downloadAndInstall(apkUrl)
-            // Solo refleja el error; si tuvo éxito, el instalador del sistema toma el control.
-            if (result is com.azeroth.companion.core.update.UpdateStatus.Error) {
-                _updateStatus.value = result
+            _updateStatus.value =
+                com.azeroth.companion.core.update.UpdateStatus.Downloading(version, 0)
+            _updateStatus.value = updateChecker.downloadAndInstall(apkUrl, version) { pct ->
+                _updateStatus.value =
+                    com.azeroth.companion.core.update.UpdateStatus.Downloading(version, pct)
             }
         }
     }
+
+    fun grantInstallPermission() = updateChecker.openInstallPermissionSettings()
 
     init {
         viewModelScope.launch { authManager.restore() }
@@ -129,13 +159,24 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             is AuthState.LoggedIn -> {
                 Text("Sesión iniciada${auth.battleTag?.let { " · $it" } ?: ""}",
                     style = MaterialTheme.typography.bodyMedium)
+                val syncing by viewModel.syncing.collectAsStateWithLifecycle()
+                val syncMessage by viewModel.syncMessage.collectAsStateWithLifecycle()
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    androidx.compose.material3.Button(onClick = {
-                        com.azeroth.companion.sync.SyncScheduler.syncNow(context)
-                    }) { Text("Sincronizar ahora") }
+                    androidx.compose.material3.Button(
+                        onClick = viewModel::syncNow,
+                        enabled = !syncing,
+                    ) { Text(if (syncing) "Sincronizando…" else "Sincronizar ahora") }
                     androidx.compose.material3.OutlinedButton(onClick = viewModel::logout) {
                         Text("Cerrar sesión")
                     }
+                }
+                syncMessage?.let { (ok, msg) ->
+                    Text(
+                        (if (ok) "✓ " else "⚠ ") + msg,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (ok) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.error,
+                    )
                 }
             }
             is AuthState.Broken -> {
@@ -217,7 +258,20 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }) { Text("Descargar e instalar v${s.version}") }
             }
             is com.azeroth.companion.core.update.UpdateStatus.Downloading ->
-                Text("Descargando v${s.version}…", style = MaterialTheme.typography.bodySmall)
+                Text("Descargando v${s.version}… ${s.percent}%",
+                    style = MaterialTheme.typography.bodySmall)
+            is com.azeroth.companion.core.update.UpdateStatus.NeedsInstallPermission -> {
+                Text("Android necesita permiso para instalar la actualización.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error)
+                androidx.compose.material3.Button(onClick = viewModel::grantInstallPermission) {
+                    Text("Abrir ajustes de permiso")
+                }
+            }
+            is com.azeroth.companion.core.update.UpdateStatus.ReadyToInstall ->
+                Text("Instalador abierto. Confirma la instalación.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary)
             is com.azeroth.companion.core.update.UpdateStatus.Error ->
                 Text("⚠ ${s.reason}", style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error)

@@ -20,7 +20,13 @@ import javax.inject.Singleton
 data class StorylinesFile(val count: Int = 0, val storylines: List<StorylineDef> = emptyList())
 
 @Serializable
-data class StorylineDef(val id: Int, val name: String, val questIds: List<Int>)
+data class StorylineDef(
+    val id: Int,
+    val name: String,
+    val questIds: List<Int>,
+    val zone: String? = null,
+    val campaign: Boolean = false,
+)
 
 data class StorylineProgress(
     val id: Int,
@@ -28,6 +34,9 @@ data class StorylineProgress(
     val completed: Int,
     val total: Int,
     val done: Boolean,
+    val zone: String?,
+    val campaign: Boolean,
+    val currentExpansion: Boolean,
 )
 
 data class StorylineQuest(
@@ -75,6 +84,16 @@ class StorylinesRepository @Inject constructor(
         }.getOrDefault(emptySet())
     }
 
+    /**
+     * Zonas de la expansión actual (Midnight). Permite priorizar "la temporada
+     * actual primero", como pide el diseño. Vive aquí y no hardcodeado en la UI.
+     */
+    private val currentExpansionZones = setOf(
+        "bosques de canción eterna", "eversong woods", "zul'aman", "harandar",
+        "voidstorm", "isla de quel'danas", "quel'danas", "ciudad solaz",
+        "silvermoon", "lunargenta", "isla enroscada", "coiled isle",
+    )
+
     suspend fun storylines(): Pair<Boolean, List<StorylineProgress>> {
         val completed = completedQuestIds()
         val list = defs().map { def ->
@@ -83,8 +102,18 @@ class StorylinesRepository @Inject constructor(
                 id = def.id, name = def.name,
                 completed = done, total = def.questIds.size,
                 done = def.questIds.isNotEmpty() && done == def.questIds.size,
+                zone = def.zone,
+                campaign = def.campaign,
+                currentExpansion = def.zone?.lowercase()?.let { z ->
+                    currentExpansionZones.any { z.contains(it) }
+                } ?: false,
             )
-        }.sortedBy { it.name.lowercase() }
+        }.sortedWith(
+            // Expansión actual primero, luego campañas, luego alfabético.
+            compareByDescending<StorylineProgress> { it.currentExpansion }
+                .thenByDescending { it.campaign }
+                .thenBy { it.name.lowercase() },
+        )
         return completed.isNotEmpty() to list
     }
 
