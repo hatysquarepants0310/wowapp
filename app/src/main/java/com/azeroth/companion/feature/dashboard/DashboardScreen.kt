@@ -121,11 +121,25 @@ fun DashboardScreen(
                     vault.mythicPlusSlots.predictedRewardIlvl +
                     vault.worldSlots.predictedRewardIlvl).filterNotNull()
                 Text(
-                    if (unlocked.isEmpty()) "Aún sin recompensas desbloquejadas esta semana."
+                    if (unlocked.isEmpty()) "Aún sin recompensas desbloqueadas esta semana."
                     else "${unlocked.size} recompensa(s) desbloqueada(s) · mejor ilvl previsto ${unlocked.max()}. Solo se reclama UNA.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
+                // Banda y Mythic+ llevan fecha en la API, así que son exactos.
+                // Mundo no: la Bóveda no se expone y las Delves solo vienen como
+                // total acumulado, de modo que hace falta una lectura anterior
+                // al reset para saber cuáles son de esta semana.
+                if (state.worldBaselineMissing) {
+                    Text(
+                        "Mundo se contará a partir del próximo reset: la API solo da el " +
+                            "total acumulado de Delves y la app aún no tiene una lectura " +
+                            "previa con la que comparar.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
                 Spacer(Modifier.height(4.dp))
                 ConfidenceBadge(vault.confidence)
             } else {

@@ -101,6 +101,7 @@ class SyncRepository @Inject constructor(
             val raids = runCatching { api.raidEncounters(realm, name, namespace) }.getOrNull()
             val achievements = runCatching { api.achievements(realm, name, namespace) }.getOrNull()
             val mounts = runCatching { api.mounts(realm, name, namespace) }.getOrNull()
+            val stats = runCatching { api.statistics(realm, name, namespace) }.getOrNull()
 
             val now = Instant.now()
             val clock = eventsRepository.resetClock()
@@ -123,6 +124,34 @@ class SyncRepository @Inject constructor(
             val raidKills = raids?.expansions?.flatMap { it.instances }
                 ?.associate { it.instance.id to it.modes.sumOf { m -> m.progress?.completed_count ?: 0 } }
                 ?: emptyMap()
+
+            // Datos EXACTOS de la semana para la Gran Bóveda. `last_kill_timestamp`
+            // por jefe y dificultad permite saber qué cayó tras el reset sin
+            // depender de tener un snapshot anterior: antes se calculaba como
+            // delta contra la línea base y, si el primer sync de la semana era
+            // posterior a la actividad, el resultado era siempre 0.
+            val killsThisWeek = raids?.expansions
+                ?.flatMap { it.instances }
+                ?.flatMap { inst ->
+                    inst.modes.flatMap { mode ->
+                        val difficulty = mode.difficulty?.type.orEmpty()
+                        mode.progress?.encounters.orEmpty()
+                            .filter { it.last_kill_timestamp >= lastReset.toEpochMilli() }
+                            .map { RaidKillRecord(it.encounter.name.orEmpty(), difficulty) }
+                    }
+                }.orEmpty()
+            val mythicRunsRecords = mythic?.current_period?.best_runs
+                ?.filter { it.completed_timestamp >= lastReset.toEpochMilli() }
+                ?.map {
+                    MythicRunRecord(
+                        name = it.dungeon?.name.orEmpty(),
+                        level = it.keystone_level,
+                        inTime = it.is_completed_within_time,
+                    )
+                }.orEmpty()
+            val delvesTotal = stats?.categories?.flatMap { it.flatten() }
+                ?.firstOrNull { it.id == catalogRepository.load().vault.delveStatisticId }
+                ?.quantity?.toInt() ?: 0
 
             snapshotDao.insert(
                 SnapshotEntity(
@@ -150,6 +179,13 @@ class SyncRepository @Inject constructor(
                         ListSerializer(Int.serializer()),
                         mounts?.mounts?.map { it.mount.id }.orEmpty(),
                     ),
+                    raidKillsThisWeekJson = json.encodeToString(
+                        ListSerializer(RaidKillRecord.serializer()), killsThisWeek,
+                    ),
+                    mythicLevelsThisWeekJson = json.encodeToString(
+                        ListSerializer(MythicRunRecord.serializer()), mythicRunsRecords,
+                    ),
+                    delvesCompletedTotal = delvesTotal,
                 ),
             )
             snapshotDao.pruneOlderThan(now.minus(Duration.ofDays(21)))

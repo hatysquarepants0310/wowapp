@@ -35,6 +35,43 @@ object VaultCalculator {
         confidence = Confidence.ESTIMATED,
     )
 
+    /**
+     * Casilla calculada como en el juego: se ordenan los logros de la semana de
+     * mejor a peor y la casilla del umbral N premia al nivel del N-ésimo. Así, 4
+     * mazmorras +10 y una +2 no dan tres recompensas de +10: la primera casilla
+     * premia tu mejor llave, la segunda tu 4.ª y la tercera tu 8.ª.
+     */
+    fun slotFromTiers(tiers: List<Int>, thresholds: List<Int>): SlotProgress {
+        val sorted = tiers.sortedDescending()
+        return SlotProgress(
+            current = sorted.size,
+            thresholds = thresholds,
+            predictedRewardIlvl = thresholds.map { t ->
+                if (sorted.size >= t) sorted[t - 1] else null
+            },
+        )
+    }
+
+    /**
+     * Gran Bóveda a partir de los datos exactos del perfil: la dificultad de
+     * cada jefe de banda matado esta semana y el nivel de cada llave M+ de la
+     * semana. Solo la fila de Mundo queda estimada (la API no expone la Bóveda
+     * ni el progreso semanal de Delves; se deduce de la estadística acumulada).
+     */
+    fun vaultFromTiers(
+        characterId: Long,
+        raidIlvls: List<Int>,
+        mythicIlvls: List<Int>,
+        worldActivitiesThisWeek: Int,
+        rules: VaultRules,
+    ): GreatVaultProgress = GreatVaultProgress(
+        characterId = characterId,
+        raidSlots = slotFromTiers(raidIlvls, rules.raidThresholds),
+        mythicPlusSlots = slotFromTiers(mythicIlvls, rules.mythicPlusThresholds),
+        worldSlots = slot(worldActivitiesThisWeek, rules.worldThresholds, rules.worldSlotIlvl),
+        confidence = Confidence.ESTIMATED,
+    )
+
     data class UpgradePlan(
         val stepsAffordable: Int,
         val ilvlGain: Int,

@@ -12,3 +12,4 @@ captures/
 # Keystores privados fuera del repo; el comunitario va versionado a propósito.
 *.keystore
 !signing/community.keystore
+.kotlin/

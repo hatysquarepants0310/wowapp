@@ -102,6 +102,16 @@ data class SnapshotEntity(
     val achievementIdsJson: String = "[]",
     /** JSON: lista de mount IDs de la colección. */
     val mountIdsJson: String = "[]",
+    /**
+     * JSON: lista de dificultades ("MYTHIC", "HEROIC", …) de los jefes de banda
+     * matados DESPUÉS del último reset, según `last_kill_timestamp`. Es exacto:
+     * no necesita snapshot previo para saber qué cayó esta semana.
+     */
+    val raidKillsThisWeekJson: String = "[]",
+    /** JSON: niveles de llave de las M+ completadas desde el último reset. */
+    val mythicLevelsThisWeekJson: String = "[]",
+    /** Estadística "Delves totales completadas" (acumulada, no semanal). */
+    val delvesCompletedTotal: Int = 0,
 )
 
 @Dao
@@ -175,6 +185,14 @@ interface SnapshotDao {
     @Query("SELECT * FROM snapshot WHERE characterId = :characterId ORDER BY takenAt DESC LIMIT 1")
     suspend fun latest(characterId: Long): SnapshotEntity?
 
+    /**
+     * Último snapshot ANTES de un instante. Es la línea base correcta para las
+     * estadísticas acumuladas (Delves): el primer snapshot de la semana ya
+     * incluiría lo hecho antes de sincronizar.
+     */
+    @Query("SELECT * FROM snapshot WHERE characterId = :characterId AND takenAt < :before ORDER BY takenAt DESC LIMIT 1")
+    suspend fun lastBefore(characterId: Long, before: Instant): SnapshotEntity?
+
     @Query("DELETE FROM snapshot WHERE takenAt < :before")
     suspend fun pruneOlderThan(before: Instant)
 }
@@ -188,7 +206,7 @@ interface SnapshotDao {
         ProgressionStateEntity::class,
         SeasonalGoalEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

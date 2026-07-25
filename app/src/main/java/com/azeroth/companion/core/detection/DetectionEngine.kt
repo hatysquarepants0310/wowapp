@@ -25,10 +25,17 @@ class DetectionEngine {
 
     fun evaluate(rule: DetectionRule, baseline: SnapshotView?, current: SnapshotView?): DetectionResult =
         when (rule) {
+            // Presencia ABSOLUTA, no diferencia contra la línea base. Blizzard
+            // borra la marca de completada de las misiones repetibles en cada
+            // reset: verificado con personajes reales, alguien que terminó toda
+            // Dragonflight no tiene ninguna de las "Aiding the Accord" en
+            // /quests/completed. Que aparezca ya significa "hecha esta semana".
+            // Con el cálculo por diferencia, quien sincronizaba por primera vez
+            // después de hacer la misión veía siempre 0 (el snapshot base y el
+            // actual eran el mismo).
             is DetectionRule.QuestCompleted -> {
                 val done = current?.completedQuestIds?.count { it in rule.questIds } ?: 0
-                val before = baseline?.completedQuestIds?.count { it in rule.questIds } ?: 0
-                estimated(((done - before).coerceAtLeast(0)) * rule.countsAs)
+                estimated(done * rule.countsAs)
             }
 
             is DetectionRule.QuestDelta -> {

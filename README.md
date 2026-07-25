@@ -188,10 +188,51 @@ Isla de Quel'Danas, en vez de Midnight). Además, el grupo de expansión 0 se ll
 **"Azeroth original"** para no confundirlo con el producto *WoW Classic*: son las zonas del juego
 base, que siguen existiendo en el WoW actual.
 
+**v2.0.0** — Reconstrucción de las historias y de la semana sobre datos verificables.
+
+*Historias.* La jerarquía de cada temporada ya no son tres cajones inventados, sino las **campañas
+reales del juego** (`Campaign` + `CampaignXQuestLine`), con sus capítulos en el orden exacto en que
+se juegan y numerados **por campaña**, no de corrido por temporada. Antes la categoría "Campaña
+principal" salía de buscar la palabra *campaign* en el nombre y quedaba vacía: The War Within tenía
+0 campañas detectadas, ahora tiene su campaña de 14 capítulos y Midnight la suya de 17.
+
+*Misiones opcionales.* `QuestLineXQuest.Flags = 1` marca las misiones **opcionales** de cada cadena.
+Exigirlas hacía que casi ninguna historia apareciera completa: sobre un personaje real con las
+campañas de las tres últimas expansiones terminadas, The War Within daba 14/16, 8/10, 19/20… y ni un
+capítulo completo. Contando solo las obligatorias da 14/14 capítulos, Midnight 17/17 y Minahonda 6/6.
+Las opcionales se siguen mostrando, marcadas como tales.
+
+*Misiones instantáneas y sin conexión.* Nombre, zona y nivel de las **17 916 misiones** de todas las
+cadenas van horneados en los assets, en español e inglés. Abrir una historia ya no dispara una
+petición por misión.
+
+*Clasificación por expansión.* Las campañas mandan sobre sus capítulos (un prólogo en Ventormenta ya
+no manda la historia a "Azeroth original") y las cadenas cuyas misiones no declaran zona
+—profesiones, salas de clase, guarniciones— se clasifican por rango de ID de misión, calibrado
+contra las que sí tienen zona conocida (89 % de acierto medido). Historias sin expansión: de 716 a 10.
+
+*Semanales.* Corregido el fallo por el que las misiones hechas no se registraban nunca. Se comparaba
+contra la línea base de la semana, así que quien sincronizaba **después** de hacer la misión veía
+siempre 0. Blizzard borra la marca de las misiones repetibles en cada reset —verificado: un personaje
+que terminó toda Dragonflight no tiene ninguna de las *Aiding the Accord* en `/quests/completed`—,
+así que basta con que aparezca para contarla.
+
+*Gran Bóveda exacta.* Banda y Mythic+ ya no se estiman: `last_kill_timestamp` por jefe y dificultad y
+la fecha de cada mazmorra dicen exactamente qué cayó tras el reset, y la recompensa prevista usa la
+dificultad o el nivel de llave **de la N-ésima mejor actividad**, como en el juego. La fila de Mundo
+se deduce de la estadística de Delves del perfil (40734) por diferencia; mientras no haya una lectura
+anterior al reset la app lo dice en vez de enseñar un 0 que parece real.
+
+*"Esta semana".* La antigua checklist —cuyas tareas eran casi todas `ManualOnly` y, sin entrada
+manual, nunca se marcaban— es ahora un panel de actividad real: cada M+ con su nivel de llave, cada
+jefe con su dificultad, las Delves y las misiones completadas desde el reset.
+
 ### Pipeline de datos
-`tools/build_storylines.py` regenera `storylines.json` y `mounts.json` a partir de las tablas DB2
-de wago.tools (datos del propio cliente del juego, la misma fuente que usa Wowhead) más la API
-oficial de Blizzard para la zona de cada historia. Se ejecuta por parche, offline; la app solo
+`tools/build_storylines.py` regenera `storylines.json`, `quests_es/en.json`, `quest_meta.json`,
+`areas_es/en.json` y `mounts.json` a partir de las tablas DB2 de wago.tools (datos del propio cliente
+del juego, la misma fuente que usa Wowhead: `QuestLine`, `QuestLineXQuest`, `Campaign`,
+`CampaignXQuestLine`, `AreaTable`, `ContentTuning`) más la API oficial de Blizzard para el nombre y
+la zona de cada misión. Se ejecuta por parche, offline; la app solo
 consume los JSON horneados — cero dependencia de esas fuentes en tiempo de ejecución.
 
 ## Contribuir

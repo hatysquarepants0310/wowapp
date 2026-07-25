@@ -3,98 +3,195 @@ package com.azeroth.companion.feature.weekly
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.azeroth.companion.core.model.TaskCategory
-import com.azeroth.companion.ui.components.ConfidenceBadge
-
-private val categoryLabels = mapOf(
-    TaskCategory.WORLD_EVENT to "Actividades",
-    TaskCategory.WEEKLY_QUEST to "Semanales",
-    TaskCategory.OMNIUM_FOLIO to "Folio Omnium",
-    TaskCategory.PVP to "PvP",
-    TaskCategory.GREAT_VAULT to "Gran Bóveda",
-    TaskCategory.CURRENCY to "Monedas",
-    TaskCategory.PROFESSION to "Profesión",
-    TaskCategory.DELVE to "Profundidades",
-    TaskCategory.PREY_HUNT to "Sistema de presas",
-    TaskCategory.WORLD_BOSS to "Jefe de mundo",
-    TaskCategory.CAMPAIGN to "Historia (una vez)",
-    TaskCategory.CUSTOM to "Tareas personalizadas",
-    TaskCategory.LEGACY to "Legacy",
-    TaskCategory.SEASONAL_REWARD to "Temporada",
-)
+import com.azeroth.companion.data.WeeklyActivity
 
 /**
- * Checklist semanal 100% automática: el estado sale de la detección sobre los
- * snapshots del sync con Battle.net (§6). Sin entrada manual — solo lectura,
- * con badge de confianza en cada dato inferido.
+ * Actividad de la semana en curso, sin nada que marcar a mano: todo sale de la
+ * cuenta de Battle.net. Las mazmorras y los jefes llevan fecha en la API, así
+ * que son exactos desde el primer sync; las Delves y las misiones se deducen
+ * comparando con el último snapshot anterior al reset.
  */
 @Composable
 fun WeeklyScreen(viewModel: WeeklyViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val a = state.activity
 
-    LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    LazyColumn(
+        Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         item {
             Text(
-                "Detección automática desde tu cuenta de Battle.net. " +
-                    "Los datos se actualizan con cada sincronización.",
+                "Todo lo que has hecho desde el reset semanal, leído de tu cuenta " +
+                    "de Battle.net. Nada se marca a mano.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        state.groups.forEach { (category, rows) ->
-            val done = rows.sumOf { it.state?.completions ?: 0 }
-            val total = rows.sumOf { it.task.maxCompletions }
-            item(key = "header_$category") {
-                Row(
-                    Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(categoryLabels[category] ?: category.name,
-                        style = MaterialTheme.typography.titleMedium)
-                    Text("$done/$total", style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary)
-                }
-            }
-            items(rows, key = { it.task.id }) { row ->
-                val completions = row.state?.completions ?: 0
-                val complete = completions >= row.task.maxCompletions
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        if (complete) "☑" else "☐",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = if (complete) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
+
+        if (!a.hasCharacter) {
+            item { Empty("Inicia sesión y sincroniza para ver tu semana.") }
+            return@LazyColumn
+        }
+
+        item { Summary(a) }
+
+        section("Mythic+", a.mythicRuns.size) {
+            if (a.mythicRuns.isEmpty()) {
+                Empty("Ninguna mazmorra Mythic+ esta semana.")
+            } else {
+                a.mythicRuns.forEach { run ->
+                    LineRow(
+                        icon = if (run.inTime) "⏱" else "✔",
+                        title = run.name.ifBlank { "Mazmorra" },
+                        trailing = "+${run.level}",
                     )
-                    Column(Modifier.weight(1f)) {
-                        Text(row.task.title["es_MX"] ?: row.task.title.values.first())
-                        row.task.description["es_MX"]?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    Text("$completions/${row.task.maxCompletions}",
-                        style = MaterialTheme.typography.bodySmall)
-                    row.state?.let { ConfidenceBadge(it.confidence) }
                 }
             }
         }
+
+        section("Bandas", a.raidKills.size) {
+            if (a.raidKills.isEmpty()) {
+                Empty("Ningún jefe de banda esta semana.")
+            } else {
+                a.raidKills.forEach { kill ->
+                    LineRow("☠", kill.name.ifBlank { "Jefe" }, difficultyLabel(kill.difficulty))
+                }
+            }
+        }
+
+        section("Profundidades", a.delves ?: 0) {
+            when {
+                a.delves == null -> Empty(
+                    "Se contarán a partir del próximo reset: la API solo da el total " +
+                        "acumulado, así que la app necesita una lectura anterior al reset " +
+                        "para saber cuáles son de esta semana.",
+                )
+                a.delves == 0 -> Empty("Ninguna Delve esta semana.")
+                else -> LineRow("🕳", "Delves completadas", a.delves.toString())
+            }
+        }
+
+        section("Misiones", a.quests.size) {
+            when {
+                !a.hasBaseline -> Empty(
+                    "Se listarán a partir del próximo reset, cuando la app tenga una " +
+                        "lectura previa con la que comparar.",
+                )
+                a.quests.isEmpty() -> Empty("Ninguna misión completada desde el reset.")
+                else -> a.quests.forEach { q -> LineRow("✓", q.name, "") }
+            }
+        }
+
+        item { Spacer(Modifier.height(24.dp)) }
     }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.section(
+    title: String,
+    count: Int,
+    content: @Composable () -> Unit,
+) {
+    item(key = "sec_$title") {
+        Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+            Row(
+                Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    count.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            content()
+        }
+    }
+}
+
+@Composable
+private fun Summary(a: WeeklyActivity) {
+    Card(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+        ) {
+            Stat(a.mythicRuns.size.toString(), "M+")
+            Stat(a.raidKills.size.toString(), "Jefes")
+            Stat(a.delves?.toString() ?: "—", "Delves")
+            Stat(if (a.hasBaseline) a.quests.size.toString() else "—", "Misiones")
+        }
+    }
+}
+
+@Composable
+private fun Stat(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun LineRow(icon: String, title: String, trailing: String) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(icon, style = MaterialTheme.typography.bodyMedium)
+        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        if (trailing.isNotBlank()) {
+            Text(
+                trailing,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Empty(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(vertical = 4.dp),
+    )
+}
+
+private fun difficultyLabel(type: String): String = when (type.uppercase()) {
+    "LFR" -> "Buscador"
+    "NORMAL" -> "Normal"
+    "HEROIC" -> "Heroico"
+    "MYTHIC" -> "Mítico"
+    else -> type
 }

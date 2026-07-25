@@ -23,12 +23,29 @@ class DetectionEngineTest {
         assertEquals(Confidence.ESTIMATED, result.confidence)
     }
 
+    /**
+     * Blizzard borra la marca de completada de las misiones repetibles en cada
+     * reset semanal, así que la presencia en /quests/completed YA significa
+     * "hecha esta semana" aunque la línea base también la tuviera (el caso
+     * normal: el primer sync de la semana es posterior a haberla hecho).
+     */
     @Test
-    fun `quest completed before the reset does not count`() {
+    fun `weekly quest present in the profile counts even without a fresh baseline`() {
         val result = engine.evaluate(
             DetectionRule.QuestCompleted(listOf(84001)),
             baseline = snapshot(quests = setOf(84001)),
             current = snapshot(quests = setOf(84001)),
+        )
+        assertEquals(1, result.completions)
+        assertEquals(Confidence.ESTIMATED, result.confidence)
+    }
+
+    @Test
+    fun `quest absent from the profile does not count`() {
+        val result = engine.evaluate(
+            DetectionRule.QuestCompleted(listOf(84001)),
+            baseline = snapshot(quests = setOf(84001)),
+            current = snapshot(),
         )
         assertEquals(0, result.completions)
         assertEquals(Confidence.PREDICTED, result.confidence)
