@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.azeroth.companion.core.model.Region
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,6 +28,8 @@ data class Settings(
     val quietHoursExceptEventPrewarn: Boolean,
     val activeCharacterId: Long?,
     val viabilityFilterEnabled: Boolean,
+    /** "es", "en" o null = seguir el idioma del sistema (autodetección). */
+    val language: String?,
 )
 
 @Singleton
@@ -44,6 +47,7 @@ class SettingsRepository @Inject constructor(
         val QUIET_EXCEPT_PREWARN = booleanPreferencesKey("quiet_except_prewarn")
         val ACTIVE_CHARACTER = longPreferencesKey("active_character_id")
         val VIABILITY_FILTER = booleanPreferencesKey("viability_filter")
+        val LANGUAGE = stringPreferencesKey("language")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -58,7 +62,15 @@ class SettingsRepository @Inject constructor(
             quietHoursExceptEventPrewarn = p[Keys.QUIET_EXCEPT_PREWARN] ?: true,
             activeCharacterId = p[Keys.ACTIVE_CHARACTER],
             viabilityFilterEnabled = p[Keys.VIABILITY_FILTER] ?: false,
+            language = p[Keys.LANGUAGE],
         )
+    }
+
+    /** Idioma elegido, o null si se sigue el del sistema. Lectura síncrona para el arranque. */
+    suspend fun language(): String? = context.dataStore.data.first()[Keys.LANGUAGE]
+
+    suspend fun setLanguage(tag: String?) = context.dataStore.edit {
+        if (tag == null) it.remove(Keys.LANGUAGE) else it[Keys.LANGUAGE] = tag
     }
 
     suspend fun setRegion(region: Region) =

@@ -4,9 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -105,47 +109,91 @@ fun DashboardScreen(
 
         SectionCard(stringResource(R.string.great_vault)) {
             val vault = state.vault
+            Spacer(Modifier.height(8.dp))
             if (vault != null) {
-                VaultRow("Banda", vault.raidSlots.current, vault.raidSlots.thresholds)
-                VaultRow("Mythic+", vault.mythicPlusSlots.current, vault.mythicPlusSlots.thresholds)
-                VaultRow("Mundo", vault.worldSlots.current, vault.worldSlots.thresholds)
-                val unlockedIlvls = (vault.raidSlots.predictedRewardIlvl +
+                // Rejilla 3x3 como la interfaz del juego: una fila por fuente,
+                // tres recompensas por fila que se desbloquean por umbrales.
+                VaultGridRow("Banda", vault.raidSlots)
+                VaultGridRow("Mythic+", vault.mythicPlusSlots)
+                VaultGridRow("Mundo", vault.worldSlots)
+                Spacer(Modifier.height(6.dp))
+                val unlocked = (vault.raidSlots.predictedRewardIlvl +
                     vault.mythicPlusSlots.predictedRewardIlvl +
                     vault.worldSlots.predictedRewardIlvl).filterNotNull()
-                if (unlockedIlvls.isNotEmpty()) {
-                    Text("Mejor recompensa prevista: ilvl ${unlockedIlvls.max()}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary)
-                }
+                Text(
+                    if (unlocked.isEmpty()) "Aún sin recompensas desbloquejadas esta semana."
+                    else "${unlocked.size} recompensa(s) desbloqueada(s) · mejor ilvl previsto ${unlocked.max()}. Solo se reclama UNA.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
                 Spacer(Modifier.height(4.dp))
                 ConfidenceBadge(vault.confidence)
             } else {
-                // Sin datos aún: la Bóveda se estima tras el primer sync o con la checklist manual.
-                VaultRow("Banda", 0, listOf(2, 4, 6))
-                VaultRow("Mythic+", 0, listOf(1, 4, 8))
-                VaultRow("Mundo", 0, listOf(2, 4, 8))
+                Text("Sincroniza para estimar tu Gran Bóveda.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
-        SectionCard("Pendientes de alta prioridad") {
-            state.topPending.forEach { task ->
-                Text(
-                    "• " + (task.title["es_MX"] ?: task.title.values.firstOrNull().orEmpty()),
-                    Modifier.padding(vertical = 4.dp),
-                )
-            }
-        }
     }
 }
 
+/**
+ * Una fila de la Gran Bóveda tal como se ve en el juego: tres casillas de
+ * recompensa que se desbloquean al alcanzar cada umbral de actividades.
+ */
 @Composable
-private fun VaultRow(label: String, current: Int, thresholds: List<Int>) {
-    val max = thresholds.last()
-    Column(Modifier.padding(vertical = 4.dp)) {
-        Text("$label · $current/$max", style = MaterialTheme.typography.bodySmall)
-        LinearProgressIndicator(
-            progress = { current.toFloat() / max },
-            modifier = Modifier.padding(top = 2.dp),
-        )
+private fun VaultGridRow(label: String, slot: com.azeroth.companion.core.model.SlotProgress) {
+    Column(Modifier.padding(bottom = 10.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(label, style = MaterialTheme.typography.labelLarge)
+            Text("${slot.current}/${slot.thresholds.last()}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Row(
+            Modifier.fillMaxWidth().padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            slot.thresholds.forEachIndexed { i, threshold ->
+                val unlocked = slot.current >= threshold
+                val ilvl = slot.predictedRewardIlvl.getOrNull(i)
+                androidx.compose.foundation.layout.Box(
+                    Modifier
+                        .weight(1f)
+                        .height(52.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                        .background(
+                            if (unlocked) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                        .border(
+                            1.dp,
+                            if (unlocked) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outline,
+                            androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (unlocked) {
+                            Text("★", style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary)
+                            Text(ilvl?.let { "ilvl $it" } ?: "listo",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        } else {
+                            Text("🔒", style = MaterialTheme.typography.bodyMedium)
+                            Text("$threshold",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
     }
 }

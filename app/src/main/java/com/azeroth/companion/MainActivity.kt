@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -72,6 +73,25 @@ class MainActivity : ComponentActivity() {
     @javax.inject.Inject
     lateinit var settingsRepository: com.azeroth.companion.core.datastore.SettingsRepository
 
+    /**
+     * Aplica el idioma elegido antes de crear la UI. Si no hay preferencia, se
+     * respeta el del sistema (autodetección en el primer arranque).
+     */
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val tag = runCatching {
+            com.azeroth.companion.core.datastore.LanguagePref.read(newBase)
+        }.getOrNull()
+        super.attachBaseContext(
+            if (tag.isNullOrBlank()) newBase else {
+                val locale = java.util.Locale.forLanguageTag(tag)
+                java.util.Locale.setDefault(locale)
+                val config = android.content.res.Configuration(newBase.resources.configuration)
+                config.setLocale(locale)
+                newBase.createConfigurationContext(config)
+            },
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleOAuthRedirect(intent)
@@ -111,6 +131,22 @@ class MainActivity : ComponentActivity() {
 
 private data class Destination(val route: String, val labelRes: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 
+/** Títulos de las subpantallas para la barra superior con botón atrás. */
+private val subScreenTitles = mapOf(
+    "content" to "Contenido",
+    "storylines" to "Historias",
+    "quests" to "Misiones por zona",
+    "events" to "Eventos",
+    "event" to "Evento",
+    "weekly" to "Semanal",
+    "progression" to "Progresión",
+    "seasons" to "Temporadas M+",
+    "seasonal" to "Recompensas de temporada",
+    "roster" to "Roster",
+    "settings" to "Ajustes",
+)
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun AppScaffold(startEventId: String?) {
     val navController: NavHostController = rememberNavController()
@@ -121,8 +157,30 @@ private fun AppScaffold(startEventId: String?) {
     )
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
+    val rootRoutes = destinations.map { it.route }.toSet()
+    // Las subpantallas de "Más" necesitan salida visible: sin esto parecía que
+    // te quedabas atrapado hasta usar el botón atrás del sistema.
+    val isSubScreen = currentRoute != null && currentRoute !in rootRoutes
+    val subTitle = subScreenTitles[currentRoute?.substringBefore('/')]
 
     Scaffold(
+        topBar = {
+            if (isSubScreen) {
+                androidx.compose.material3.TopAppBar(
+                    title = { Text(subTitle ?: "") },
+                    navigationIcon = {
+                        androidx.compose.material3.IconButton(
+                            onClick = { navController.popBackStack() },
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Atrás",
+                            )
+                        }
+                    },
+                )
+            }
+        },
         bottomBar = {
             NavigationBar {
                 destinations.forEach { dest ->

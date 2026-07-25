@@ -52,7 +52,12 @@ class SyncRepository @Inject constructor(
         val api = apiFactory.forRegion(region)
         return runCatching {
             val profile = api.userProfile(namespace = region.namespaceProfile)
+            // El endpoint de cuenta NO trae ilvl ni spec. Fusionar con lo ya
+            // guardado: escribir ceros aquí borraba los datos del sync detallado
+            // en cada refresco del roster (bug de "Nivel 0").
+            val existing = characterDao.observeAll().first().associateBy { it.id }
             profile.wow_accounts.flatMap { it.characters }.forEach { dto ->
+                val prev = existing[dto.id]
                 characterDao.upsert(
                     CharacterEntity(
                         id = dto.id,
@@ -60,15 +65,16 @@ class SyncRepository @Inject constructor(
                         realmSlug = dto.realm.slug,
                         realmName = dto.realm.name ?: dto.realm.slug,
                         region = region.name,
-                        faction = dto.faction?.type ?: "NEUTRAL",
-                        playableClass = dto.playable_class?.name ?: "",
-                        activeSpec = null,
-                        level = dto.level,
-                        averageItemLevel = 0,
-                        equippedItemLevel = 0,
-                        isMain = false,
-                        lastLogin = null,
-                        lastSyncedAt = null,
+                        faction = dto.faction?.type ?: prev?.faction ?: "NEUTRAL",
+                        playableClass = dto.playable_class?.name?.takeIf { it.isNotBlank() }
+                            ?: prev?.playableClass.orEmpty(),
+                        activeSpec = prev?.activeSpec,
+                        level = dto.level.takeIf { it > 0 } ?: prev?.level ?: 0,
+                        averageItemLevel = prev?.averageItemLevel ?: 0,
+                        equippedItemLevel = prev?.equippedItemLevel ?: 0,
+                        isMain = prev?.isMain ?: false,
+                        lastLogin = prev?.lastLogin,
+                        lastSyncedAt = prev?.lastSyncedAt,
                     ),
                 )
             }
