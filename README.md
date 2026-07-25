@@ -158,6 +158,18 @@ sus misiones marcadas ✓/○ cruzando el catálogo oficial con las misiones com
 (igual que Wowhead, con API oficial). Además, **aviso de actualización al abrir la app** con opción
 de instalar en el momento o después.
 
+**v1.7.0** — **Historias (storylines)**: 1.639 cadenas de misiones de todo el juego con tu progreso
+✓/○ real, estilo Wowhead — datos del cliente del juego (tablas DB2 `QuestLine` vía wago.tools,
+horneadas en la app; cero scraping, cero dependencia en runtime). Al abrir una historia ves cada
+misión con su zona y recompensa. Además: **barra inferior simplificada a 3 botones** (Inicio ·
+Personaje · Más) y un **menú "Más" rediseñado con iconos** para que se sienta a funciones, no a
+ajustes.
+
+### Pipeline de datos
+`tools/build_storylines.py` regenera `storylines.json` a partir de las tablas DB2 de wago.tools
+(datos del propio cliente del juego, la misma fuente que usa Wowhead). Se ejecuta por parche,
+offline; la app solo consume el JSON horneado.
+
 ## Contribuir
 
 El catálogo (`catalog.json`) es el corazón comunitario del proyecto: cadencias, IDs de quest
