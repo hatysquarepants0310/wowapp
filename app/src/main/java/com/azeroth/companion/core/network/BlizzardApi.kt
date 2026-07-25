@@ -67,6 +67,18 @@ interface BlizzardApi {
         @Query("namespace") namespace: String,
     ): MountsDto
 
+    /**
+     * Estadísticas acumuladas del personaje. Es la única fuente pública que
+     * cuenta Delves completadas (estadística 40734), que es lo que alimenta la
+     * fila de Mundo de la Gran Bóveda.
+     */
+    @GET("/profile/wow/character/{realm}/{name}/achievements/statistics")
+    suspend fun statistics(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Query("namespace") namespace: String,
+    ): StatisticsDto
+
     @GET("/profile/wow/character/{realm}/{name}/equipment")
     suspend fun equipment(
         @Path("realm") realmSlug: String,
@@ -225,7 +237,12 @@ data class MythicKeystoneProfileDto(val current_period: CurrentPeriodDto? = null
 data class CurrentPeriodDto(val best_runs: List<MythicRunDto> = emptyList())
 
 @Serializable
-data class MythicRunDto(val completed_timestamp: Long = 0, val keystone_level: Int = 0)
+data class MythicRunDto(
+    val completed_timestamp: Long = 0,
+    val keystone_level: Int = 0,
+    val dungeon: KeyedNameDto? = null,
+    val is_completed_within_time: Boolean = true,
+)
 
 @Serializable
 data class RaidEncountersDto(val expansions: List<ExpansionProgressDto> = emptyList())
@@ -237,10 +254,48 @@ data class ExpansionProgressDto(val instances: List<InstanceProgressDto> = empty
 data class InstanceProgressDto(val instance: KeyedNameDto, val modes: List<ModeProgressDto> = emptyList())
 
 @Serializable
-data class ModeProgressDto(val progress: ProgressDto? = null)
+data class ModeProgressDto(
+    val difficulty: DifficultyDto? = null,
+    val progress: ProgressDto? = null,
+)
 
 @Serializable
-data class ProgressDto(val completed_count: Int = 0, val total_count: Int = 0)
+data class DifficultyDto(val type: String = "", val name: String = "")
+
+@Serializable
+data class ProgressDto(
+    val completed_count: Int = 0,
+    val total_count: Int = 0,
+    val encounters: List<EncounterProgressDto> = emptyList(),
+)
+
+/**
+ * Cada jefe trae [last_kill_timestamp]: permite saber EXACTAMENTE qué jefes
+ * cayeron después del último reset, sin depender de tener un snapshot previo.
+ */
+@Serializable
+data class EncounterProgressDto(
+    val encounter: KeyedNameDto,
+    val completed_count: Int = 0,
+    val last_kill_timestamp: Long = 0,
+)
+
+@Serializable
+data class StatisticsDto(val categories: List<StatCategoryDto> = emptyList())
+
+@Serializable
+data class StatCategoryDto(
+    val id: Int = 0,
+    val name: String = "",
+    val statistics: List<StatEntryDto> = emptyList(),
+    val sub_categories: List<StatCategoryDto> = emptyList(),
+) {
+    /** Aplana la jerarquía de categorías/subcategorías en una lista de valores. */
+    fun flatten(): List<StatEntryDto> = statistics + sub_categories.flatMap { it.flatten() }
+}
+
+@Serializable
+data class StatEntryDto(val id: Int = 0, val name: String = "", val quantity: Double = 0.0)
 
 @Serializable
 data class TokenIndexDto(val price: Long = 0, val last_updated_timestamp: Long = 0)

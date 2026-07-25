@@ -33,6 +33,8 @@ data class DashboardState(
     val activeCharacterClass: String? = null,
     val lastSyncedAt: Instant? = null,
     val vault: com.azeroth.companion.core.model.GreatVaultProgress? = null,
+    /** Sin lectura previa al reset no se puede saber qué Delves son de esta semana. */
+    val worldBaselineMissing: Boolean = false,
 )
 
 @HiltViewModel
@@ -70,6 +72,9 @@ class DashboardViewModel @Inject constructor(
                 val vault = runCatching {
                     progressionRepository.computeVault(active?.id ?: 0L)
                 }.getOrNull()
+                val worldUnknown = runCatching {
+                    progressionRepository.worldBaselineMissing(active?.id ?: 0L)
+                }.getOrDefault(true)
                 _state.value = _state.value.copy(
                     activeCharacterName = active?.name,
                     activeCharacterRealm = active?.realmName,
@@ -77,6 +82,7 @@ class DashboardViewModel @Inject constructor(
                     activeCharacterClass = active?.playableClass,
                     lastSyncedAt = active?.lastSyncedAt,
                     vault = vault,
+                    worldBaselineMissing = worldUnknown,
                 )
             }
         }

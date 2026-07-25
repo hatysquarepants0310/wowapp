@@ -50,4 +50,35 @@ class VaultCalculatorTest {
         assertEquals(0, plan.stepsAffordable)
         assertEquals(0, plan.ilvlGain)
     }
+
+    /**
+     * Igual que en el juego: la casilla del umbral N premia al nivel de la
+     * N-ésima mejor actividad, no un ilvl fijo por posición. Con 4 llaves +10 y
+     * una +2, la primera casilla vale +10 y la del umbral 4 también, pero la de
+     * 8 sigue bloqueada.
+     */
+    @Test
+    fun `slot from tiers rewards the Nth best activity`() {
+        val slot = VaultCalculator.slotFromTiers(
+            tiers = listOf(642, 642, 642, 642, 619),
+            thresholds = listOf(1, 4, 8),
+        )
+        assertEquals(5, slot.current)
+        assertEquals(listOf<Int?>(642, 642, null), slot.predictedRewardIlvl)
+    }
+
+    @Test
+    fun `raid slots use the difficulty of each kill`() {
+        val vault = VaultCalculator.vaultFromTiers(
+            characterId = 1L,
+            raidIlvls = listOf(645, 632, 632, 619),
+            mythicIlvls = emptyList(),
+            worldActivitiesThisWeek = 0,
+            rules = rules,
+        )
+        assertEquals(4, vault.raidSlots.current)
+        // Umbral 2 -> 2.º mejor (632); umbral 4 -> 4.º mejor (619); umbral 6 bloqueado.
+        assertEquals(listOf<Int?>(632, 619, null), vault.raidSlots.predictedRewardIlvl)
+        assertEquals(0, vault.mythicPlusSlots.current)
+    }
 }

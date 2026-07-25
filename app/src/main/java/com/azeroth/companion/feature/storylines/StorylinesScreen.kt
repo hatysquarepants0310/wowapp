@@ -37,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.azeroth.companion.data.CategoryKind
 import com.azeroth.companion.data.CategoryNode
 import com.azeroth.companion.data.SeasonNode
 import com.azeroth.companion.data.StorylineProgress
@@ -230,9 +231,16 @@ private fun SeasonCard(season: SeasonNode, onClick: () -> Unit) {
                                 fontWeight = FontWeight.Bold)
                         }
                     }
-                    Text("${season.storylineCount} historias · ${season.completed}/${season.total} misiones",
+                    Text(
+                        buildString {
+                            append("${season.completed}/${season.total} historias completas")
+                            if (season.campaignCount > 0) {
+                                append(" · ${season.campaignCount} campañas")
+                            }
+                        },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     if (season.total > 0) {
                         LinearProgressIndicator(
                             progress = { season.completed.toFloat() / season.total },
@@ -258,7 +266,7 @@ private fun CategoryList(state: StorylinesState, viewModel: StorylinesViewModel)
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text("Buscar historia o zona") },
+            label = { Text("Buscar historia, campaña o zona") },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             singleLine = true,
         )
@@ -278,14 +286,8 @@ private fun CategoryList(state: StorylinesState, viewModel: StorylinesViewModel)
                         (it.zone?.contains(state.query, true) == true)
                 }
                 if (visible.isEmpty()) return@forEach
-                item(key = "cat_${node.category}") {
-                    Text(
-                        node.category.label.uppercase(),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = accent,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 2.dp),
-                    )
+                item(key = "cat_${node.key}") {
+                    CategoryHeader(node, accent)
                 }
                 items(visible, key = { "st_${it.id}" }) { story ->
                     StoryRow(story, accent) { viewModel.openStory(story) }
@@ -293,6 +295,38 @@ private fun CategoryList(state: StorylinesState, viewModel: StorylinesViewModel)
             }
             item { Spacer(Modifier.height(16.dp)) }
         }
+    }
+}
+
+/**
+ * Cabecera de categoría: el nombre REAL de la campaña del juego (o la zona),
+ * con cuántas de sus historias están completas.
+ */
+@Composable
+private fun CategoryHeader(node: CategoryNode, accent: Color) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                if (node.kind == CategoryKind.CAMPAIGN) "⚔" else "🗺",
+                style = MaterialTheme.typography.labelLarge,
+            )
+            Text(
+                node.label.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                color = accent,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            "${node.completed}/${node.total}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -350,12 +384,24 @@ private fun QuestList(state: StorylinesState, viewModel: StorylinesViewModel) {
     val story = state.story!!
     val accent = expansionColors(state.season?.expansionId ?: 0).first
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        Text("${story.completed} / ${story.total} misiones completadas",
+        Text("${story.completed} / ${story.total} misiones obligatorias",
             style = MaterialTheme.typography.titleMedium, color = accent,
             modifier = Modifier.padding(top = 10.dp))
+        story.campaign?.let {
+            Text("⚔ $it", style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         story.zone?.let {
             Text("📍 $it", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (story.optionalTotal > 0) {
+            Text(
+                "${story.optionalCompleted}/${story.optionalTotal} opcionales · " +
+                    "no hacen falta para completar la historia",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         if (state.questsLoading) { Center { CircularProgressIndicator() }; return }
         LazyColumn(
@@ -382,16 +428,21 @@ private fun QuestCard(q: StorylineQuest, accent: Color, expanded: Boolean, onCli
                         else MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(if (q.completed) "✓" else q.step.toString(),
+                    Text(if (q.completed) "✓" else if (q.optional) "·" else q.step.toString(),
                         style = MaterialTheme.typography.labelMedium,
                         color = if (q.completed) accent
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold)
                 }
-                Text(q.name, style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f),
-                    color = if (q.completed) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(Modifier.weight(1f)) {
+                    Text(q.name, style = MaterialTheme.typography.bodyMedium,
+                        color = if (q.completed) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (q.optional) {
+                        Text("opcional", style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.secondary)
+                    }
+                }
                 Text(if (expanded) "▾" else "▸",
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

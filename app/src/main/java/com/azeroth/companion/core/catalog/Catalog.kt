@@ -57,6 +57,21 @@ data class VaultRules(
         "delves_bountiful", "prey_eversong", "prey_zulaman", "prey_harandar",
         "prey_voidstorm", "weekly_world_boss",
     ),
+    /**
+     * ilvl de la recompensa según la DIFICULTAD del jefe, igual que en el juego:
+     * la casilla N premia al nivel del jefe N-ésimo mejor de la semana, no un
+     * valor fijo por posición.
+     */
+    val raidIlvlByDifficulty: Map<String, Int> = mapOf(
+        "LFR" to 606, "NORMAL" to 619, "HEROIC" to 632, "MYTHIC" to 645,
+    ),
+    /** ilvl de la recompensa según el nivel de la llave M+ (nivel → ilvl). */
+    val mythicPlusIlvlByLevel: Map<String, Int> = mapOf(
+        "2" to 619, "3" to 623, "4" to 626, "5" to 626, "6" to 629,
+        "7" to 632, "8" to 636, "9" to 639, "10" to 642,
+    ),
+    /** Estadística del perfil que cuenta Delves completadas (fila de Mundo). */
+    val delveStatisticId: Int = 40734,
 )
 
 /** Costos de mejora de equipo (§7.3): calculadora de crests. */
