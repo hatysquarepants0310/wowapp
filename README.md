@@ -256,6 +256,34 @@ prioridad sobre cualquier estimación.
 tienes** al cruzar tu colección, y una pantalla con todo el equipo destacado de los jefes finales.
 Son 385 objetos con imagen y origen, horneados en assets: abren al instante y sin conexión.
 
+**v2.2.0** — Las semanales se marcan de verdad, y el botín te lleva a dónde conseguirlo.
+
+*Bug de las semanales.* No se marcaban aunque la misma misión sí saliera completada en el resto de
+la app: la pantalla resolvía el personaje como `activeCharacterId ?: 0L` mientras el sync guardaba el
+estado con el ID **real** del personaje (el elegido o, si no hay ninguno, el primero del roster). Se
+escribía bajo un ID y se leía bajo otro. La regla vivía copiada en seis sitios; ahora existe una sola
+vez, en `ActiveCharacter`, para que no vuelva a divergir.
+
+*Botín navegable.* Cada objeto del botín de temporada lleva al jefe y la instancia de los que cae:
+abre la pestaña correcta, despliega la instancia y resalta al jefe. Se acabó ver una montura y no
+saber de dónde sale.
+
+*Botín por semanal.* Cada semanal se despliega y enseña lo que se persigue en el contenido que pide,
+con imagen y probabilidad. La misión de seguimiento en sí solo da oro y experiencia —comprobado
+contra la API—, así que lo útil es el botín de la mazmorra, la banda o el jefe de mundo que hay
+detrás; el catálogo mapea cada semanal a sus instancias.
+
+*Tus intentos reales.* Las monturas de temporada muestran cuántas veces has matado a su jefe (sale
+de tu perfil, no de una estimación) y qué porcentaje de gente ya la tendría con esos intentos:
+1 - (1 - p)^n. Con un 1 %, 100 intentos son un 63 %, no una garantía.
+
+*Sobre las probabilidades.* Confirmado que Blizzard no las publica: el juego tampoco las muestra. Las
+webs que sí las tienen las calculan con telemetría de sus propios usuarios — Wowhead lo explica en su
+web ("It maintains a WoW addon called the Wowhead Looter, which collects data as you play the
+game"). Copiar esos números sería usar datos ajenos sin permiso, así que la app estima con lo que sí
+es público y explica cada número; el campo `knownDropRates` del catálogo está para que la comunidad
+aporte tasas medidas, y esas ganan sobre cualquier estimación.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json`, `quests_es/en.json`, `quest_meta.json`,
 `areas_es/en.json` y `mounts.json` a partir de las tablas DB2 de wago.tools (datos del propio cliente

@@ -41,10 +41,26 @@ import com.azeroth.companion.data.InstanceSummary
  * confundir). Fuentes oficiales — Blizzard Game Data + Raider.IO.
  */
 @Composable
-fun ContentScreen(viewModel: ContentViewModel = hiltViewModel()) {
+fun ContentScreen(
+    focusInstanceId: Int = 0,
+    focusBossId: Int = 0,
+    viewModel: ContentViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var tab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Mythic+", "Mazmorras", "Bandas")
+    // Al llegar desde un objeto del botín se abre ya en la pestaña correcta.
+    var tab by remember {
+        mutableIntStateOf(if (focusInstanceId != 0) 2 else 0)
+    }
+    androidx.compose.runtime.LaunchedEffect(focusInstanceId, focusBossId) {
+        viewModel.focusOn(focusInstanceId, focusBossId)
+    }
+    // La instancia puede ser mazmorra o banda: se decide con el contenido ya cargado.
+    androidx.compose.runtime.LaunchedEffect(state.expansion, focusInstanceId) {
+        if (focusInstanceId != 0 && state.expansion != null) {
+            tab = if (state.expansion?.raids?.any { it.id == focusInstanceId } == true) 2 else 1
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         TabRow(selectedTabIndex = tab) {
@@ -172,7 +188,15 @@ private fun ExpansionSelector(state: ContentState, viewModel: ContentViewModel) 
 @Composable
 private fun InstanceCard(instance: InstanceSummary, state: ContentState, viewModel: ContentViewModel) {
     val bosses = state.bossesByInstance[instance.id]
-    Card(Modifier.fillMaxWidth().clickable { viewModel.loadBosses(instance.id) }) {
+    val focused = state.focusInstanceId == instance.id
+    Card(
+        Modifier.fillMaxWidth().clickable { viewModel.loadBosses(instance.id) },
+        colors = if (focused) {
+            androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            )
+        } else androidx.compose.material3.CardDefaults.cardColors(),
+    ) {
         Column(Modifier.padding(12.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(instance.name, style = MaterialTheme.typography.titleSmall)
@@ -189,6 +213,7 @@ private fun InstanceCard(instance: InstanceSummary, state: ContentState, viewMod
                         bosses.forEachIndexed { i, boss ->
                             BossRow(index = i + 1, boss = boss,
                                 loot = state.lootByBoss[boss.id],
+                                highlighted = state.focusBossId == boss.id,
                                 onClick = { viewModel.loadLoot(boss.id) })
                         }
                     }
@@ -203,11 +228,18 @@ private fun BossRow(
     index: Int,
     boss: com.azeroth.companion.data.Boss,
     loot: List<com.azeroth.companion.data.LootEntry>?,
+    highlighted: Boolean = false,
     onClick: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 4.dp)) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("$index. ${boss.name}", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "$index. ${boss.name}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (highlighted) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (highlighted) androidx.compose.ui.text.font.FontWeight.Bold else null,
+            )
             Text(if (loot == null) "ver botín" else "botín ▾",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary)

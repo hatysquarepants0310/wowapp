@@ -1,5 +1,6 @@
 package com.azeroth.companion.feature.weekly
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,10 @@ import com.azeroth.companion.data.WeeklyActivity
  * comparando con el último snapshot anterior al reset.
  */
 @Composable
-fun WeeklyScreen(viewModel: WeeklyViewModel = hiltViewModel()) {
+fun WeeklyScreen(
+    onOpenSource: (Int, Int) -> Unit = { _, _ -> },
+    viewModel: WeeklyViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val a = state.activity
 
@@ -63,10 +67,15 @@ fun WeeklyScreen(viewModel: WeeklyViewModel = hiltViewModel()) {
                 Column {
                     state.tasks.forEach { row ->
                         val complete = (row.state?.completions ?: 0) > 0
-                        LineRow(
-                            icon = if (complete) "☑" else "☐",
+                        val id = row.task.id
+                        WeeklyTaskRow(
                             title = row.task.title["es_MX"] ?: row.task.title.values.first(),
-                            trailing = if (complete) "hecha" else "",
+                            complete = complete,
+                            expandable = row.task.lootInstanceIds.isNotEmpty(),
+                            expanded = state.expandedTaskId == id,
+                            loot = state.lootByTask[id],
+                            onToggle = { viewModel.toggleTask(id) },
+                            onOpenSource = onOpenSource,
                         )
                     }
                     Text(
@@ -149,6 +158,71 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
                 )
             }
             content()
+        }
+    }
+}
+
+/**
+ * Una semanal con el botín del contenido que pide: la misión de seguimiento solo
+ * da oro, así que lo que responde "¿por qué hago esto?" es lo que cae dentro.
+ */
+@Composable
+private fun WeeklyTaskRow(
+    title: String,
+    complete: Boolean,
+    expandable: Boolean,
+    expanded: Boolean,
+    loot: List<com.azeroth.companion.data.LootEntry>?,
+    onToggle: () -> Unit,
+    onOpenSource: (Int, Int) -> Unit,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .let { m -> if (expandable) m.clickable { onToggle() } else m }
+            .padding(vertical = 5.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(if (complete) "☑" else "☐", style = MaterialTheme.typography.bodyMedium)
+            Text(title, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            if (complete) {
+                Text(
+                    "hecha",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            if (expandable) {
+                Text(
+                    if (expanded) "▾" else "▸",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+            Column(Modifier.padding(start = 26.dp, top = 4.dp)) {
+                if (loot == null) {
+                    Empty("Cargando botín…")
+                } else if (loot.isEmpty()) {
+                    Empty("Sin botín listado para este contenido.")
+                } else {
+                    Text(
+                        "Lo que se persigue aquí:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    loot.forEach { entry ->
+                        com.azeroth.companion.ui.components.LootRow(
+                            entry,
+                            onClick = { onOpenSource(it.instanceId, it.bossId) },
+                        )
+                    }
+                }
+            }
         }
     }
 }

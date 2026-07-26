@@ -1,7 +1,6 @@
 package com.azeroth.companion.data
 
 import android.content.Context
-import com.azeroth.companion.core.database.CharacterDao
 import com.azeroth.companion.core.database.SnapshotDao
 import com.azeroth.companion.core.datastore.LanguagePref
 import com.azeroth.companion.core.datastore.SettingsRepository
@@ -142,7 +141,7 @@ class StorylinesRepository @Inject constructor(
     private val apiFactory: BlizzardApiFactory,
     private val settingsRepository: SettingsRepository,
     private val snapshotDao: SnapshotDao,
-    private val characterDao: CharacterDao,
+    private val activeCharacter: ActiveCharacter,
     private val json: Json,
 ) {
     private var fileCache: StorylinesFile? = null
@@ -203,10 +202,7 @@ class StorylinesRepository @Inject constructor(
     private fun StorylineDef.required(): List<Int> = questIds.filterNot { it in opt }
 
     private suspend fun completedQuestIds(): Set<Int> {
-        val settings = settingsRepository.settings.first()
-        val roster = characterDao.observeAll().first()
-        val character = roster.firstOrNull { it.id == settings.activeCharacterId }
-            ?: roster.firstOrNull() ?: return emptySet()
+        val character = activeCharacter.current() ?: return emptySet()
         val snapshot = snapshotDao.latest(character.id) ?: return emptySet()
         return runCatching {
             json.decodeFromString(ListSerializer(Int.serializer()), snapshot.completedQuestIdsJson).toSet()

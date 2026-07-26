@@ -2,6 +2,7 @@ package com.azeroth.companion.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,9 +55,16 @@ private fun slotLabel(slot: String?): String? = when (slot?.uppercase()) {
  * de caída, así que el número siempre viene acompañado de cómo se ha obtenido.
  */
 @Composable
-fun LootRow(entry: LootEntry, showSource: Boolean = true) {
+fun LootRow(
+    entry: LootEntry,
+    showSource: Boolean = true,
+    onClick: ((LootEntry) -> Unit)? = null,
+) {
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        Modifier
+            .fillMaxWidth()
+            .let { m -> if (onClick != null) m.clickable { onClick(entry) } else m }
+            .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         val border = qualityColor(entry.quality)
@@ -128,6 +136,26 @@ fun LootRow(entry: LootEntry, showSource: Boolean = true) {
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (entry.attempts > 0 && !entry.owned) {
+                Text(
+                    buildString {
+                        append("Llevas ${entry.attempts} intento")
+                        if (entry.attempts != 1) append("s")
+                        entry.cumulativePercent?.let {
+                            append(" · a estas alturas la tendría el ${formatPercent(it)}")
+                        }
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+            if (onClick != null && entry.bossId != 0) {
+                Text(
+                    "Ver dónde se consigue →",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

@@ -2,7 +2,6 @@ package com.azeroth.companion.data
 
 import android.content.Context
 import com.azeroth.companion.core.catalog.CatalogRepository
-import com.azeroth.companion.core.database.CharacterDao
 import com.azeroth.companion.core.database.SnapshotDao
 import com.azeroth.companion.core.datastore.LanguagePref
 import com.azeroth.companion.core.datastore.SettingsRepository
@@ -61,13 +60,19 @@ data class LootEntry(
     val iconUrl: String?,
     val slot: String?,
     val instance: String,
+    val instanceId: Int,
     val boss: String,
+    val bossId: Int,
     val difficulties: List<String>,
     val chance: DropChance,
     val chancePercent: Double?,
     val chanceExplanation: String,
     val isMount: Boolean,
     val owned: Boolean = false,
+    /** Veces que has matado al jefe del que cae (de tu propio perfil). */
+    val attempts: Int = 0,
+    /** Probabilidad de que a estas alturas ya lo tuvieras, dado [attempts]. */
+    val cumulativePercent: Double? = null,
 )
 
 /**
@@ -81,7 +86,7 @@ class SeasonLootRepository @Inject constructor(
     private val catalogRepository: CatalogRepository,
     private val settingsRepository: SettingsRepository,
     private val snapshotDao: SnapshotDao,
-    private val characterDao: CharacterDao,
+    private val activeCharacter: ActiveCharacter,
     private val apiFactory: com.azeroth.companion.core.network.BlizzardApiFactory,
     private val json: Json,
 ) {
@@ -108,11 +113,42 @@ class SeasonLootRepository @Inject constructor(
     suspend fun expansionName(): String = file().expansion
 
     /**
-     * Monturas exclusivas de la temporada: las que aparecen en las tablas de
-     * botín de las bandas y mazmorras de la expansión actual. Marca las que ya
-     * tienes cruzando con tu colección.
+     * Monturas exclusivas de la temporada (las que aparecen en las tablas de
+     * botín de bandas y mazmorras de la expansión actual), marcando las que ya
+     * tienes, y con TUS intentos: la API dice cuántas veces has matado
+     * a cada jefe, así que se puede decir "llevas 23 intentos" con datos reales
+     * en lugar de solo una probabilidad teórica.
      */
-    suspend fun seasonMounts(): List<LootEntry> = entriesFor { it in file().mountItemIds }
+    suspend fun seasonMounts(): List<LootEntry> {
+        val base = entriesFor { it in file().mountItemIds }
+        val kills = killsByEncounter()
+        return base.map { entry ->
+            val attempts = kills[entry.bossId] ?: 0
+            entry.copy(
+                attempts = attempts,
+                cumulativePercent = DropChanceCalculator.cumulative(entry.chance, attempts),
+            )
+        }
+    }
+
+    /** encounterId -> veces matado (sumando dificultades), del perfil del personaje. */
+    private suspend fun killsByEncounter(): Map<Int, Int> {
+        val character = activeCharacter.current() ?: return emptyMap()
+        val region = settingsRepository.settings.first().region
+        val api = apiFactory.forRegion(region)
+        val raids = runCatching {
+            api.raidEncounters(character.realmSlug, character.name.lowercase(), region.namespaceProfile)
+        }.getOrNull() ?: return emptyMap()
+        val out = mutableMapOf<Int, Int>()
+        raids.expansions.flatMap { it.instances }.forEach { inst ->
+            inst.modes.forEach { mode ->
+                mode.progress?.encounters.orEmpty().forEach { enc ->
+                    out[enc.encounter.id] = (out[enc.encounter.id] ?: 0) + enc.completed_count
+                }
+            }
+        }
+        return out
+    }
 
     /**
      * Armas y equipo destacado de la temporada: lo épico o mejor de los jefes
@@ -135,6 +171,23 @@ class SeasonLootRepository @Inject constructor(
             .take(limit)
             .map { (id, boss) -> entry(id, boss, f, emptySet()) }
             .sortedWith(compareByDescending<LootEntry> { it.isMount }.thenBy { it.name })
+    }
+
+    /**
+     * Lo destacado del botín de unas instancias: las monturas primero y luego el
+     * equipo épico. Responde "¿por qué hago esta semanal?".
+     */
+    suspend fun instanceHighlights(instanceIds: List<Int>, limit: Int = 8): List<LootEntry> {
+        if (instanceIds.isEmpty()) return emptyList()
+        val f = file()
+        val owned = ownedMountItemIds()
+        return f.bosses.filter { it.instanceId in instanceIds }
+            .flatMap { boss -> boss.items.map { it to boss } }
+            .distinctBy { it.first }
+            .map { (id, boss) -> entry(id, boss, f, owned) }
+            .filter { it.isMount || it.quality in EPIC_OR_BETTER }
+            .sortedWith(compareByDescending<LootEntry> { it.isMount }.thenBy { it.name })
+            .take(limit)
     }
 
     /**
@@ -184,7 +237,9 @@ class SeasonLootRepository @Inject constructor(
                 iconUrl = icon,
                 slot = detail?.inventory_type?.type?.takeIf { it != "NON_EQUIP" },
                 instance = encounter.instance?.name.orEmpty(),
+                instanceId = encounter.instance?.id ?: 0,
                 boss = encounter.name,
+                bossId = bossId,
                 difficulties = encounter.modes.map { it.type },
                 chance = chance,
                 chancePercent = DropChanceCalculator.percent(chance),
@@ -236,7 +291,9 @@ class SeasonLootRepository @Inject constructor(
             iconUrl = item?.icon,
             slot = item?.slot?.takeIf { it.isNotBlank() && it != "NON_EQUIP" },
             instance = boss.instance,
+            instanceId = boss.instanceId,
             boss = if (es) boss.boss else boss.bossEn.ifBlank { boss.boss },
+            bossId = boss.bossId,
             difficulties = boss.modes,
             chance = chance,
             chancePercent = DropChanceCalculator.percent(chance),
@@ -254,10 +311,7 @@ class SeasonLootRepository @Inject constructor(
     private suspend fun ownedMountItemIds(): Set<Int> {
         val f = file()
         if (f.mountItemIds.isEmpty()) return emptySet()
-        val settings = settingsRepository.settings.first()
-        val roster = characterDao.observeAll().first()
-        val character = roster.firstOrNull { it.id == settings.activeCharacterId }
-            ?: roster.firstOrNull() ?: return emptySet()
+        val character = activeCharacter.current() ?: return emptySet()
         val snapshot = snapshotDao.latest(character.id) ?: return emptySet()
         val ownedMountIds = runCatching {
             json.decodeFromString(ListSerializer(Int.serializer()), snapshot.mountIdsJson).toSet()

@@ -99,6 +99,19 @@ object DropChanceCalculator {
         return DropChance.FromTable(perKill, tableSize)
     }
 
+    /**
+     * Probabilidad de haber conseguido ya el objeto tras [attempts] intentos:
+     * 1 - (1 - p)^n. Sirve para poner en contexto la mala suerte ("llevas 40
+     * intentos, el 33 % de la gente ya lo tendría"). Es el único número de
+     * probabilidad que la app puede calcular sobre datos REALES del jugador,
+     * porque los intentos salen de sus propias muertes de jefe.
+     */
+    fun cumulative(chance: DropChance, attempts: Int): Double? {
+        val p = percent(chance)?.div(100.0) ?: return null
+        if (attempts <= 0 || p <= 0.0) return null
+        return (1 - Math.pow(1 - p, attempts.toDouble())) * 100
+    }
+
     private fun trim(value: Double): String =
         if (value == value.toLong().toDouble()) value.toLong().toString()
         else String.format("%.1f", value)

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.azeroth.companion.core.datastore.SettingsRepository
 import com.azeroth.companion.core.model.TaskCategory
+import com.azeroth.companion.data.ActiveCharacter
 import com.azeroth.companion.data.EventsRepository
 import com.azeroth.companion.data.TaskWithState
 import com.azeroth.companion.data.WeeklyActivity
@@ -22,6 +23,9 @@ data class WeeklyState(
     val activity: WeeklyActivity = WeeklyActivity(),
     /** Las semanales del catálogo con su estado detectado. */
     val tasks: List<TaskWithState> = emptyList(),
+    /** Semanal desplegada y el botín del contenido que pide. */
+    val expandedTaskId: String? = null,
+    val lootByTask: Map<String, List<com.azeroth.companion.data.LootEntry>> = emptyMap(),
 )
 
 /**
@@ -38,10 +42,31 @@ class WeeklyViewModel @Inject constructor(
     private val weeklyRepository: WeeklyRepository,
     private val eventsRepository: EventsRepository,
     private val settingsRepository: SettingsRepository,
+    private val activeCharacter: ActiveCharacter,
+    private val seasonLootRepository: com.azeroth.companion.data.SeasonLootRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WeeklyState())
     val state: StateFlow<WeeklyState> = _state
+
+    /**
+     * Al desplegar una semanal se carga el botín del contenido que pide. La
+     * misión de seguimiento solo da oro y experiencia: lo que se persigue está
+     * en la mazmorra, la banda o el jefe de mundo que hay que completar.
+     */
+    fun toggleTask(taskId: String) {
+        val opening = _state.value.expandedTaskId != taskId
+        _state.value = _state.value.copy(expandedTaskId = if (opening) taskId else null)
+        if (!opening || _state.value.lootByTask.containsKey(taskId)) return
+        val task = _state.value.tasks.firstOrNull { it.task.id == taskId }?.task ?: return
+        if (task.lootInstanceIds.isEmpty()) return
+        viewModelScope.launch {
+            val loot = seasonLootRepository.instanceHighlights(task.lootInstanceIds)
+            _state.value = _state.value.copy(
+                lootByTask = _state.value.lootByTask + (taskId to loot),
+            )
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -50,7 +75,9 @@ class WeeklyViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val settings = settingsRepository.settings.first()
-            val characterId = settings.activeCharacterId ?: 0L
+            // TIENE que ser el mismo personaje con el que el sync guardó los
+            // estados: si no hay uno elegido, ambos caen al primero del roster.
+            val characterId = activeCharacter.currentId() ?: return@launch
             val tasks = weeklyRepository.tasks(includeLegacy = settings.showLegacyContent)
                 .filter { it.category != TaskCategory.GREAT_VAULT }
             val lastReset = eventsRepository.resetClock().lastWeeklyReset(Instant.now())

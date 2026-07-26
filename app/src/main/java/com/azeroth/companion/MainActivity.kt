@@ -144,6 +144,7 @@ private val subScreenTitles = mapOf(
     "seasons" to "Temporadas M+",
     "seasonal" to "Recompensas de temporada",
     "seasonloot" to "Botín de la temporada",
+    "content/{instanceId}/{bossId}" to "Contenido",
     "roster" to "Roster",
     "settings" to "Ajustes",
 )
@@ -223,9 +224,37 @@ private fun AppScaffold(startEventId: String?) {
             composable("event/{eventId}") { entry ->
                 EventDetailScreen(eventId = entry.arguments?.getString("eventId").orEmpty())
             }
-            composable("weekly") { WeeklyScreen() }
-            composable("seasonloot") { com.azeroth.companion.feature.loot.SeasonLootScreen() }
+            composable("weekly") {
+                WeeklyScreen(
+                    onOpenSource = { instanceId, bossId ->
+                        navController.navigate("content/$instanceId/$bossId")
+                    },
+                )
+            }
+            composable("seasonloot") {
+                com.azeroth.companion.feature.loot.SeasonLootScreen(
+                    onOpenSource = { instanceId, bossId ->
+                        navController.navigate("content/$instanceId/$bossId")
+                    },
+                )
+            }
             composable("content") { com.azeroth.companion.feature.content.ContentScreen() }
+            composable(
+                "content/{instanceId}/{bossId}",
+                arguments = listOf(
+                    androidx.navigation.navArgument("instanceId") {
+                        type = androidx.navigation.NavType.IntType
+                    },
+                    androidx.navigation.navArgument("bossId") {
+                        type = androidx.navigation.NavType.IntType
+                    },
+                ),
+            ) { entry ->
+                com.azeroth.companion.feature.content.ContentScreen(
+                    focusInstanceId = entry.arguments?.getInt("instanceId") ?: 0,
+                    focusBossId = entry.arguments?.getInt("bossId") ?: 0,
+                )
+            }
             composable("character") { com.azeroth.companion.feature.character.CharacterScreen() }
             composable("seasons") { com.azeroth.companion.feature.seasons.SeasonsScreen() }
             composable("quests") { com.azeroth.companion.feature.quests.QuestTrackerScreen() }
