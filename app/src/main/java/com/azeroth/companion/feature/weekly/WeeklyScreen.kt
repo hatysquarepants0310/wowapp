@@ -53,6 +53,32 @@ fun WeeklyScreen(viewModel: WeeklyViewModel = hiltViewModel()) {
 
         item { Summary(a) }
 
+        // Las semanales de la expansión: cada fila es una misión real de Blizzard
+        // ("Midnight: <actividad>"), así que se marca sola al sincronizar.
+        val done = state.tasks.count { (it.state?.completions ?: 0) > 0 }
+        section("Semanales", done) {
+            if (state.tasks.isEmpty()) {
+                Empty("Sin semanales en el catálogo para esta expansión.")
+            } else {
+                Column {
+                    state.tasks.forEach { row ->
+                        val complete = (row.state?.completions ?: 0) > 0
+                        LineRow(
+                            icon = if (complete) "☑" else "☐",
+                            title = row.task.title["es_MX"] ?: row.task.title.values.first(),
+                            trailing = if (complete) "hecha" else "",
+                        )
+                    }
+                    Text(
+                        "$done de ${state.tasks.size} hechas esta semana.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+        }
+
         section("Mythic+", a.mythicRuns.size) {
             if (a.mythicRuns.isEmpty()) {
                 Empty("Ninguna mazmorra Mythic+ esta semana.")

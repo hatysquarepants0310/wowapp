@@ -202,7 +202,7 @@ private fun InstanceCard(instance: InstanceSummary, state: ContentState, viewMod
 private fun BossRow(
     index: Int,
     boss: com.azeroth.companion.data.Boss,
-    loot: List<String>?,
+    loot: List<com.azeroth.companion.data.LootEntry>?,
     onClick: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 4.dp)) {
@@ -219,9 +219,10 @@ private fun BossRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                    loot.forEach { item ->
-                        Text("• $item", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary)
+                    // Imagen, color de calidad y probabilidad estimada: el mismo
+                    // componente que usa el botín de temporada.
+                    loot.forEach { entry ->
+                        com.azeroth.companion.ui.components.LootRow(entry, showSource = false)
                     }
                 }
             }

@@ -140,6 +140,13 @@ interface BlizzardApi {
         @Query("locale") locale: String = "es_MX",
     ): JournalEncounterDto
 
+    @GET("/data/wow/item/{id}")
+    suspend fun item(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): ItemDto
+
     @GET("/data/wow/media/item/{id}")
     suspend fun itemMedia(
         @Path("id") id: Int,
@@ -337,6 +344,21 @@ data class JournalEncounterDto(
     val id: Int = 0,
     val name: String = "",
     val items: List<JournalLootDto> = emptyList(),
+    val instance: KeyedNameDto? = null,
+    val modes: List<DifficultyDto> = emptyList(),
+)
+
+/** Objeto del juego: calidad, tipo y ranura, para pintar el botín como en el juego. */
+@Serializable
+data class ItemDto(
+    val id: Int = 0,
+    val name: String = "",
+    val quality: TypedNameDto? = null,
+    val level: Int = 0,
+    val item_class: KeyedNameDto? = null,
+    val item_subclass: KeyedNameDto? = null,
+    val inventory_type: TypedNameDto? = null,
+    val is_equippable: Boolean = false,
 )
 
 @Serializable

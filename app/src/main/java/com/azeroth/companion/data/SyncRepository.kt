@@ -79,7 +79,18 @@ class SyncRepository @Inject constructor(
                 )
             }
             SyncResult.Success
-        }.getOrElse { it.toSyncFailure() }
+        }.getOrElse { error ->
+            // /profile/user/wow es el ÚNICO endpoint que exige el token del usuario.
+            // Si la sesión caducó, el roster ya guardado sigue siendo válido y el
+            // resto del sync funciona con el token de aplicación: no es un fallo
+            // que deba interrumpir nada.
+            val haveRoster = characterDao.observeAll().first().isNotEmpty()
+            if ((error as? HttpException)?.code() == 401 && haveRoster) {
+                SyncResult.Success
+            } else {
+                error.toSyncFailure()
+            }
+        }
     }
 
     /** Sync completo del personaje activo: perfil + snapshot + detección. */

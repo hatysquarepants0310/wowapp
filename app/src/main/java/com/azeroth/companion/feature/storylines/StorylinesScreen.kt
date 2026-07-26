@@ -109,13 +109,15 @@ class StorylinesViewModel @Inject constructor(
         // descripción y la recompensa se piden solo al abrir el detalle.
         if (!opening) return
         val quest = _state.value.quests.firstOrNull { it.id == id } ?: return
-        if (quest.description != null || quest.reward != null) return
+        if (quest.description != null || quest.rewardItems.isNotEmpty()) return
         viewModelScope.launch {
-            val (description, reward) = repository.questDetail(id)
-            if (description == null && reward == null) return@launch
+            val detail = repository.questDetail(id)
+            if (detail.description == null && detail.rewards.isEmpty()) return@launch
             _state.value = _state.value.copy(
                 quests = _state.value.quests.map {
-                    if (it.id == id) it.copy(description = description, reward = reward) else it
+                    if (it.id == id) {
+                        it.copy(description = detail.description, rewardItems = detail.rewards)
+                    } else it
                 },
             )
         }
@@ -463,8 +465,16 @@ private fun QuestCard(q: StorylineQuest, accent: Color, expanded: Boolean, onCli
                 Column(Modifier.padding(start = 38.dp, top = 6.dp)) {
                     q.zone?.let { Detail("Zona", it) }
                     if (q.minLevel > 0) Detail("Nivel mínimo", q.minLevel.toString())
-                    q.reward?.let { Detail("Recompensa", it) }
                     Detail("ID de misión", q.id.toString())
+                    if (q.rewardItems.isNotEmpty()) {
+                        Text(
+                            if (q.rewardItems.size > 1) "Recompensa (eliges una)" else "Recompensa",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                        q.rewardItems.forEach { reward -> QuestRewardRow(reward) }
+                    }
                     q.description?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -472,6 +482,40 @@ private fun QuestCard(q: StorylineQuest, accent: Color, expanded: Boolean, onCli
                     }
                 }
             }
+        }
+    }
+}
+
+/** Recompensa de misión con su imagen: la misma lectura visual que el equipo. */
+@Composable
+private fun QuestRewardRow(reward: com.azeroth.companion.data.QuestReward) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            Modifier.size(32.dp).clip(RoundedCornerShape(6.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (reward.iconUrl != null) {
+                coil.compose.AsyncImage(
+                    model = reward.iconUrl,
+                    contentDescription = reward.name,
+                    modifier = Modifier.size(32.dp).clip(RoundedCornerShape(6.dp)),
+                )
+            } else {
+                Text("🎁", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            Text(reward.name, style = MaterialTheme.typography.bodySmall)
+            Text(
+                reward.chanceExplanation,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

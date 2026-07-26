@@ -35,6 +35,7 @@ class ContentRepository @Inject constructor(
     private val apiFactory: BlizzardApiFactory,
     private val catalogRepository: CatalogRepository,
     private val settingsRepository: SettingsRepository,
+    private val seasonLootRepository: SeasonLootRepository,
     okHttpClient: OkHttpClient,
     json: Json,
 ) {
@@ -46,7 +47,6 @@ class ContentRepository @Inject constructor(
         .create(RaiderIoApi::class.java)
 
     private val bossCache = mutableMapOf<Int, List<Boss>>()
-    private val lootCache = mutableMapOf<Int, List<String>>()
     private val expansionCache = mutableMapOf<Int, ExpansionContent>()
     private var expansionsRefCache: List<ExpansionRef>? = null
 
@@ -103,16 +103,12 @@ class ContentRepository @Inject constructor(
         }.getOrDefault(emptyList()).also { bossCache[instanceId] = it }
     }
 
-    /** Botín (nombres de objetos) de un jefe. Responde "¿qué looteo aquí?". */
-    suspend fun bossLoot(encounterId: Int): List<String> {
-        lootCache[encounterId]?.let { return it }
-        val region = settingsRepository.settings.first().region
-        val api = apiFactory.forRegion(region)
-        return runCatching {
-            api.journalEncounter(encounterId, region.namespaceStatic)
-                .items.mapNotNull { it.item?.name }
-        }.getOrDefault(emptyList()).also { lootCache[encounterId] = it }
-    }
+    /**
+     * Botín de un jefe con imagen, calidad y probabilidad estimada. Responde
+     * "¿qué looteo aquí y con qué chance?" para cualquier jefe del juego.
+     */
+    suspend fun bossLoot(encounterId: Int, isRaid: Boolean = true): List<LootEntry> =
+        seasonLootRepository.bossLoot(encounterId, isRaid)
 
     private fun AffixDto.toAffix() = Affix(name, description)
 }

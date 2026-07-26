@@ -35,6 +35,8 @@ data class DashboardState(
     val vault: com.azeroth.companion.core.model.GreatVaultProgress? = null,
     /** Sin lectura previa al reset no se puede saber qué Delves son de esta semana. */
     val worldBaselineMissing: Boolean = false,
+    /** Monturas exclusivas de la temporada, para la tarjeta de Inicio. */
+    val seasonMounts: List<com.azeroth.companion.data.LootEntry> = emptyList(),
 )
 
 @HiltViewModel
@@ -45,6 +47,7 @@ class DashboardViewModel @Inject constructor(
     private val characterDao: com.azeroth.companion.core.database.CharacterDao,
     private val progressionRepository: com.azeroth.companion.data.ProgressionRepository,
     private val settingsRepository: SettingsRepository,
+    private val seasonLootRepository: com.azeroth.companion.data.SeasonLootRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -75,6 +78,10 @@ class DashboardViewModel @Inject constructor(
                 val worldUnknown = runCatching {
                     progressionRepository.worldBaselineMissing(active?.id ?: 0L)
                 }.getOrDefault(true)
+                // Se recalcula al cambiar de personaje: el "ya la tienes" depende
+                // de la colección del personaje activo.
+                val mounts = runCatching { seasonLootRepository.seasonMounts() }
+                    .getOrDefault(emptyList())
                 _state.value = _state.value.copy(
                     activeCharacterName = active?.name,
                     activeCharacterRealm = active?.realmName,
@@ -83,6 +90,7 @@ class DashboardViewModel @Inject constructor(
                     lastSyncedAt = active?.lastSyncedAt,
                     vault = vault,
                     worldBaselineMissing = worldUnknown,
+                    seasonMounts = mounts,
                 )
             }
         }

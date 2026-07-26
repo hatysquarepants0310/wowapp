@@ -29,12 +29,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.azeroth.companion.R
 import com.azeroth.companion.ui.components.ConfidenceBadge
 import com.azeroth.companion.ui.components.CountdownText
+import com.azeroth.companion.ui.components.LootRow
 import com.azeroth.companion.ui.components.SectionCard
 
 @Composable
 fun DashboardScreen(
     onOpenChecklist: (String) -> Unit,
     onOpenRoster: () -> Unit = {},
+    onOpenSeasonLoot: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -149,6 +151,23 @@ fun DashboardScreen(
             }
         }
 
+        // Lo exclusivo de la temporada: se pierde cuando la temporada cierra, así
+        // que merece estar en Inicio y no enterrado en un submenú.
+        if (state.seasonMounts.isNotEmpty()) {
+            SectionCard("Exclusivo de la temporada") {
+                Text(
+                    "Monturas que solo caen en esta temporada. Toca para ver todo el " +
+                        "botín destacado con su probabilidad.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+                state.seasonMounts.take(3).forEach { LootRow(it) }
+                androidx.compose.material3.TextButton(onClick = onOpenSeasonLoot) {
+                    Text("Ver todo el botín de la temporada →")
+                }
+            }
+        }
     }
 }
 

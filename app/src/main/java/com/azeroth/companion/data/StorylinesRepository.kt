@@ -5,6 +5,8 @@ import com.azeroth.companion.core.database.CharacterDao
 import com.azeroth.companion.core.database.SnapshotDao
 import com.azeroth.companion.core.datastore.LanguagePref
 import com.azeroth.companion.core.datastore.SettingsRepository
+import com.azeroth.companion.core.loot.DropChance
+import com.azeroth.companion.core.loot.DropChanceCalculator
 import com.azeroth.companion.core.network.BlizzardApiFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -103,18 +105,27 @@ data class StorylineProgress(
     val optionalTotal: Int = 0,
 )
 
+/** Recompensa de una misión, con imagen y probabilidad. */
+data class QuestReward(
+    val itemId: Int,
+    val name: String,
+    val iconUrl: String?,
+    val chancePercent: Double?,
+    val chanceExplanation: String,
+)
+
 data class StorylineQuest(
     val id: Int,
     val name: String,
     val completed: Boolean,
     val zone: String?,
-    val reward: String?,
     val minLevel: Int = 0,
     val description: String? = null,
     /** Posición en la cadena: el orden en que se hace. */
     val step: Int = 0,
     /** Misión opcional: no hace falta para completar la historia. */
     val optional: Boolean = false,
+    val rewardItems: List<QuestReward> = emptyList(),
 )
 
 /**
@@ -138,7 +149,7 @@ class StorylinesRepository @Inject constructor(
     private var questNames: Map<Int, String>? = null
     private var questMeta: Map<Int, List<Int>>? = null
     private var areaNames: Map<Int, String>? = null
-    private val questDetailCache = mutableMapOf<Int, Pair<String?, String?>>()
+    private val questDetailCache = mutableMapOf<Int, QuestDetail>()
 
     private fun spanish(): Boolean =
         (LanguagePref.read(context) ?: java.util.Locale.getDefault().language).startsWith("es")
@@ -322,7 +333,6 @@ class StorylinesRepository @Inject constructor(
                 name = names[qid] ?: "Misión #$qid",
                 completed = qid in completed,
                 zone = m?.getOrNull(0)?.takeIf { it != 0 }?.let { areaNames[it] },
-                reward = null,
                 minLevel = m?.getOrNull(1) ?: 0,
                 description = null,
                 step = index + 1,
@@ -332,18 +342,37 @@ class StorylinesRepository @Inject constructor(
     }
 
     /**
-     * Descripción y recompensa de una misión concreta: se pide a la API solo
-     * cuando el usuario abre el detalle, para no gastar peticiones al listar.
+     * Descripción y recompensas de una misión concreta, con imagen de cada objeto.
+     * Se pide a la API solo al abrir el detalle, para no gastar una petición por
+     * misión al listar la cadena.
+     *
+     * La recompensa de misión no es aleatoria: si hay un solo objeto está
+     * garantizado y, si hay varios, el juego te deja elegir uno.
      */
-    suspend fun questDetail(questId: Int): Pair<String?, String?> {
+    suspend fun questDetail(questId: Int): QuestDetail {
         questDetailCache[questId]?.let { return it }
         val region = settingsRepository.settings.first().region
         val api = apiFactory.forRegion(region)
         val detail = runCatching { api.quest(questId, region.namespaceStatic) }.getOrNull()
-        val pair = detail?.description?.takeIf { it.isNotBlank() } to
-            detail?.rewards?.items?.items?.mapNotNull { it.item?.name }
-                ?.takeIf { it.isNotEmpty() }?.joinToString(", ")
-        questDetailCache[questId] = pair
-        return pair
+        val items = detail?.rewards?.items?.items?.mapNotNull { it.item }
+            ?.filter { it.id != 0 }.orEmpty()
+        val chance: DropChance =
+            if (items.size > 1) DropChance.Choice(items.size) else DropChance.Guaranteed
+        val rewards = items.map { item ->
+            val icon = runCatching { api.itemMedia(item.id, region.namespaceStatic) }
+                .getOrNull()?.assets?.firstOrNull { it.key == "icon" }?.value
+            QuestReward(
+                itemId = item.id,
+                name = item.name ?: "Objeto #${item.id}",
+                iconUrl = icon,
+                chancePercent = DropChanceCalculator.percent(chance),
+                chanceExplanation = DropChanceCalculator.explain(chance),
+            )
+        }
+        val out = QuestDetail(detail?.description?.takeIf { it.isNotBlank() }, rewards)
+        questDetailCache[questId] = out
+        return out
     }
 }
+
+data class QuestDetail(val description: String?, val rewards: List<QuestReward>)
