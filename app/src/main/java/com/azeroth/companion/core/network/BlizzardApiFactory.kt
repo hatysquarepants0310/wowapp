@@ -26,17 +26,29 @@ class BlizzardApiFactory @Inject constructor(
     fun forRegion(region: Region): BlizzardApi = cache.getOrPut(region) {
         val client = baseClient.newBuilder()
             .addInterceptor { chain ->
-                // Token del usuario para endpoints de perfil; si no hay sesión, cae al
-                // token de aplicación para que los datos de juego públicos funcionen igual.
-                val token = runBlocking {
-                    authManager.validAccessToken(region) ?: authManager.appAccessToken(region)
+                // Solo /profile/user/** (el roster de la CUENTA) exige el token del
+                // usuario. Todo lo demás —incluidos /profile/wow/character/**, que es
+                // de donde sale el progreso— funciona con el token de aplicación, que
+                // la app se emite a sí misma. Verificado contra la API: misiones
+                // completadas, bandas, M+ y estadísticas responden 200 con él.
+                // Gracias a eso, que la sesión de Battle.net caduque ya no interrumpe
+                // la sincronización.
+                val needsUser = chain.request().url.encodedPath.startsWith("/profile/user")
+                val user = runBlocking { authManager.validAccessToken(region) }
+                val token = if (needsUser) user else {
+                    user ?: runBlocking { authManager.appAccessToken(region) }
                 }
-                val request = if (token != null) {
-                    chain.request().newBuilder().header("Authorization", "Bearer $token").build()
-                } else {
-                    chain.request()
+                var response = chain.proceed(chain.request().withToken(token))
+                // Un 401 con el token del usuario (revocado, caducado justo ahora)
+                // no debe dejar la pantalla vacía si el de aplicación sí sirve.
+                if (response.code == 401 && !needsUser && token == user) {
+                    val app = runBlocking { authManager.appAccessToken(region) }
+                    if (app != null && app != token) {
+                        response.close()
+                        response = chain.proceed(chain.request().withToken(app))
+                    }
                 }
-                chain.proceed(request)
+                response
             }
             .build()
         Retrofit.Builder()
@@ -46,4 +58,7 @@ class BlizzardApiFactory @Inject constructor(
             .build()
             .create(BlizzardApi::class.java)
     }
+
+    private fun okhttp3.Request.withToken(token: String?) =
+        if (token == null) this else newBuilder().header("Authorization", "Bearer $token").build()
 }

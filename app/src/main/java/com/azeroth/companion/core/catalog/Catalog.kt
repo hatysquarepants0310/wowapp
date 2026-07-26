@@ -22,6 +22,7 @@ data class Catalog(
     val seasonalRewards: List<SeasonalReward>,
     val zones: List<ZoneInfo> = emptyList(),
     val vault: VaultRules = VaultRules(),
+    val loot: LootRules = LootRules(),
     val economy: EconomyRules = EconomyRules(),
     val season: SeasonInfo = SeasonInfo(),
     /** ID de expansión en el journal de Blizzard para listar mazmorras y bandas. */
@@ -72,6 +73,34 @@ data class VaultRules(
     ),
     /** Estadística del perfil que cuenta Delves completadas (fila de Mundo). */
     val delveStatisticId: Int = 40734,
+)
+
+/**
+ * Reglas para ESTIMAR la probabilidad de botín. Blizzard no publica tasas de
+ * caída por objeto: lo único público es la tabla de botín de cada jefe (journal).
+ * Con el tamaño de la tabla y cuántos objetos suelta un intento se obtiene una
+ * estimación honesta, que la app muestra siempre marcada como estimada.
+ */
+@Serializable
+data class LootRules(
+    /** Objetos que suelta un jefe de banda por muerte (grupo de 20). */
+    val raidItemsPerKill: Double = 4.0,
+    /** Objetos que suelta un jefe de mazmorra por muerte. */
+    val dungeonItemsPerKill: Double = 1.0,
+    /** Objetos extra del último jefe de una mazmorra. */
+    val dungeonFinalBossBonusItems: Double = 1.0,
+    /**
+     * Orden de magnitud de las monturas de botín: NO sale de la tabla del jefe,
+     * es una tirada aparte que Blizzard no publica. Se deja aquí para que la
+     * comunidad lo corrija con observaciones reales.
+     */
+    val mountDropPercentEstimate: Double = 1.0,
+    /**
+     * Tasas medidas por la comunidad, objeto → porcentaje. Tienen prioridad
+     * sobre cualquier estimación. Vacío por defecto: preferimos decir "estimado"
+     * antes que inventar una cifra.
+     */
+    val knownDropRates: Map<String, Double> = emptyMap(),
 )
 
 /** Costos de mejora de equipo (§7.3): calculadora de crests. */

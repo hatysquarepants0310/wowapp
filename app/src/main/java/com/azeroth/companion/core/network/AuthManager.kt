@@ -74,12 +74,19 @@ class AuthManager @Inject constructor(
 
     val isConfigured: Boolean get() = clientId.isNotBlank() && clientSecret.isNotBlank()
 
-    suspend fun restore() {
+    suspend fun restore(region: Region? = null) {
         val prefs = context.authStore.data.first()
-        _state.value = when {
-            prefs[Keys.ACCESS_TOKEN] == null -> AuthState.LoggedOut
-            else -> AuthState.LoggedIn(prefs[Keys.BATTLE_TAG])
+        val token = prefs[Keys.ACCESS_TOKEN]
+        if (token == null) {
+            _state.value = AuthState.LoggedOut
+            return
         }
+        val expiresAt = prefs[Keys.EXPIRES_AT] ?: 0
+        val expired = Instant.now().epochSecond >= expiresAt
+        _state.value = if (expired) AuthState.Expired else AuthState.LoggedIn(prefs[Keys.BATTLE_TAG])
+        // Al abrir la app se intenta alargar el token: es lo que evita que la
+        // sesión muera sola. Si ya caducó no hay nada que alargar.
+        if (!expired && region != null) extendToken(region, token)
     }
 
     /** Construye la URL de autorización y guarda code_verifier + state pendientes. */
@@ -133,26 +140,90 @@ class AuthManager @Inject constructor(
         )
     }
 
-    /** Devuelve un token vigente, refrescando si expiró. Null = modo degradado. */
+    /** Devuelve un token vigente, alargándolo o refrescándolo si toca. Null = modo degradado. */
     suspend fun validAccessToken(region: Region): String? {
         val prefs = context.authStore.data.first()
         val token = prefs[Keys.ACCESS_TOKEN] ?: return null
         val expiresAt = prefs[Keys.EXPIRES_AT] ?: 0
-        if (Instant.now().epochSecond < expiresAt - 60) return token
-        val refresh = prefs[Keys.REFRESH_TOKEN] ?: run {
-            _state.value = AuthState.Broken("Token expirado y sin refresh token. Vuelve a iniciar sesión.")
-            return null
+        val now = Instant.now().epochSecond
+        // Alargar mucho antes de que caduque: si el token muere sin haberse
+        // alargado, no hay forma de recuperarlo sin volver a iniciar sesión.
+        if (now > expiresAt - RENEW_MARGIN_SECONDS) {
+            extendToken(region, token)?.let { return it }
         }
-        // Igual que en el login: client_id solo por Basic auth, nunca también en el cuerpo.
-        exchange(
-            region,
-            FormBody.Builder()
-                .add("grant_type", "refresh_token")
-                .add("refresh_token", refresh)
-                .build(),
-        )
-        return context.authStore.data.first()[Keys.ACCESS_TOKEN]
+        if (now < expiresAt - 60) return token
+        val refresh = prefs[Keys.REFRESH_TOKEN]
+        if (refresh != null) {
+            // Igual que en el login: client_id solo por Basic auth, nunca también en el cuerpo.
+            exchange(
+                region,
+                FormBody.Builder()
+                    .add("grant_type", "refresh_token")
+                    .add("refresh_token", refresh)
+                    .build(),
+            )
+            return context.authStore.data.first()[Keys.ACCESS_TOKEN]
+        }
+        // Sin sesión de usuario los datos del personaje SIGUEN funcionando con el
+        // token de aplicación (los endpoints /profile/wow/character/... lo aceptan);
+        // solo la importación del roster de la cuenta necesita al usuario. Por eso
+        // esto es "Expired" y no "Broken": no hay nada que el usuario deba arreglar
+        // salvo que quiera volver a leer la lista de personajes de su cuenta.
+        _state.value = AuthState.Expired
+        return null
     }
+
+    /**
+     * Alarga la vida del token con el grant `token_extension` de Blizzard.
+     * Blizzard NO habilita `refresh_token` para los clientes de desarrollador
+     * (el endpoint responde `invalid_client: Unauthorized grant type`) y los
+     * tokens de usuario caducan a las 24 h, que era la causa de tener que
+     * reconectar la cuenta todos los días. `token_extension` sí está habilitado
+     * y devuelve el mismo token con ~90 días de vida, así que basta con abrir la
+     * app una vez cada tres meses para no volver a iniciar sesión.
+     */
+    @Volatile private var lastExtendAttempt: Long = 0
+
+    private suspend fun extendToken(region: Region, token: String): String? =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            if (clientId.isBlank() || clientSecret.isBlank()) return@withContext null
+            // El interceptor pasa por aquí en CADA petición: sin este freno, un
+            // token que no se puede alargar dispararía una llamada extra por
+            // request.
+            val now = Instant.now().epochSecond
+            if (now - lastExtendAttempt < EXTEND_RETRY_SECONDS) return@withContext null
+            lastExtendAttempt = now
+            val request = Request.Builder()
+                .url("${region.oauthHost}/token")
+                .header("Authorization", okhttp3.Credentials.basic(clientId, clientSecret))
+                .post(
+                    FormBody.Builder()
+                        .add("grant_type", "token_extension")
+                        .add("token", token)
+                        .build(),
+                )
+                .build()
+            runCatching {
+                okHttpClient.newCall(request).execute().use { response ->
+                    val raw = response.body?.string().orEmpty()
+                    if (!response.isSuccessful) return@withContext null
+                    val payload = json.decodeFromString(TokenResponse.serializer(), raw)
+                    context.authStore.edit {
+                        it[Keys.ACCESS_TOKEN] = payload.access_token
+                        it[Keys.EXPIRES_AT] = Instant.now().epochSecond + payload.expires_in
+                    }
+                    _state.value = AuthState.LoggedIn(prefsBattleTag())
+                    payload.access_token
+                }
+            }.getOrNull()
+        }
+
+    private suspend fun prefsBattleTag(): String? =
+        context.authStore.data.first()[Keys.BATTLE_TAG]
+
+    /** Hay sesión guardada, aunque esté caducada (el roster local sigue sirviendo). */
+    suspend fun hasStoredSession(): Boolean =
+        context.authStore.data.first()[Keys.ACCESS_TOKEN] != null
 
     suspend fun logout() {
         context.authStore.edit { it.clear() }
@@ -221,6 +292,18 @@ class AuthManager @Inject constructor(
         val buf = ByteArray(bytes)
         SecureRandom().nextBytes(buf)
         return Base64.encodeToString(buf, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
+    }
+
+    private companion object {
+        /**
+         * Se intenta alargar el token cuando le queda menos de una semana. Un
+         * token caducado ya no se puede alargar, así que el margen tiene que ser
+         * mucho mayor que el intervalo con el que el usuario abre la app.
+         */
+        const val RENEW_MARGIN_SECONDS = 7L * 24 * 3600
+
+        /** Espera mínima entre intentos de alargar, para no llamar por request. */
+        const val EXTEND_RETRY_SECONDS = 3600L
     }
 }
 

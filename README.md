@@ -227,12 +227,43 @@ anterior al reset la app lo dice en vez de enseñar un 0 que parece real.
 manual, nunca se marcaban— es ahora un panel de actividad real: cada M+ con su nivel de llave, cada
 jefe con su dificultad, las Delves y las misiones completadas desde el reset.
 
+**v2.1.0** — La sesión de Battle.net ya no se cae cada día, vuelven las semanales y todo el botín
+lleva imagen y probabilidad.
+
+*Sesión.* Los tokens de usuario de Blizzard caducan a las 24 h y el grant `refresh_token` **no está
+habilitado** para los clientes de desarrollador (el endpoint responde
+`invalid_client: Unauthorized grant type`): de ahí el "reconecta la cuenta" diario. El grant
+`token_extension` sí está habilitado y devuelve el token con **~90 días** de vida, así que la app lo
+alarga en cada arranque. Además, los endpoints de personaje (`/profile/wow/character/**`) funcionan
+con el token de aplicación, que la app se emite a sí misma —verificado contra la API—, así que ahora
+solo re-importar la lista de personajes de la cuenta necesita sesión: aunque caduque, tu progreso
+sigue sincronizándose y la app lo dice en lugar de mostrar un error.
+
+*Semanales.* Vuelven, y esta vez se marcan solas. Blizzard nombra sus misiones semanales de
+seguimiento `"Midnight: <actividad>"`; de ahí salen las **16 semanales reales** de la expansión con
+su ID de misión, en lugar de las tareas inventadas con regla `ManualOnly` que nunca podían marcarse.
+
+*Botín con imagen y probabilidad.* Misiones, mazmorras, bandas y las recompensas exclusivas de la
+temporada muestran el icono real del objeto, su color de calidad, la ranura, el jefe y la
+dificultad. Blizzard **no publica tasas de caída**, así que la app estima con lo que sí es público
+—la tabla de botín de cada jefe— y **explica de dónde sale cada número** en la propia fila: "la tabla
+del jefe tiene 16 objetos y caen ~4 por intento". Las monturas se calculan aparte, porque son una
+tirada independiente de la tabla; el catálogo acepta tasas medidas por la comunidad y esas tienen
+prioridad sobre cualquier estimación.
+
+*Exclusivo de la temporada, en Inicio.* Nueva tarjeta con las monturas que solo caen esta temporada
+(salen del journal oficial: se detectan por `item_class` 15 / subclase 5), marcando las que **ya
+tienes** al cruzar tu colección, y una pantalla con todo el equipo destacado de los jefes finales.
+Son 385 objetos con imagen y origen, horneados en assets: abren al instante y sin conexión.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json`, `quests_es/en.json`, `quest_meta.json`,
 `areas_es/en.json` y `mounts.json` a partir de las tablas DB2 de wago.tools (datos del propio cliente
 del juego, la misma fuente que usa Wowhead: `QuestLine`, `QuestLineXQuest`, `Campaign`,
 `CampaignXQuestLine`, `AreaTable`, `ContentTuning`) más la API oficial de Blizzard para el nombre y
-la zona de cada misión. Se ejecuta por parche, offline; la app solo
+la zona de cada misión. `tools/build_season_loot.py` genera `season_loot.json` recorriendo el journal
+oficial de la expansión actual (instancias → jefes → objetos → imagen), que es lo que alimenta el
+botín con imagen y probabilidad. Se ejecuta por parche, offline; la app solo
 consume los JSON horneados — cero dependencia de esas fuentes en tiempo de ejecución.
 
 ## Contribuir

@@ -188,6 +188,27 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     )
                 }
             }
+            AuthState.Expired -> {
+                // No es un error: los datos del personaje siguen actualizándose con
+                // el token de aplicación. Solo re-leer la lista de personajes de la
+                // cuenta necesita entrar otra vez.
+                Text(
+                    "Sesión de Battle.net caducada. Tus personajes siguen " +
+                        "sincronizándose con normalidad; vuelve a entrar solo si " +
+                        "quieres re-importar la lista de personajes de la cuenta " +
+                        "(por ejemplo, si creaste un alt nuevo).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                val syncing by viewModel.syncing.collectAsStateWithLifecycle()
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.Button(
+                        onClick = viewModel::syncNow,
+                        enabled = !syncing,
+                    ) { Text(if (syncing) "Sincronizando…" else "Sincronizar ahora") }
+                }
+                LoginButton(viewModel, scope, context)
+            }
             is AuthState.Broken -> {
                 Text("⚠ ${auth.reason}", color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall)

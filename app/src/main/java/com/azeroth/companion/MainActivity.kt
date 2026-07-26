@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Groups
@@ -142,6 +143,7 @@ private val subScreenTitles = mapOf(
     "progression" to "Progresión",
     "seasons" to "Temporadas M+",
     "seasonal" to "Recompensas de temporada",
+    "seasonloot" to "Botín de la temporada",
     "roster" to "Roster",
     "settings" to "Ajustes",
 )
@@ -212,6 +214,7 @@ private fun AppScaffold(startEventId: String?) {
                 DashboardScreen(
                     onOpenChecklist = { navController.navigate("event/$it") },
                     onOpenRoster = { navController.navigate("roster") },
+                    onOpenSeasonLoot = { navController.navigate("seasonloot") },
                 )
             }
             composable("events") {
@@ -221,6 +224,7 @@ private fun AppScaffold(startEventId: String?) {
                 EventDetailScreen(eventId = entry.arguments?.getString("eventId").orEmpty())
             }
             composable("weekly") { WeeklyScreen() }
+            composable("seasonloot") { com.azeroth.companion.feature.loot.SeasonLootScreen() }
             composable("content") { com.azeroth.companion.feature.content.ContentScreen() }
             composable("character") { com.azeroth.companion.feature.character.CharacterScreen() }
             composable("seasons") { com.azeroth.companion.feature.seasons.SeasonsScreen() }
@@ -266,6 +270,8 @@ private fun MoreScreen(onNavigate: (String) -> Unit) {
             Icons.Filled.TrendingUp, purple),
         MoreItem("seasons", "Temporadas M+", "Tu historial y progreso por temporada de Mythic+",
             Icons.Filled.EmojiEvents, gold),
+        MoreItem("seasonloot", "Botín de la temporada", "Monturas y equipo exclusivos, con imagen y probabilidad",
+            Icons.Filled.Diamond, purple),
         MoreItem("seasonal", "Recompensas de temporada", "Objetivos con fecha límite y viabilidad",
             Icons.Filled.CalendarMonth, rose),
         MoreItem("roster", "Roster", "Todos tus personajes y sus intentos de montura",

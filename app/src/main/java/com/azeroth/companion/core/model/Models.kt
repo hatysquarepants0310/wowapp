@@ -284,6 +284,12 @@ enum class Viability { ACHIEVABLE, TIGHT, UNREALISTIC }
 sealed interface AuthState {
     data object LoggedOut : AuthState
     data class LoggedIn(val battleTag: String?) : AuthState
+    /**
+     * Sesión caducada pero NO rota: los datos del personaje siguen llegando con
+     * el token de aplicación. Solo re-importar la lista de personajes de la
+     * cuenta necesita volver a entrar con Battle.net.
+     */
+    data object Expired : AuthState
     /** OAuth roto: la app sigue viva en modo degradado. */
     data class Broken(val reason: String) : AuthState
 }

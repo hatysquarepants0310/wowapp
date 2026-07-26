@@ -263,7 +263,7 @@ def main(d):
     write(ASSETS, 'areas_en.json', {str(a): aen[a] for a in sorted(areas) if a in aen})
 
     if os.path.exists(j('MountXDisplay.csv')):
-        build_mounts(j('MountXDisplay.csv'))
+        build_mounts(j('MountXDisplay.csv'), j('Mount.csv'), j('Mount_es.csv'))
 
     by_exp = Counter(s.get("exp") for s in storylines)
     print(f"historias: {len(storylines)} | campañas: {len(campaigns)} | "
@@ -279,16 +279,28 @@ def write(dirname, name, payload):
     print(f"  {name}: {os.path.getsize(dest)} bytes")
 
 
-def build_mounts(mxd_csv):
+def build_mounts(mxd_csv, mount_csv=None, mount_es_csv=None):
     disp = {}
     for r in read(mxd_csv):
         mid, cd = r.get('MountID'), r.get('CreatureDisplayInfoID')
         if mid and cd and mid != '0' and cd != '0' and mid not in disp:
             disp[mid] = int(cd)
+    # Los nombres permiten enseñar la colección sin conexión y, sobre todo, cruzar
+    # el objeto-montura del botín con la montura de la colección: son IDs
+    # distintos y el nombre es el único puente que da la API.
+    names, names_es = {}, {}
+    if mount_csv and os.path.exists(mount_csv):
+        names = {r['ID']: (r['Name_lang'] or '').strip() for r in read(mount_csv)
+                 if (r['Name_lang'] or '').strip()}
+    if mount_es_csv and os.path.exists(mount_es_csv):
+        names_es = {r['ID']: (r['Name_lang'] or '').strip() for r in read(mount_es_csv)
+                    if (r['Name_lang'] or '').strip()}
     write(ASSETS, 'mounts.json', {
-        "source": "wago.tools (MountXDisplay)",
+        "source": "wago.tools (Mount / MountXDisplay)",
         "renderPattern": "https://render.worldofwarcraft.com/us/npcs/zoom/creature-display-{id}.jpg",
         "displays": {int(k): v for k, v in disp.items()},
+        "names": names,
+        "namesEs": names_es,
     })
 
 

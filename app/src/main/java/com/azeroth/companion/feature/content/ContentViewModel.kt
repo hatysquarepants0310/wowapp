@@ -21,7 +21,7 @@ data class ContentState(
     val selectedExpansionId: Int = 0,
     val expansion: ExpansionContent? = null,
     val bossesByInstance: Map<Int, List<Boss>> = emptyMap(),
-    val lootByBoss: Map<Int, List<String>> = emptyMap(),
+    val lootByBoss: Map<Int, List<com.azeroth.companion.data.LootEntry>> = emptyMap(),
     val showPastExpansions: Boolean = false,
     val error: String? = null,
 )
@@ -89,10 +89,10 @@ class ContentViewModel @Inject constructor(
     }
 
     /** Botín de un jefe al tocarlo (¿qué looteo aquí?). */
-    fun loadLoot(encounterId: Int) {
+    fun loadLoot(encounterId: Int, isRaid: Boolean = true) {
         if (_state.value.lootByBoss.containsKey(encounterId)) return
         viewModelScope.launch {
-            val loot = contentRepository.bossLoot(encounterId)
+            val loot = contentRepository.bossLoot(encounterId, isRaid)
             _state.value = _state.value.copy(
                 lootByBoss = _state.value.lootByBoss + (encounterId to loot),
             )
