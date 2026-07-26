@@ -157,6 +157,12 @@ data class TrackedTask(
     val isRemovedAtSeasonEnd: Boolean = false,
     val legacyExpansion: String? = null,
     val priorityWeight: Int = 0,
+    /**
+     * Instancias de las que sale el botín de esta semanal. La misión de
+     * seguimiento en sí solo da oro y experiencia: lo que se persigue está en el
+     * contenido que pide completar, así que es ahí donde hay que mirar.
+     */
+    val lootInstanceIds: List<Int> = emptyList(),
 )
 
 data class TaskState(

@@ -24,6 +24,9 @@ data class ContentState(
     val lootByBoss: Map<Int, List<com.azeroth.companion.data.LootEntry>> = emptyMap(),
     val showPastExpansions: Boolean = false,
     val error: String? = null,
+    /** Jefe al que se ha llegado desde un objeto del botín: se resalta y se abre. */
+    val focusBossId: Int = 0,
+    val focusInstanceId: Int = 0,
 )
 
 @HiltViewModel
@@ -36,6 +39,24 @@ class ContentViewModel @Inject constructor(
 
     init {
         refresh()
+    }
+
+    /**
+     * Abre directamente la instancia y el jefe de los que cae un objeto. Es lo
+     * que hace que tocar una montura en "Exclusivo de la temporada" te lleve a
+     * dónde conseguirla, en vez de dejarte buscándola.
+     */
+    fun focusOn(instanceId: Int, bossId: Int) {
+        if (instanceId == 0 && bossId == 0) return
+        viewModelScope.launch {
+            // Puede llegar antes de que termine refresh(): se espera a tener
+            // contenido para que la instancia exista en la lista.
+            while (_state.value.loading) kotlinx.coroutines.delay(50)
+            _state.value = _state.value.copy(focusInstanceId = instanceId, focusBossId = bossId)
+            if (instanceId != 0) loadBosses(instanceId)
+            if (bossId != 0) loadLoot(bossId, isRaid = _state.value.expansion?.raids
+                ?.any { it.id == instanceId } == true)
+        }
     }
 
     fun refresh() {

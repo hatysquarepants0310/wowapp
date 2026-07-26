@@ -162,7 +162,9 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(6.dp))
-                state.seasonMounts.take(3).forEach { LootRow(it) }
+                state.seasonMounts.take(3).forEach { mount ->
+                    LootRow(mount, onClick = { onOpenSeasonLoot() })
+                }
                 androidx.compose.material3.TextButton(onClick = onOpenSeasonLoot) {
                     Text("Ver todo el botín de la temporada →")
                 }

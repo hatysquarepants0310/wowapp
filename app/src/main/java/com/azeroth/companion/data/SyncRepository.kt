@@ -43,6 +43,7 @@ class SyncRepository @Inject constructor(
     private val eventsRepository: EventsRepository,
     private val catalogRepository: com.azeroth.companion.core.catalog.CatalogRepository,
     private val detectionEngine: DetectionEngine,
+    private val activeCharacter: ActiveCharacter,
     private val json: Json,
 ) {
 
@@ -97,7 +98,7 @@ class SyncRepository @Inject constructor(
     suspend fun syncActiveCharacter(): SyncResult {
         val settings = settingsRepository.settings.first()
         val region = settings.region
-        val character = activeCharacter(settings.activeCharacterId)
+        val character = activeCharacter.current()
             ?: return SyncResult.Failed("Sin personaje activo. Sincroniza el roster primero.")
         val api = apiFactory.forRegion(region)
         val namespace = region.namespaceProfile
@@ -252,11 +253,6 @@ class SyncRepository @Inject constructor(
                 }
             }
         }
-    }
-
-    private suspend fun activeCharacter(activeId: Long?): CharacterEntity? {
-        val all = characterDao.observeAll().first()
-        return all.firstOrNull { it.id == activeId } ?: all.firstOrNull()
     }
 
     private fun SnapshotEntity.toView() = SnapshotView(

@@ -62,4 +62,17 @@ class DropChanceTest {
         assertTrue(chance is DropChance.Unknown)
         assertNull(DropChanceCalculator.percent(chance))
     }
+
+    /**
+     * Con una tasa del 1 %, 100 intentos NO garantizan nada: la probabilidad
+     * acumulada es ~63 %. Es el número que pone en contexto la mala suerte.
+     */
+    @Test
+    fun `la probabilidad acumulada crece con los intentos`() {
+        val chance = DropChance.RareRoll(1.0)
+        assertEquals(63.4, DropChanceCalculator.cumulative(chance, 100)!!, 0.5)
+        assertEquals(9.6, DropChanceCalculator.cumulative(chance, 10)!!, 0.5)
+        assertNull(DropChanceCalculator.cumulative(chance, 0))
+        assertNull(DropChanceCalculator.cumulative(DropChance.Unknown("x"), 10))
+    }
 }

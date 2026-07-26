@@ -1,7 +1,6 @@
 package com.azeroth.companion.data
 
 import android.content.Context
-import com.azeroth.companion.core.database.CharacterDao
 import com.azeroth.companion.core.database.SnapshotDao
 import com.azeroth.companion.core.datastore.LanguagePref
 import com.azeroth.companion.core.datastore.SettingsRepository
@@ -50,7 +49,7 @@ data class WeeklyActivity(
 class WeeklyActivityRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val snapshotDao: SnapshotDao,
-    private val characterDao: CharacterDao,
+    private val activeCharacter: ActiveCharacter,
     private val settingsRepository: SettingsRepository,
     private val eventsRepository: EventsRepository,
     private val apiFactory: BlizzardApiFactory,
@@ -73,10 +72,7 @@ class WeeklyActivityRepository @Inject constructor(
     }
 
     suspend fun load(): WeeklyActivity {
-        val settings = settingsRepository.settings.first()
-        val roster = characterDao.observeAll().first()
-        val character = roster.firstOrNull { it.id == settings.activeCharacterId }
-            ?: roster.firstOrNull() ?: return WeeklyActivity()
+        val character = activeCharacter.current() ?: return WeeklyActivity()
         val current = snapshotDao.latest(character.id) ?: return WeeklyActivity(hasCharacter = true)
         val lastReset = eventsRepository.resetClock().lastWeeklyReset(Instant.now())
         val baseline = snapshotDao.lastBefore(character.id, lastReset)

@@ -1,5 +1,5 @@
 {
-  "catalogVersion": 2,
+  "catalogVersion": 3,
   "gameVersion": "12.1",
   "updatedAt": "2026-07-23T00:00:00Z",
   "resets": [
@@ -466,7 +466,17 @@
         ]
       },
       "priorityWeight": 80,
-      "isRemovedAtSeasonEnd": true
+      "isRemovedAtSeasonEnd": true,
+      "lootInstanceIds": [
+        1311,
+        1300,
+        1315,
+        1304,
+        1316,
+        1309,
+        1313,
+        1299
+      ]
     },
     {
       "id": "weekly_raid",
@@ -487,7 +497,10 @@
         ]
       },
       "priorityWeight": 80,
-      "isRemovedAtSeasonEnd": true
+      "isRemovedAtSeasonEnd": true,
+      "lootInstanceIds": [
+        1307
+      ]
     },
     {
       "id": "weekly_world_boss",
@@ -508,7 +521,11 @@
         ]
       },
       "priorityWeight": 75,
-      "isRemovedAtSeasonEnd": true
+      "isRemovedAtSeasonEnd": true,
+      "lootInstanceIds": [
+        1305,
+        1314
+      ]
     },
     {
       "id": "weekly_battlegrounds",

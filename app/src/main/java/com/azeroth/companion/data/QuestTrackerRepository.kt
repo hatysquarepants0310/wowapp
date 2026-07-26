@@ -1,6 +1,5 @@
 package com.azeroth.companion.data
 
-import com.azeroth.companion.core.database.CharacterDao
 import com.azeroth.companion.core.database.SnapshotDao
 import com.azeroth.companion.core.datastore.SettingsRepository
 import com.azeroth.companion.core.network.BlizzardApiFactory
@@ -32,7 +31,7 @@ class QuestTrackerRepository @Inject constructor(
     private val apiFactory: BlizzardApiFactory,
     private val settingsRepository: SettingsRepository,
     private val snapshotDao: SnapshotDao,
-    private val characterDao: CharacterDao,
+    private val activeCharacter: ActiveCharacter,
     private val json: Json,
 ) {
     private var zonesCache: List<QuestZone>? = null
@@ -53,10 +52,7 @@ class QuestTrackerRepository @Inject constructor(
 
     /** IDs de misiones completadas del personaje activo (del último snapshot). */
     private suspend fun completedQuestIds(): Set<Int> {
-        val settings = settingsRepository.settings.first()
-        val roster = characterDao.observeAll().first()
-        val character = roster.firstOrNull { it.id == settings.activeCharacterId }
-            ?: roster.firstOrNull() ?: return emptySet()
+        val character = activeCharacter.current() ?: return emptySet()
         val snapshot = snapshotDao.latest(character.id) ?: return emptySet()
         return runCatching {
             json.decodeFromString(ListSerializer(Int.serializer()), snapshot.completedQuestIdsJson).toSet()

@@ -64,7 +64,10 @@ class SeasonLootViewModel @Inject constructor(
  * oficial horneado en assets, así que abre al instante y sin conexión.
  */
 @Composable
-fun SeasonLootScreen(viewModel: SeasonLootViewModel = hiltViewModel()) {
+fun SeasonLootScreen(
+    onOpenSource: (Int, Int) -> Unit = { _, _ -> },
+    viewModel: SeasonLootViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     if (state.loading) {
@@ -92,7 +95,9 @@ fun SeasonLootScreen(viewModel: SeasonLootViewModel = hiltViewModel()) {
             item {
                 SectionTitle("Monturas de la temporada", state.mounts.size)
             }
-            items(state.mounts, key = { "m_${it.itemId}" }) { LootRow(it) }
+            items(state.mounts, key = { "m_${it.itemId}" }) { entry ->
+                LootRow(entry, onClick = { onOpenSource(it.instanceId, it.bossId) })
+            }
             item { Spacer(Modifier.height(8.dp)); HorizontalDivider() }
         }
 
@@ -106,7 +111,9 @@ fun SeasonLootScreen(viewModel: SeasonLootViewModel = hiltViewModel()) {
                 )
             }
         }
-        items(state.gear, key = { "g_${it.itemId}" }) { LootRow(it) }
+        items(state.gear, key = { "g_${it.itemId}" }) { entry ->
+            LootRow(entry, onClick = { onOpenSource(it.instanceId, it.bossId) })
+        }
         item { Spacer(Modifier.height(24.dp)) }
     }
 }
