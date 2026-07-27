@@ -38,4 +38,63 @@
     <string name="channel_progression">Progresión</string>
 
     <string name="exact_alarm_rationale">Para avisarte con precisión de segundos antes de cada evento, la app necesita permiso de alarmas exactas. Sin él, los avisos pueden llegar con minutos de retraso.</string>
+
+    <!-- Detalle de misión y TomTom -->
+    <string name="quest_done">✓ Completada</string>
+    <string name="quest_not_done">○ Sin completar</string>
+    <string name="quest_min_level">Nivel %1$d</string>
+    <string name="quest_in_storyline">Parte de: %1$s</string>
+    <string name="quest_reward">Recompensa</string>
+    <string name="quest_reward_choice">Recompensa (eliges una)</string>
+    <string name="quest_id">ID de misión: %1$d</string>
+    <string name="tomtom_title">Ir con TomTom</string>
+    <string name="tomtom_copy">Copiar comando</string>
+    <string name="tomtom_copied">Comando copiado</string>
+    <string name="tomtom_hint">Pégalo en el chat del juego con el addon TomTom instalado y te pondrá la flecha en el punto de la misión.</string>
+    <string name="tomtom_missing">El cliente no publica un punto en el mapa para esta misión.</string>
+
+    <!-- Esta semana -->
+    <string name="weekly_intro">Todo lo que has hecho desde el reset semanal, leído de tu cuenta de Battle.net. Nada se marca a mano.</string>
+    <string name="weekly_need_login">Inicia sesión y sincroniza para ver tu semana.</string>
+    <string name="weekly_section_weeklies">Semanales</string>
+    <string name="weekly_section_mplus">Mythic+</string>
+    <string name="weekly_section_raids">Bandas</string>
+    <string name="weekly_section_delves">Profundidades</string>
+    <string name="weekly_section_detected">Repetibles detectadas</string>
+    <string name="weekly_section_other_quests">Otras misiones desde el reset</string>
+    <string name="weekly_done_count">%1$d de %2$d hechas esta semana.</string>
+    <string name="weekly_done">hecha</string>
+    <string name="weekly_none_catalog">Sin semanales en el catálogo para esta expansión.</string>
+    <string name="weekly_none_mplus">Ninguna mazmorra Mythic+ esta semana.</string>
+    <string name="weekly_none_raid">Ningún jefe de banda esta semana.</string>
+    <string name="weekly_none_delves">Ninguna Delve esta semana.</string>
+    <string name="weekly_delves_pending">Se contarán a partir del próximo reset: la API solo da el total acumulado, así que la app necesita una lectura anterior al reset para saber cuáles son de esta semana.</string>
+    <string name="weekly_delves_done">Delves completadas</string>
+    <string name="weekly_learning">La app aprende cuáles de tus misiones son repetibles comparando tus sincronizaciones. En cuanto reconozca la primera, aparecerá aquí por nombre.</string>
+    <string name="weekly_none_repeatable">Ninguna repetible hecha en este periodo (%1$d conocidas).</string>
+    <string name="weekly_quests_pending">Se listarán a partir del próximo reset, cuando la app tenga una lectura previa con la que comparar.</string>
+    <string name="weekly_none_quests">Ninguna misión completada desde el reset.</string>
+    <string name="weekly_loot_intro">Lo que se persigue aquí:</string>
+    <string name="weekly_loot_loading">Cargando botín…</string>
+    <string name="weekly_loot_none">Sin botín listado para este contenido.</string>
+    <string name="weekly_quests_of">Misiones de esta semanal</string>
+    <string name="stat_mplus">M+</string>
+    <string name="stat_bosses">Jefes</string>
+    <string name="stat_delves">Delves</string>
+    <string name="stat_quests">Misiones</string>
+
+    <!-- Botín -->
+    <string name="loot_unknown_chance">probabilidad desconocida</string>
+    <string name="loot_owned">✓ ya la tienes</string>
+    <string name="loot_see_source">Ver dónde se consigue →</string>
+    <string name="loot_attempts">Llevas %1$d intentos</string>
+    <string name="loot_attempts_one">Llevas 1 intento</string>
+    <string name="loot_cumulative"> · a estas alturas la tendría el %1$s</string>
+    <string name="season_loot_intro">Exclusivo de %1$s. Las probabilidades son estimadas: Blizzard publica la tabla de botín de cada jefe, pero no las tasas de caída. Cada línea dice de dónde sale su número.</string>
+    <string name="season_loot_mounts">Monturas de la temporada</string>
+    <string name="season_loot_gear">Equipo destacado (jefes finales)</string>
+    <string name="season_loot_empty">Sin datos de botín para esta expansión todavía.</string>
+    <string name="season_exclusive">Exclusivo de la temporada</string>
+    <string name="season_exclusive_hint">Monturas que solo caen en esta temporada. Toca para ver todo el botín destacado con su probabilidad.</string>
+    <string name="season_see_all">Ver todo el botín de la temporada →</string>
 </resources>

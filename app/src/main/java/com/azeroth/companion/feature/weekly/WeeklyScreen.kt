@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.azeroth.companion.R
 import com.azeroth.companion.data.WeeklyActivity
 
 /**
@@ -36,10 +38,23 @@ import com.azeroth.companion.data.WeeklyActivity
 @Composable
 fun WeeklyScreen(
     onOpenSource: (Int, Int) -> Unit = { _, _ -> },
+    onOpenQuest: (Int) -> Unit = {},
     viewModel: WeeklyViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val a = state.activity
+    // stringResource solo puede llamarse en contexto @Composable, y el cuerpo de
+    // LazyColumn no lo es: los títulos de sección se resuelven aquí.
+    val titleWeeklies = stringResource(R.string.weekly_section_weeklies)
+    val titleMplus = stringResource(R.string.weekly_section_mplus)
+    val titleRaids = stringResource(R.string.weekly_section_raids)
+    val titleDelves = stringResource(R.string.weekly_section_delves)
+    val titleDetected = stringResource(R.string.weekly_section_detected)
+    val titleOtherQuests = stringResource(R.string.weekly_section_other_quests)
+    val titleQuestsOf = stringResource(R.string.weekly_quests_of)
+    // El catálogo trae los títulos en ambos idiomas; se elige según el idioma
+    // activo, que puede ser el del sistema o el que el usuario haya forzado.
+    val localeKey = if (java.util.Locale.getDefault().language.startsWith("es")) "es_MX" else "en_US"
 
     LazyColumn(
         Modifier.fillMaxSize().padding(16.dp),
@@ -47,15 +62,14 @@ fun WeeklyScreen(
     ) {
         item {
             Text(
-                "Todo lo que has hecho desde el reset semanal, leído de tu cuenta " +
-                    "de Battle.net. Nada se marca a mano.",
+                stringResource(R.string.weekly_intro),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
         if (!a.hasCharacter) {
-            item { Empty("Inicia sesión y sincroniza para ver tu semana.") }
+            item { Empty(stringResource(R.string.weekly_need_login)) }
             return@LazyColumn
         }
 
@@ -66,26 +80,27 @@ fun WeeklyScreen(
         // adivinados: los marcadores "Midnight: X" resultaron no existir en
         // /quests/completed, comprobado sobre 75 personajes activos.
         val done = state.tasks.count { (it.state?.completions ?: 0) > 0 }
-        section("Semanales", done) {
+        section(titleWeeklies, done) {
             if (state.tasks.isEmpty()) {
-                Empty("Sin semanales en el catálogo para esta expansión.")
+                Empty(stringResource(R.string.weekly_none_catalog))
             } else {
                 Column {
                     state.tasks.forEach { row ->
                         val complete = (row.state?.completions ?: 0) > 0
                         val id = row.task.id
                         WeeklyTaskRow(
-                            title = row.task.title["es_MX"] ?: row.task.title.values.first(),
+                            title = row.task.title[localeKey] ?: row.task.title.values.first(),
                             complete = complete,
-                            expandable = row.task.lootInstanceIds.isNotEmpty(),
                             expanded = state.expandedTaskId == id,
                             loot = state.lootByTask[id],
+                            quests = state.questsByTask[id],
                             onToggle = { viewModel.toggleTask(id) },
                             onOpenSource = onOpenSource,
+                            onOpenQuest = onOpenQuest,
                         )
                     }
                     Text(
-                        "$done de ${state.tasks.size} hechas esta semana.",
+                        stringResource(R.string.weekly_done_count, done, state.tasks.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
@@ -94,9 +109,9 @@ fun WeeklyScreen(
             }
         }
 
-        section("Mythic+", a.mythicRuns.size) {
+        section(titleMplus, a.mythicRuns.size) {
             if (a.mythicRuns.isEmpty()) {
-                Empty("Ninguna mazmorra Mythic+ esta semana.")
+                Empty(stringResource(R.string.weekly_none_mplus))
             } else {
                 a.mythicRuns.forEach { run ->
                     LineRow(
@@ -108,9 +123,9 @@ fun WeeklyScreen(
             }
         }
 
-        section("Bandas", a.raidKills.size) {
+        section(titleRaids, a.raidKills.size) {
             if (a.raidKills.isEmpty()) {
-                Empty("Ningún jefe de banda esta semana.")
+                Empty(stringResource(R.string.weekly_none_raid))
             } else {
                 a.raidKills.forEach { kill ->
                     LineRow("☠", kill.name.ifBlank { "Jefe" }, difficultyLabel(kill.difficulty))
@@ -118,15 +133,13 @@ fun WeeklyScreen(
             }
         }
 
-        section("Profundidades", a.delves ?: 0) {
+        section(titleDelves, a.delves ?: 0) {
             when {
                 a.delves == null -> Empty(
-                    "Se contarán a partir del próximo reset: la API solo da el total " +
-                        "acumulado, así que la app necesita una lectura anterior al reset " +
-                        "para saber cuáles son de esta semana.",
+                    stringResource(R.string.weekly_delves_pending),
                 )
-                a.delves == 0 -> Empty("Ninguna Delve esta semana.")
-                else -> LineRow("🕳", "Delves completadas", a.delves.toString())
+                a.delves == 0 -> Empty(stringResource(R.string.weekly_none_delves))
+                else -> LineRow("🕳", stringResource(R.string.weekly_delves_done), a.delves.toString())
             }
         }
 
@@ -136,28 +149,24 @@ fun WeeklyScreen(
         // Red de seguridad: aunque el catálogo no cubra una semanal concreta, la
         // app aprende qué misiones son repetibles observando tus propios syncs y
         // las muestra aquí POR NOMBRE, así que nunca te quedas sin ver lo hecho.
-        section("Repetibles detectadas", a.repeatableDone.size) {
+        section(titleDetected, a.repeatableDone.size) {
             when {
                 a.learnedRepeatables == 0 -> Empty(
-                    "La app aprende cuáles de tus misiones son repetibles comparando " +
-                        "tus sincronizaciones. En cuanto reconozca la primera, aparecerá " +
-                        "aquí por nombre.",
+                    stringResource(R.string.weekly_learning),
                 )
                 a.repeatableDone.isEmpty() -> Empty(
-                    "Ninguna repetible hecha en este periodo " +
-                        "(${a.learnedRepeatables} conocidas).",
+                    stringResource(R.string.weekly_none_repeatable, a.learnedRepeatables),
                 )
-                else -> a.repeatableDone.forEach { q -> LineRow("☑", q.name, "hecha") }
+                else -> a.repeatableDone.forEach { q -> LineRow("☑", q.name, stringResource(R.string.weekly_done)) }
             }
         }
 
-        section("Otras misiones desde el reset", a.quests.size) {
+        section(titleOtherQuests, a.quests.size) {
             when {
                 !a.hasBaseline -> Empty(
-                    "Se listarán a partir del próximo reset, cuando la app tenga una " +
-                        "lectura previa con la que comparar.",
+                    stringResource(R.string.weekly_quests_pending),
                 )
-                a.quests.isEmpty() -> Empty("Ninguna misión completada desde el reset.")
+                a.quests.isEmpty() -> Empty(stringResource(R.string.weekly_none_quests))
                 else -> a.quests.forEach { q -> LineRow("✓", q.name, "") }
             }
         }
@@ -197,16 +206,17 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
 private fun WeeklyTaskRow(
     title: String,
     complete: Boolean,
-    expandable: Boolean,
     expanded: Boolean,
     loot: List<com.azeroth.companion.data.LootEntry>?,
+    quests: List<com.azeroth.companion.data.WeeklyQuestDone>?,
     onToggle: () -> Unit,
     onOpenSource: (Int, Int) -> Unit,
+    onOpenQuest: (Int) -> Unit,
 ) {
     Column(
         Modifier
             .fillMaxWidth()
-            .let { m -> if (expandable) m.clickable { onToggle() } else m }
+            .clickable { onToggle() }
             .padding(vertical = 5.dp),
     ) {
         Row(
@@ -218,36 +228,61 @@ private fun WeeklyTaskRow(
             Text(title, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
             if (complete) {
                 Text(
-                    "hecha",
+                    stringResource(R.string.weekly_done),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            if (expandable) {
-                Text(
-                    if (expanded) "▾" else "▸",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                if (expanded) "▾" else "▸",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         androidx.compose.animation.AnimatedVisibility(visible = expanded) {
             Column(Modifier.padding(start = 26.dp, top = 4.dp)) {
-                if (loot == null) {
-                    Empty("Cargando botín…")
-                } else if (loot.isEmpty()) {
-                    Empty("Sin botín listado para este contenido.")
-                } else {
+                // Las misiones concretas de la semanal: tocar una abre su ficha
+                // con botín, zona y el comando de TomTom.
+                if (!quests.isNullOrEmpty()) {
                     Text(
-                        "Lo que se persigue aquí:",
+                        stringResource(R.string.weekly_quests_of),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    loot.forEach { entry ->
-                        com.azeroth.companion.ui.components.LootRow(
-                            entry,
-                            onClick = { onOpenSource(it.instanceId, it.bossId) },
-                        )
+                    quests.forEach { quest ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .clickable { onOpenQuest(quest.id) }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(if (quest.completed) "☑" else "☐",
+                                style = MaterialTheme.typography.bodySmall)
+                            Text(quest.name, Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodySmall)
+                            Text("›", color = MaterialTheme.colorScheme.primary)
+                        }
                     }
+                    Spacer(Modifier.height(6.dp))
+                }
+                when {
+                    // Solo hay botín asociado en las semanales que apuntan a una
+                    // instancia; en las demás basta con la lista de misiones.
+                    !loot.isNullOrEmpty() -> {
+                        Text(
+                            stringResource(R.string.weekly_loot_intro),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        loot.forEach { entry ->
+                            com.azeroth.companion.ui.components.LootRow(
+                                entry,
+                                onClick = { onOpenSource(it.instanceId, it.bossId) },
+                            )
+                        }
+                    }
+                    quests == null && loot == null -> Empty(stringResource(R.string.weekly_loot_loading))
+                    quests.isNullOrEmpty() -> Empty(stringResource(R.string.weekly_loot_none))
                 }
             }
         }
@@ -261,10 +296,10 @@ private fun Summary(a: WeeklyActivity) {
             Modifier.fillMaxWidth().padding(14.dp),
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
-            Stat(a.mythicRuns.size.toString(), "M+")
-            Stat(a.raidKills.size.toString(), "Jefes")
-            Stat(a.delves?.toString() ?: "—", "Delves")
-            Stat(if (a.hasBaseline) a.quests.size.toString() else "—", "Misiones")
+            Stat(a.mythicRuns.size.toString(), stringResource(R.string.stat_mplus))
+            Stat(a.raidKills.size.toString(), stringResource(R.string.stat_bosses))
+            Stat(a.delves?.toString() ?: "—", stringResource(R.string.stat_delves))
+            Stat(if (a.hasBaseline) a.quests.size.toString() else "—", stringResource(R.string.stat_quests))
         }
     }
 }

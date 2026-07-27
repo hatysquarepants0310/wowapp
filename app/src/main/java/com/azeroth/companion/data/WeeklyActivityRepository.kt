@@ -31,7 +31,7 @@ data class RaidKillRecord(
     val instanceId: Int = 0,
 )
 
-data class WeeklyQuestDone(val id: Int, val name: String)
+data class WeeklyQuestDone(val id: Int, val name: String, val completed: Boolean = true)
 
 /**
  * Lo que el personaje ha hecho DESDE el último reset, con datos verificables de

@@ -335,6 +335,30 @@ lo que has hecho.
 *Guardia contra la regresión.* Un test falla la compilación si alguna semanal vuelve a apoyarse en un
 ID marcador o en una regla que no puede dispararse.
 
+**v2.5.0** — Comando de TomTom en cada misión, ficha de misión compartida, dos semanales corregidas y
+más interfaz traducida.
+
+*TomTom.* Cada misión enseña su `/way #mapa x y <nombre>`, con botón de copiar, listo para pegar en
+el chat del juego. Sale de las tablas `QuestPOIBlob`/`QuestPOIPoint` del cliente, convertidas de
+coordenadas de mundo a coordenadas de mapa con `UiMapAssignment` (los ejes del mundo van girados
+respecto al mapa, de ahí que X e Y se crucen e inviertan). **21 738 misiones con punto**, el 96 % de
+las que aparecen en alguna cadena; la conversión se validó comprobando que el 90 % de las historias
+caen en tres mapas o menos y que las coordenadas se reparten por todo el mapa en vez de amontonarse
+en los bordes.
+
+*Ficha de misión.* Nueva pantalla con si la tienes hecha, zona, nivel, la historia a la que pertenece,
+la recompensa con su imagen y el comando de TomTom. Se llega desde una semanal y desde cualquier
+misión de una historia, así que la información es la misma vengas de donde vengas.
+
+*Dos semanales corregidas.* Asaltos del Vacío se marca ahora con "Semana 3 de 5 de Búsqueda de
+conocimiento: Asaltos a líneas ley" (27 de 75 personajes), la misión que el jugador completa de
+verdad. Se añade además la serie rotatoria completa de cinco semanas como semanal propia. De
+Tormentarion no se ha podido verificar ninguna misión sobre 75 personajes: mantiene el ID con el
+nombre correcto y la detección por reputación, y queda dicho que no está confirmada.
+
+*Idiomas.* Los textos de "Esta semana", el botín y la ficha de misión pasan a recursos, con las 86
+claves traducidas en los dos idiomas y una prueba que compara ambos ficheros.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json`, `quests_es/en.json`, `quest_meta.json`,
 `areas_es/en.json` y `mounts.json` a partir de las tablas DB2 de wago.tools (datos del propio cliente
@@ -342,7 +366,8 @@ del juego, la misma fuente que usa Wowhead: `QuestLine`, `QuestLineXQuest`, `Cam
 `CampaignXQuestLine`, `AreaTable`, `ContentTuning`) más la API oficial de Blizzard para el nombre y
 la zona de cada misión. `tools/build_season_loot.py` genera `season_loot.json` recorriendo el journal
 oficial de la expansión actual (instancias → jefes → objetos → imagen), que es lo que alimenta el
-botín con imagen y probabilidad. Se ejecuta por parche, offline; la app solo
+botín con imagen y probabilidad. `tools/build_quest_coords.py` genera `quest_coords.json` con el
+punto de cada misión para el comando de TomTom. Se ejecuta por parche, offline; la app solo
 consume los JSON horneados — cero dependencia de esas fuentes en tiempo de ejecución.
 
 ## Contribuir

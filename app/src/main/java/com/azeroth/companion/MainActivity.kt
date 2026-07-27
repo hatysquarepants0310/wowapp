@@ -144,6 +144,7 @@ private val subScreenTitles = mapOf(
     "seasons" to "Temporadas M+",
     "seasonal" to "Recompensas de temporada",
     "seasonloot" to "Botín de la temporada",
+    "quest/{questId}" to "Misión",
     "content/{instanceId}/{bossId}" to "Contenido",
     "roster" to "Roster",
     "settings" to "Ajustes",
@@ -229,6 +230,19 @@ private fun AppScaffold(startEventId: String?) {
                     onOpenSource = { instanceId, bossId ->
                         navController.navigate("content/$instanceId/$bossId")
                     },
+                    onOpenQuest = { navController.navigate("quest/$it") },
+                )
+            }
+            composable(
+                "quest/{questId}",
+                arguments = listOf(
+                    androidx.navigation.navArgument("questId") {
+                        type = androidx.navigation.NavType.IntType
+                    },
+                ),
+            ) { entry ->
+                com.azeroth.companion.feature.quest.QuestDetailScreen(
+                    questId = entry.arguments?.getInt("questId") ?: 0,
                 )
             }
             composable("seasonloot") {
@@ -258,7 +272,11 @@ private fun AppScaffold(startEventId: String?) {
             composable("character") { com.azeroth.companion.feature.character.CharacterScreen() }
             composable("seasons") { com.azeroth.companion.feature.seasons.SeasonsScreen() }
             composable("quests") { com.azeroth.companion.feature.quests.QuestTrackerScreen() }
-            composable("storylines") { com.azeroth.companion.feature.storylines.StorylinesScreen() }
+            composable("storylines") {
+                com.azeroth.companion.feature.storylines.StorylinesScreen(
+                    onOpenQuest = { navController.navigate("quest/$it") },
+                )
+            }
             composable("progression") { ProgressionScreen() }
             composable("seasonal") { SeasonalScreen() }
             composable("roster") { RosterScreen() }

@@ -38,4 +38,63 @@
     <string name="channel_progression">Progression</string>
 
     <string name="exact_alarm_rationale">To warn you with second-level precision before each event, the app needs the exact alarm permission. Without it, alerts may arrive minutes late.</string>
+
+    <!-- Quest detail and TomTom -->
+    <string name="quest_done">✓ Completed</string>
+    <string name="quest_not_done">○ Not completed</string>
+    <string name="quest_min_level">Level %1$d</string>
+    <string name="quest_in_storyline">Part of: %1$s</string>
+    <string name="quest_reward">Reward</string>
+    <string name="quest_reward_choice">Reward (pick one)</string>
+    <string name="quest_id">Quest ID: %1$d</string>
+    <string name="tomtom_title">Navigate with TomTom</string>
+    <string name="tomtom_copy">Copy command</string>
+    <string name="tomtom_copied">Command copied</string>
+    <string name="tomtom_hint">Paste it into the game chat with the TomTom addon installed and it will point an arrow at the quest.</string>
+    <string name="tomtom_missing">The game client publishes no map point for this quest.</string>
+
+    <!-- This week -->
+    <string name="weekly_intro">Everything you have done since the weekly reset, read from your Battle.net account. Nothing is ticked by hand.</string>
+    <string name="weekly_need_login">Log in and sync to see your week.</string>
+    <string name="weekly_section_weeklies">Weeklies</string>
+    <string name="weekly_section_mplus">Mythic+</string>
+    <string name="weekly_section_raids">Raids</string>
+    <string name="weekly_section_delves">Delves</string>
+    <string name="weekly_section_detected">Repeatables detected</string>
+    <string name="weekly_section_other_quests">Other quests since the reset</string>
+    <string name="weekly_done_count">%1$d of %2$d done this week.</string>
+    <string name="weekly_done">done</string>
+    <string name="weekly_none_catalog">No weeklies in the catalog for this expansion.</string>
+    <string name="weekly_none_mplus">No Mythic+ dungeon this week.</string>
+    <string name="weekly_none_raid">No raid boss this week.</string>
+    <string name="weekly_none_delves">No delve this week.</string>
+    <string name="weekly_delves_pending">These will be counted from the next reset: the API only gives the running total, so the app needs a reading from before the reset to tell which ones are from this week.</string>
+    <string name="weekly_delves_done">Delves completed</string>
+    <string name="weekly_learning">The app learns which of your quests are repeatable by comparing your syncs. As soon as it recognises the first one, it will show up here by name.</string>
+    <string name="weekly_none_repeatable">No repeatable done in this period (%1$d known).</string>
+    <string name="weekly_quests_pending">These will be listed from the next reset, once the app has an earlier reading to compare against.</string>
+    <string name="weekly_none_quests">No quest completed since the reset.</string>
+    <string name="weekly_loot_intro">What you are here for:</string>
+    <string name="weekly_loot_loading">Loading loot…</string>
+    <string name="weekly_loot_none">No loot listed for this content.</string>
+    <string name="weekly_quests_of">Quests for this weekly</string>
+    <string name="stat_mplus">M+</string>
+    <string name="stat_bosses">Bosses</string>
+    <string name="stat_delves">Delves</string>
+    <string name="stat_quests">Quests</string>
+
+    <!-- Loot -->
+    <string name="loot_unknown_chance">drop chance unknown</string>
+    <string name="loot_owned">✓ already yours</string>
+    <string name="loot_see_source">See where it drops →</string>
+    <string name="loot_attempts">%1$d attempts so far</string>
+    <string name="loot_attempts_one">1 attempt so far</string>
+    <string name="loot_cumulative"> · by now %1$s of players would have it</string>
+    <string name="season_loot_intro">Exclusive to %1$s. Drop chances are estimates: Blizzard publishes each boss\'s loot table, but not the drop rates. Every line says where its number comes from.</string>
+    <string name="season_loot_mounts">Mounts of the season</string>
+    <string name="season_loot_gear">Highlight gear (final bosses)</string>
+    <string name="season_loot_empty">No loot data for this expansion yet.</string>
+    <string name="season_exclusive">Exclusive to the season</string>
+    <string name="season_exclusive_hint">Mounts that only drop this season. Tap to see all the highlight loot with its drop chance.</string>
+    <string name="season_see_all">See all the season\'s loot →</string>
 </resources>

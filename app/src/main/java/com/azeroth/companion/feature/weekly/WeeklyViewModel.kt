@@ -26,6 +26,8 @@ data class WeeklyState(
     /** Semanal desplegada y el botín del contenido que pide. */
     val expandedTaskId: String? = null,
     val lootByTask: Map<String, List<com.azeroth.companion.data.LootEntry>> = emptyMap(),
+    /** Misiones concretas de cada semanal, para poder abrir su ficha. */
+    val questsByTask: Map<String, List<com.azeroth.companion.data.WeeklyQuestDone>> = emptyMap(),
 )
 
 /**
@@ -44,6 +46,7 @@ class WeeklyViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val activeCharacter: ActiveCharacter,
     private val seasonLootRepository: com.azeroth.companion.data.SeasonLootRepository,
+    private val storylinesRepository: com.azeroth.companion.data.StorylinesRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WeeklyState())
@@ -57,15 +60,35 @@ class WeeklyViewModel @Inject constructor(
     fun toggleTask(taskId: String) {
         val opening = _state.value.expandedTaskId != taskId
         _state.value = _state.value.copy(expandedTaskId = if (opening) taskId else null)
-        if (!opening || _state.value.lootByTask.containsKey(taskId)) return
+        if (!opening) return
         val task = _state.value.tasks.firstOrNull { it.task.id == taskId }?.task ?: return
-        if (task.lootInstanceIds.isEmpty()) return
         viewModelScope.launch {
-            val loot = seasonLootRepository.instanceHighlights(task.lootInstanceIds)
-            _state.value = _state.value.copy(
-                lootByTask = _state.value.lootByTask + (taskId to loot),
-            )
+            if (task.lootInstanceIds.isNotEmpty() &&
+                !_state.value.lootByTask.containsKey(taskId)
+            ) {
+                val loot = seasonLootRepository.instanceHighlights(task.lootInstanceIds)
+                _state.value = _state.value.copy(
+                    lootByTask = _state.value.lootByTask + (taskId to loot),
+                )
+            }
+            if (!_state.value.questsByTask.containsKey(taskId)) {
+                // Se enseñan primero las que ya has hecho: son las que explican
+                // por qué la fila está marcada.
+                val quests = storylinesRepository.questsFor(questIds(task.detectionRule))
+                _state.value = _state.value.copy(
+                    questsByTask = _state.value.questsByTask + (taskId to quests),
+                )
+            }
         }
+    }
+
+    /** IDs de misión de una regla, incluidas las anidadas en AnyOf/AllOf. */
+    private fun questIds(rule: com.azeroth.companion.core.model.DetectionRule): List<Int> = when (rule) {
+        is com.azeroth.companion.core.model.DetectionRule.QuestCompleted -> rule.questIds
+        is com.azeroth.companion.core.model.DetectionRule.QuestDelta -> rule.questIds
+        is com.azeroth.companion.core.model.DetectionRule.AnyOf -> rule.rules.flatMap { questIds(it) }
+        is com.azeroth.companion.core.model.DetectionRule.AllOf -> rule.rules.flatMap { questIds(it) }
+        else -> emptyList()
     }
 
     init {

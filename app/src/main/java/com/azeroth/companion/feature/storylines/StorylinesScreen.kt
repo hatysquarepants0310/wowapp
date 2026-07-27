@@ -144,7 +144,10 @@ class StorylinesViewModel @Inject constructor(
 }
 
 @Composable
-fun StorylinesScreen(viewModel: StorylinesViewModel = hiltViewModel()) {
+fun StorylinesScreen(
+    onOpenQuest: (Int) -> Unit = {},
+    viewModel: StorylinesViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     // El botón atrás sube un nivel de la jerarquía antes de salir de la pantalla.
@@ -153,7 +156,7 @@ fun StorylinesScreen(viewModel: StorylinesViewModel = hiltViewModel()) {
     ) { viewModel.goBack() }
 
     when {
-        state.story != null -> QuestList(state, viewModel)
+        state.story != null -> QuestList(state, viewModel, onOpenQuest)
         state.season != null -> CategoryList(state, viewModel)
         state.loading -> Center { CircularProgressIndicator() }
         else -> SeasonList(state, viewModel)
@@ -395,7 +398,11 @@ private fun StoryRow(story: StorylineProgress, accent: Color, onClick: () -> Uni
 // ---------- Nivel 3: misiones de la historia ----------
 
 @Composable
-private fun QuestList(state: StorylinesState, viewModel: StorylinesViewModel) {
+private fun QuestList(
+    state: StorylinesState,
+    viewModel: StorylinesViewModel,
+    onOpenQuest: (Int) -> Unit,
+) {
     val story = state.story!!
     val accent = expansionColors(state.season?.expansionId ?: 0).first
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
@@ -424,7 +431,11 @@ private fun QuestList(state: StorylinesState, viewModel: StorylinesViewModel) {
             modifier = Modifier.padding(top = 10.dp),
         ) {
             items(state.quests, key = { it.id }) { q ->
-                QuestCard(q, accent, state.expandedQuest == q.id) { viewModel.toggleQuest(q.id) }
+                QuestCard(
+                    q, accent, state.expandedQuest == q.id,
+                    onClick = { viewModel.toggleQuest(q.id) },
+                    onOpenDetail = { onOpenQuest(q.id) },
+                )
             }
             item { Spacer(Modifier.height(16.dp)) }
         }
@@ -432,7 +443,13 @@ private fun QuestList(state: StorylinesState, viewModel: StorylinesViewModel) {
 }
 
 @Composable
-private fun QuestCard(q: StorylineQuest, accent: Color, expanded: Boolean, onClick: () -> Unit) {
+private fun QuestCard(
+    q: StorylineQuest,
+    accent: Color,
+    expanded: Boolean,
+    onClick: () -> Unit,
+    onOpenDetail: () -> Unit,
+) {
     Card(Modifier.fillMaxWidth().clickable { onClick() }) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically,
@@ -465,7 +482,9 @@ private fun QuestCard(q: StorylineQuest, accent: Color, expanded: Boolean, onCli
                 Column(Modifier.padding(start = 38.dp, top = 6.dp)) {
                     q.zone?.let { Detail("Zona", it) }
                     if (q.minLevel > 0) Detail("Nivel mínimo", q.minLevel.toString())
-                    Detail("ID de misión", q.id.toString())
+                    androidx.compose.material3.TextButton(onClick = onOpenDetail) {
+                        Text("Ver ficha completa (zona, botín y TomTom) →")
+                    }
                     if (q.rewardItems.isNotEmpty()) {
                         Text(
                             if (q.rewardItems.size > 1) "Recompensa (eliges una)" else "Recompensa",
