@@ -37,6 +37,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import androidx.compose.ui.res.stringResource
+import com.azeroth.companion.R
 import com.azeroth.companion.data.CategoryKind
 import com.azeroth.companion.data.CategoryNode
 import com.azeroth.companion.data.SeasonNode
@@ -190,12 +192,12 @@ private fun SeasonList(state: StorylinesState, viewModel: StorylinesViewModel) {
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text("Buscar temporada") },
+            label = { Text(stringResource(R.string.storylines_search_season)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
         if (!state.hasAccount) {
-            Text("Inicia sesión y sincroniza para ver tu progreso real.",
+            Text(stringResource(R.string.storylines_need_sync),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.padding(top = 8.dp))
@@ -244,16 +246,16 @@ private fun SeasonCard(season: SeasonNode, onClick: () -> Unit) {
                         Text(season.name, style = MaterialTheme.typography.titleMedium,
                             color = accent, fontWeight = FontWeight.SemiBold)
                         if (season.isCurrent) {
-                            Text("ACTUAL", style = MaterialTheme.typography.labelSmall,
+                            Text(stringResource(R.string.storylines_current), style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontWeight = FontWeight.Bold)
                         }
                     }
                     Text(
                         buildString {
-                            append("${season.completed}/${season.total} historias completas")
+                            append(stringResource(R.string.storylines_progress, season.completed, season.total))
                             if (season.campaignCount > 0) {
-                                append(" · ${season.campaignCount} campañas")
+                                append(" · " + stringResource(R.string.storylines_campaigns, season.campaignCount))
                             }
                         },
                         style = MaterialTheme.typography.bodySmall,
@@ -284,12 +286,12 @@ private fun CategoryList(state: StorylinesState, viewModel: StorylinesViewModel)
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text("Buscar historia, campaña o zona") },
+            label = { Text(stringResource(R.string.storylines_search)) },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             singleLine = true,
         )
         if (state.categories.isEmpty()) {
-            Text("Sin historias clasificadas en esta temporada.",
+            Text(stringResource(R.string.storylines_empty_season),
                 Modifier.padding(top = 16.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             return
@@ -406,7 +408,7 @@ private fun QuestList(
     val story = state.story!!
     val accent = expansionColors(state.season?.expansionId ?: 0).first
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        Text("${story.completed} / ${story.total} misiones obligatorias",
+        Text(stringResource(R.string.storylines_required, story.completed, story.total),
             style = MaterialTheme.typography.titleMedium, color = accent,
             modifier = Modifier.padding(top = 10.dp))
         story.campaign?.let {
@@ -419,8 +421,7 @@ private fun QuestList(
         }
         if (story.optionalTotal > 0) {
             Text(
-                "${story.optionalCompleted}/${story.optionalTotal} opcionales · " +
-                    "no hacen falta para completar la historia",
+                stringResource(R.string.storylines_optional, story.optionalCompleted, story.optionalTotal),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -471,7 +472,7 @@ private fun QuestCard(
                         color = if (q.completed) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant)
                     if (q.optional) {
-                        Text("opcional", style = MaterialTheme.typography.labelSmall,
+                        Text(stringResource(R.string.storylines_optional_tag), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.secondary)
                     }
                 }
@@ -483,7 +484,7 @@ private fun QuestCard(
                     q.zone?.let { Detail("Zona", it) }
                     if (q.minLevel > 0) Detail("Nivel mínimo", q.minLevel.toString())
                     androidx.compose.material3.TextButton(onClick = onOpenDetail) {
-                        Text("Ver ficha completa (zona, botín y TomTom) →")
+                        Text(stringResource(R.string.storylines_open_detail))
                     }
                     if (q.rewardItems.isNotEmpty()) {
                         Text(

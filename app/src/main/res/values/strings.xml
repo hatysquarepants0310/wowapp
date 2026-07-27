@@ -97,4 +97,56 @@
     <string name="season_exclusive">Exclusivo de la temporada</string>
     <string name="season_exclusive_hint">Monturas que solo caen en esta temporada. Toca para ver todo el botín destacado con su probabilidad.</string>
     <string name="season_see_all">Ver todo el botín de la temporada →</string>
+
+    <!-- Historias -->
+    <string name="storylines_search_season">Buscar temporada</string>
+    <string name="storylines_search">Buscar historia, campaña o zona</string>
+    <string name="storylines_need_sync">Inicia sesión y sincroniza para ver tu progreso real.</string>
+    <string name="storylines_current">ACTUAL</string>
+    <string name="storylines_empty_season">Sin historias clasificadas en esta temporada.</string>
+    <string name="storylines_progress">%1$d/%2$d historias completas</string>
+    <string name="storylines_campaigns">%1$d campañas</string>
+    <string name="storylines_required">%1$d / %2$d misiones obligatorias</string>
+    <string name="storylines_optional">%1$d/%2$d opcionales · no hacen falta para completar la historia</string>
+    <string name="storylines_optional_tag">opcional</string>
+    <string name="storylines_open_detail">Ver ficha completa (zona, botín y TomTom) →</string>
+    <string name="storylines_other">Otras historias</string>
+
+    <!-- Inicio -->
+    <string name="dashboard_no_events">Sin eventos próximos en el catálogo.</string>
+    <string name="dashboard_active_character">Personaje activo</string>
+    <string name="dashboard_see_roster">Ver roster →</string>
+    <string name="dashboard_not_synced">Aún sin sincronizar</string>
+    <string name="dashboard_synced_ago">Sincronizado hace %1$d min</string>
+    <string name="dashboard_stale">⚠ Datos de hace %1$d min — pueden no reflejar acciones recientes in-game</string>
+    <string name="vault_need_sync">Sincroniza para estimar tu Gran Bóveda.</string>
+    <string name="vault_row_raid">Banda</string>
+    <string name="vault_row_mplus">Mythic+</string>
+    <string name="vault_row_world">Mundo</string>
+    <string name="vault_none_unlocked">Aún sin recompensas desbloqueadas esta semana.</string>
+    <string name="vault_unlocked">%1$d recompensa(s) desbloqueada(s) · mejor ilvl previsto %2$d. Solo se reclama UNA.</string>
+    <string name="vault_world_pending">Mundo se contará a partir del próximo reset: la API solo da el total acumulado de Delves y la app aún no tiene una lectura previa con la que comparar.</string>
+    <string name="vault_ready">listo</string>
+
+    <!-- Navegación y hub "Más" -->
+    <string name="title_content">Contenido</string>
+    <string name="title_storylines">Historias</string>
+    <string name="title_quests_zone">Misiones por zona</string>
+    <string name="title_event">Evento</string>
+    <string name="title_this_week">Esta semana</string>
+    <string name="title_seasons_mplus">Temporadas M+</string>
+    <string name="title_season_rewards">Recompensas de temporada</string>
+    <string name="title_season_loot">Botín de la temporada</string>
+    <string name="title_quest">Misión</string>
+    <string name="more_content_desc">Mazmorras, bandas, jefes y afijos de M+</string>
+    <string name="more_storylines_desc">Todas las historias con tu progreso, campaña por campaña</string>
+    <string name="more_quests_desc">Cada zona con tus misiones completadas automáticamente</string>
+    <string name="more_events_desc">Temporizadores, cadencia y recompensas de cada evento</string>
+    <string name="more_weekly_desc">M+, jefes, Delves y misiones hechas desde el reset</string>
+    <string name="more_progression_desc">Gran Bóveda, Folio, Presas y Delves</string>
+    <string name="more_seasons_desc">Tu historial y progreso por temporada de Mythic+</string>
+    <string name="more_seasonloot_desc">Monturas y equipo exclusivos, con imagen y probabilidad</string>
+    <string name="more_seasonal_desc">Objetivos con fecha límite y viabilidad</string>
+    <string name="more_roster_desc">Todos tus personajes y sus intentos de montura</string>
+    <string name="more_settings_desc">Cuenta, región, actualización, datos y diagnóstico</string>
 </resources>
