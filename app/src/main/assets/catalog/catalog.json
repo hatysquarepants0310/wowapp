@@ -1,5 +1,5 @@
 {
-  "catalogVersion": 3,
+  "catalogVersion": 4,
   "gameVersion": "12.1",
   "updatedAt": "2026-07-23T00:00:00Z",
   "resets": [
@@ -280,190 +280,22 @@
   ],
   "weeklyTasks": [
     {
-      "id": "weekly_world_quests",
-      "category": "WORLD_EVENT",
-      "title": {
-        "es_MX": "Misiones de mundo",
-        "en_US": "World Quests"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93766
-        ]
-      },
-      "priorityWeight": 60,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_arcantina",
-      "category": "WEEKLY_QUEST",
-      "title": {
-        "es_MX": "Arcantina",
-        "en_US": "Arcantina"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93767
-        ]
-      },
-      "priorityWeight": 60,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_housing",
-      "category": "WEEKLY_QUEST",
-      "title": {
-        "es_MX": "Viviendas",
-        "en_US": "Housing"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93769
-        ]
-      },
-      "priorityWeight": 40,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_saltherils_soiree",
-      "category": "WEEKLY_QUEST",
-      "title": {
-        "es_MX": "Velada de Saltheril",
-        "en_US": "Saltheril's Soiree"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93889
-        ]
-      },
-      "priorityWeight": 55,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_abundance",
-      "category": "WEEKLY_QUEST",
-      "title": {
-        "es_MX": "Abundancia",
-        "en_US": "Abundance"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93890
-        ]
-      },
-      "priorityWeight": 55,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_stormarion_assault",
-      "category": "WORLD_EVENT",
-      "title": {
-        "es_MX": "Ataque de Tormentarion",
-        "en_US": "Stormarion Assault"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93892
-        ]
-      },
-      "priorityWeight": 70,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_delves",
-      "category": "DELVE",
-      "title": {
-        "es_MX": "Abismos",
-        "en_US": "Delves"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93909
-        ]
-      },
-      "priorityWeight": 85,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_prey",
-      "category": "PREY_HUNT",
-      "title": {
-        "es_MX": "Presa",
-        "en_US": "Prey"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93910
-        ]
-      },
-      "priorityWeight": 70,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
       "id": "weekly_dungeons",
       "category": "WEEKLY_QUEST",
       "title": {
-        "es_MX": "Calabozos",
-        "en_US": "Dungeons"
+        "es_MX": "Mazmorras Mythic+",
+        "en_US": "Mythic+ dungeons"
       },
       "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
+        "es_MX": "Se marca con las mazmorras que la API fecha después del reset.",
+        "en_US": "Ticks from the dungeons the API timestamps after the reset."
       },
       "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
       "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93911
-        ]
+        "type": "ActivityThisWeek",
+        "activity": "MYTHIC_PLUS",
+        "min": 1
       },
       "priorityWeight": 80,
       "isRemovedAtSeasonEnd": true,
@@ -482,19 +314,19 @@
       "id": "weekly_raid",
       "category": "WEEKLY_QUEST",
       "title": {
-        "es_MX": "Banda",
-        "en_US": "Raid"
+        "es_MX": "Jefes de banda",
+        "en_US": "Raid bosses"
       },
       "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
+        "es_MX": "Se marca con los jefes que la API fecha después del reset.",
+        "en_US": "Ticks from the bosses the API timestamps after the reset."
       },
       "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
       "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93912
-        ]
+        "type": "ActivityThisWeek",
+        "activity": "RAID_BOSS",
+        "min": 1
       },
       "priorityWeight": 80,
       "isRemovedAtSeasonEnd": true,
@@ -503,133 +335,45 @@
       ]
     },
     {
-      "id": "weekly_world_boss",
-      "category": "WORLD_BOSS",
+      "id": "weekly_delves",
+      "category": "DELVE",
       "title": {
-        "es_MX": "Jefe de mundo",
-        "en_US": "World Boss"
+        "es_MX": "Profundidades",
+        "en_US": "Delves"
       },
       "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
+        "es_MX": "Por diferencia de la estadística de Delves; necesita una lectura anterior al reset.",
+        "en_US": "From the delve statistic difference; needs a reading from before the reset."
       },
       "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
       "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          93913
-        ]
+        "type": "ActivityThisWeek",
+        "activity": "DELVE",
+        "min": 1
       },
-      "priorityWeight": 75,
-      "isRemovedAtSeasonEnd": true,
-      "lootInstanceIds": [
-        1305,
-        1314
-      ]
-    },
-    {
-      "id": "weekly_battlegrounds",
-      "category": "PVP",
-      "title": {
-        "es_MX": "Campos de batalla",
-        "en_US": "Battlegrounds"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          94457
-        ]
-      },
-      "priorityWeight": 50,
+      "priorityWeight": 85,
       "isRemovedAtSeasonEnd": true
     },
     {
-      "id": "weekly_world_tour",
-      "category": "WORLD_EVENT",
-      "title": {
-        "es_MX": "Tour mundial",
-        "en_US": "World Tour"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          95245
-        ]
-      },
-      "priorityWeight": 50,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_void_assaults",
-      "category": "WORLD_EVENT",
-      "title": {
-        "es_MX": "Asaltos del Vacío",
-        "en_US": "Void Assaults"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          95842
-        ]
-      },
-      "priorityWeight": 70,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_ritual_sites",
-      "category": "WORLD_EVENT",
-      "title": {
-        "es_MX": "Sitios de ritual",
-        "en_US": "Ritual Sites"
-      },
-      "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
-      },
-      "resetPeriod": "WEEKLY",
-      "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          95843
-        ]
-      },
-      "priorityWeight": 65,
-      "isRemovedAtSeasonEnd": true
-    },
-    {
-      "id": "weekly_offworld_showdowns",
+      "id": "weekly_repeatables",
       "category": "WEEKLY_QUEST",
       "title": {
-        "es_MX": "Enfrentamientos extramundos",
-        "en_US": "Offworld Showdowns"
+        "es_MX": "Misiones semanales",
+        "en_US": "Weekly quests"
       },
       "description": {
-        "es_MX": "Semanal de Midnight. Se marca sola en cuanto la API la ve completada.",
-        "en_US": "Midnight weekly. Ticks itself as soon as the API sees it completed."
+        "es_MX": "Misiones repetibles que la app ha aprendido de tu cuenta y hoy figuran completadas.",
+        "en_US": "Repeatable quests the app learned from your account that are completed right now."
       },
       "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
       "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          96727
-        ]
+        "type": "ActivityThisWeek",
+        "activity": "REPEATABLE_QUEST",
+        "min": 1
       },
-      "priorityWeight": 45,
+      "priorityWeight": 70,
       "isRemovedAtSeasonEnd": true
     },
     {

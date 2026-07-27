@@ -44,6 +44,7 @@ class SyncRepository @Inject constructor(
     private val catalogRepository: com.azeroth.companion.core.catalog.CatalogRepository,
     private val detectionEngine: DetectionEngine,
     private val activeCharacter: ActiveCharacter,
+    private val repeatableQuestDao: com.azeroth.companion.core.database.RepeatableQuestDao,
     private val json: Json,
 ) {
 
@@ -165,6 +166,17 @@ class SyncRepository @Inject constructor(
                 ?.firstOrNull { it.id == catalogRepository.load().vault.delveStatisticId }
                 ?.quantity?.toInt() ?: 0
 
+            // ANTES de guardar el nuevo snapshot: aprender qué misiones son
+            // repetibles. Una misión que estaba completada y ya no lo está solo
+            // puede haber sido reiniciada por Blizzard, así que es semanal o
+            // diaria. Así la app descubre las semanales del jugador sin depender
+            // de una lista de IDs escrita a mano, que es justo lo que falló.
+            // La primera vez se recorre TODO el histórico ya guardado: si la app
+            // lleva semanas instalada, las semanales se conocen desde el primer
+            // sync tras actualizar, sin esperar a que pase otro reset.
+            backfillRepeatableQuests(character.id)
+            learnRepeatableQuests(character.id, quests?.quests?.map { it.id }.orEmpty())
+
             snapshotDao.insert(
                 SnapshotEntity(
                     characterId = character.id,
@@ -214,10 +226,74 @@ class SyncRepository @Inject constructor(
         }
     }
 
+    /**
+     * Recorre el histórico de snapshots comparando cada par consecutivo. Se hace
+     * una sola vez (mientras no haya nada aprendido): recupera de golpe las
+     * semanales que el usuario ya hizo en semanas anteriores.
+     */
+    private suspend fun backfillRepeatableQuests(characterId: Long) {
+        if (repeatableQuestDao.count() > 0) return
+        val history = snapshotDao.allFor(characterId)
+        if (history.size < 2) return
+        val now = Instant.now()
+        val learned = mutableSetOf<Int>()
+        var previous: Set<Int>? = null
+        history.forEach { snapshot ->
+            val ids = runCatching {
+                json.decodeFromString(ListSerializer(Int.serializer()), snapshot.completedQuestIdsJson)
+            }.getOrDefault(emptyList()).toSet()
+            if (ids.isNotEmpty()) {
+                previous?.let { learned += (it - ids) }
+                previous = ids
+            }
+        }
+        if (learned.isEmpty()) return
+        repeatableQuestDao.upsertAll(
+            learned.map {
+                com.azeroth.companion.core.database.RepeatableQuestEntity(questId = it, learnedAt = now)
+            },
+        )
+    }
+
+    /**
+     * Compara el último snapshot con lo que la API devuelve ahora: lo que
+     * desapareció de la lista de completadas es, por definición, repetible.
+     */
+    private suspend fun learnRepeatableQuests(characterId: Long, currentIds: List<Int>) {
+        val previous = snapshotDao.latest(characterId) ?: return
+        val before = runCatching {
+            json.decodeFromString(ListSerializer(Int.serializer()), previous.completedQuestIdsJson)
+        }.getOrDefault(emptyList()).toSet()
+        if (before.isEmpty() || currentIds.isEmpty()) return
+        val vanished = before - currentIds.toSet()
+        if (vanished.isEmpty()) return
+        val now = Instant.now()
+        repeatableQuestDao.upsertAll(
+            vanished.map {
+                com.azeroth.companion.core.database.RepeatableQuestEntity(questId = it, learnedAt = now)
+            },
+        )
+    }
+
     /** Evalúa cada regla de detección y persiste resultados (sin pisar overrides). */
     private suspend fun runDetection(characterId: Long, lastReset: Instant) {
         val baseline = snapshotDao.firstAfter(characterId, lastReset)?.toView()
-        val current = snapshotDao.latest(characterId)?.toView()
+        val preReset = snapshotDao.lastBefore(characterId, lastReset)
+        val latest = snapshotDao.latest(characterId)
+        val repeatable = repeatableQuestDao.ids().toSet()
+        val current = latest?.toView()?.let { view ->
+            view.copy(
+                raidBossKillsThisWeek = decodeList(
+                    ListSerializer(RaidKillRecord.serializer()), latest.raidKillsThisWeekJson,
+                ).size,
+                delvesThisWeek = preReset?.let {
+                    (latest.delvesCompletedTotal - it.delvesCompletedTotal).coerceAtLeast(0)
+                } ?: 0,
+                // Una misión repetible que figura completada AHORA solo puede
+                // haberse hecho en el periodo actual: Blizzard las reinicia.
+                repeatableQuestsDoneThisWeek = view.completedQuestIds.count { it in repeatable },
+            )
+        }
         weeklyRepository.tasks(includeLegacy = true).forEach { task ->
             val result = detectionEngine.evaluate(task.detectionRule, baseline, current)
             if (result.completions > 0) {
@@ -254,6 +330,13 @@ class SyncRepository @Inject constructor(
             }
         }
     }
+
+    private fun <T> decodeList(
+        serializer: kotlinx.serialization.KSerializer<List<T>>,
+        raw: String?,
+    ): List<T> = runCatching {
+        raw?.let { json.decodeFromString(serializer, it) }.orEmpty()
+    }.getOrDefault(emptyList())
 
     private fun SnapshotEntity.toView() = SnapshotView(
         completedQuestIds = json.decodeFromString(

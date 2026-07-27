@@ -24,10 +24,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.azeroth.companion.data.WeeklyActivity
 
 /**
- * Actividad de la semana en curso, sin nada que marcar a mano: todo sale de la
- * cuenta de Battle.net. Las mazmorras y los jefes llevan fecha en la API, así
- * que son exactos desde el primer sync; las Delves y las misiones se deducen
- * comparando con el último snapshot anterior al reset.
+ * Actividad de la semana en curso, sin nada que marcar a mano.
+ *
+ * Las mazmorras M+ y los jefes de banda llevan fecha en la API: son exactos
+ * desde el primer sync. Las Delves salen por diferencia de la estadística
+ * acumulada. Y las semanales con nombre salen de las misiones que la app ha
+ * aprendido que son repetibles observando tus propias sincronizaciones, que es
+ * la única forma fiable: los IDs de las misiones marcador de Blizzard no
+ * aparecen en el perfil.
  */
 @Composable
 fun WeeklyScreen(
@@ -57,8 +61,10 @@ fun WeeklyScreen(
 
         item { Summary(a) }
 
-        // Las semanales de la expansión: cada fila es una misión real de Blizzard
-        // ("Midnight: <actividad>"), así que se marca sola al sincronizar.
+        // Resumen por actividad. Cada fila se marca con una señal que la API
+        // demuestra (mazmorras y jefes van fechados), no con IDs de misión
+        // adivinados: los marcadores "Midnight: X" resultaron no existir en
+        // /quests/completed, comprobado sobre 75 personajes activos.
         val done = state.tasks.count { (it.state?.completions ?: 0) > 0 }
         section("Semanales", done) {
             if (state.tasks.isEmpty()) {
@@ -124,7 +130,25 @@ fun WeeklyScreen(
             }
         }
 
-        section("Misiones", a.quests.size) {
+        // Las semanales que el jugador HA HECHO, por nombre. Salen de las
+        // misiones repetibles que la app ha aprendido de su propia cuenta: no
+        // dependen de una lista de IDs escrita a mano.
+        section("Semanales hechas", a.repeatableDone.size) {
+            when {
+                a.learnedRepeatables == 0 -> Empty(
+                    "La app está aprendiendo cuáles de tus misiones son repetibles " +
+                        "comparando tus sincronizaciones. En cuanto reconozca la primera, " +
+                        "aparecerán aquí por nombre y se marcarán solas.",
+                )
+                a.repeatableDone.isEmpty() -> Empty(
+                    "Ninguna semanal hecha todavía en este periodo " +
+                        "(${a.learnedRepeatables} misiones repetibles conocidas).",
+                )
+                else -> a.repeatableDone.forEach { q -> LineRow("☑", q.name, "hecha") }
+            }
+        }
+
+        section("Otras misiones desde el reset", a.quests.size) {
             when {
                 !a.hasBaseline -> Empty(
                     "Se listarán a partir del próximo reset, cuando la app tenga una " +

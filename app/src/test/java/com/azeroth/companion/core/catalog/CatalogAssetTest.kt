@@ -29,27 +29,33 @@ class CatalogAssetTest {
     }
 
     /**
-     * La regresión que motivó esta prueba: casi todas las semanales eran
-     * ManualOnly y, como la app no tiene entrada manual, se quedaban en 0/N para
-     * siempre. Toda semanal que no sea de la Gran Bóveda debe traer detección
-     * automática con IDs de misión reales.
+     * Dos regresiones reales viven en esta prueba:
+     *
+     * 1. Las semanales eran ManualOnly y, sin entrada manual, se quedaban en 0/N
+     *    para siempre.
+     * 2. Después pasaron a usar los IDs de las misiones marcador "Midnight: X",
+     *    que Blizzard NO expone en /quests/completed — comprobado sobre 75
+     *    personajes activos: 15 de 16 no aparecían nunca.
+     *
+     * Por eso toda semanal debe detectarse con una señal que la API demuestre.
      */
     @Test
-    fun `las semanales se detectan solas`() {
+    fun `las semanales se detectan con señales comprobables`() {
         val catalog = json.decodeFromString(
             Catalog.serializer(), File(assets, "catalog.json").readText(),
         )
-        val manual = catalog.weeklyTasks
-            .filter { it.category != TaskCategory.GREAT_VAULT }
-            .filter { it.detectionRule == DetectionRule.ManualOnly }
+        val weeklies = catalog.weeklyTasks.filter { it.category != TaskCategory.GREAT_VAULT }
+        assertTrue("sin semanales en el catálogo", weeklies.isNotEmpty())
+
+        val manual = weeklies.filter { it.detectionRule == DetectionRule.ManualOnly }
         assertEquals(emptyList<String>(), manual.map { it.id })
 
-        catalog.weeklyTasks
-            .mapNotNull { it.detectionRule as? DetectionRule.QuestCompleted }
-            .forEach { rule ->
-                assertTrue("regla sin IDs de misión", rule.questIds.isNotEmpty())
-                assertTrue("ID de misión inverosímil", rule.questIds.all { it > 0 })
-            }
+        val unprovable = weeklies.filterNot { it.detectionRule is DetectionRule.ActivityThisWeek }
+        assertEquals(
+            "semanales que no se apoyan en una señal medida",
+            emptyList<String>(),
+            unprovable.map { it.id },
+        )
     }
 
     @Test

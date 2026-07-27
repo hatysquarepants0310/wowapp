@@ -17,6 +17,12 @@ data class SnapshotView(
     val currencies: Map<Int, Int> = emptyMap(),
     val achievementIds: Set<Int> = emptySet(),
     val mountIds: Set<Int> = emptySet(),
+    /** Jefes de banda derrotados DESPUÉS del reset (fechados por la API). */
+    val raidBossKillsThisWeek: Int = 0,
+    /** Delves de la semana, por diferencia con el snapshot previo al reset. */
+    val delvesThisWeek: Int = 0,
+    /** Misiones repetibles APRENDIDAS que ahora figuran completadas. */
+    val repeatableQuestsDoneThisWeek: Int = 0,
 )
 
 data class DetectionResult(val completions: Int, val confidence: Confidence)
@@ -66,6 +72,20 @@ class DetectionEngine {
 
             is DetectionRule.CurrencyThreshold ->
                 estimated(if ((current?.currencies?.get(rule.currencyId) ?: 0) >= rule.amount) 1 else 0)
+
+            is DetectionRule.ActivityThisWeek -> {
+                val value = when (rule.activity) {
+                    com.azeroth.companion.core.model.WeeklyActivityKind.MYTHIC_PLUS ->
+                        current?.mythicPlusRunsThisWeek ?: 0
+                    com.azeroth.companion.core.model.WeeklyActivityKind.RAID_BOSS ->
+                        current?.raidBossKillsThisWeek ?: 0
+                    com.azeroth.companion.core.model.WeeklyActivityKind.DELVE ->
+                        current?.delvesThisWeek ?: 0
+                    com.azeroth.companion.core.model.WeeklyActivityKind.REPEATABLE_QUEST ->
+                        current?.repeatableQuestsDoneThisWeek ?: 0
+                }
+                estimated(if (value >= rule.min) value else 0)
+            }
 
             DetectionRule.ManualOnly -> DetectionResult(0, Confidence.PREDICTED)
 

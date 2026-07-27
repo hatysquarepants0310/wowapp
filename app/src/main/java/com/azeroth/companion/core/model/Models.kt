@@ -176,6 +176,10 @@ data class TaskState(
 
 // ---------- Reglas de detección ----------
 
+/** Actividades que la API fecha, así que se saben exactas sin línea base. */
+@Serializable
+enum class WeeklyActivityKind { MYTHIC_PLUS, RAID_BOSS, DELVE, REPEATABLE_QUEST }
+
 @Serializable
 sealed interface DetectionRule {
     @Serializable
@@ -205,6 +209,15 @@ sealed interface DetectionRule {
     @Serializable
     @SerialName("CurrencyThreshold")
     data class CurrencyThreshold(val currencyId: Int, val amount: Int) : DetectionRule
+
+    /**
+     * Actividad medida directamente en el perfil esta semana. Es la única
+     * detección que funciona desde el primer sync para el contenido con fecha
+     * (M+, jefes de banda) y no depende de acertar un ID de misión.
+     */
+    @Serializable
+    @SerialName("ActivityThisWeek")
+    data class ActivityThisWeek(val activity: WeeklyActivityKind, val min: Int = 1) : DetectionRule
 
     @Serializable
     @SerialName("ManualOnly")

@@ -2,6 +2,7 @@ package com.azeroth.companion.core.detection
 
 import com.azeroth.companion.core.model.Confidence
 import com.azeroth.companion.core.model.DetectionRule
+import com.azeroth.companion.core.model.WeeklyActivityKind
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -93,5 +94,43 @@ class DetectionEngineTest {
         assertEquals(0, partial.completions)
         val full = engine.evaluate(rule, snapshot(), snapshot(quests = setOf(84001), runs = 2))
         assertEquals(1, full.completions)
+    }
+
+    /**
+     * La detección que sustituyó a los IDs de misión inventados. Los marcadores
+     * "Midnight: X" no aparecen en /quests/completed (comprobado sobre 75
+     * personajes), así que las semanales se apoyan en actividad medida.
+     */
+    @Test
+    fun `la actividad medida marca la semanal`() {
+        val engine = DetectionEngine()
+        val view = SnapshotView(
+            completedQuestIds = emptySet(),
+            reputations = emptyMap(),
+            mythicPlusRunsThisWeek = 3,
+            raidKills = emptyMap(),
+            raidBossKillsThisWeek = 2,
+            delvesThisWeek = 0,
+            repeatableQuestsDoneThisWeek = 5,
+        )
+        fun rule(kind: WeeklyActivityKind) = DetectionRule.ActivityThisWeek(kind, min = 1)
+        assertEquals(3, engine.evaluate(rule(WeeklyActivityKind.MYTHIC_PLUS), null, view).completions)
+        assertEquals(2, engine.evaluate(rule(WeeklyActivityKind.RAID_BOSS), null, view).completions)
+        assertEquals(5, engine.evaluate(rule(WeeklyActivityKind.REPEATABLE_QUEST), null, view).completions)
+        // Sin Delves esta semana la fila no se marca, y no se inventa un valor.
+        assertEquals(0, engine.evaluate(rule(WeeklyActivityKind.DELVE), null, view).completions)
+        assertEquals(
+            Confidence.PREDICTED,
+            engine.evaluate(rule(WeeklyActivityKind.DELVE), null, view).confidence,
+        )
+    }
+
+    /** Sin snapshot no se marca nada: la ausencia de datos no es un cero real. */
+    @Test
+    fun `sin snapshot la actividad no marca`() {
+        val result = DetectionEngine().evaluate(
+            DetectionRule.ActivityThisWeek(WeeklyActivityKind.RAID_BOSS, min = 1), null, null,
+        )
+        assertEquals(0, result.completions)
     }
 }
