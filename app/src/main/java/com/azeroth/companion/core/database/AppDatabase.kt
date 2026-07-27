@@ -112,6 +112,8 @@ data class SnapshotEntity(
     val mythicLevelsThisWeekJson: String = "[]",
     /** Estadística "Delves totales completadas" (acumulada, no semanal). */
     val delvesCompletedTotal: Int = 0,
+    /** JSON: estadísticas acumuladas que el catálogo pide seguir (id -> valor). */
+    val statisticsJson: String = "{}",
 )
 
 /**
@@ -236,7 +238,7 @@ interface SnapshotDao {
         SeasonalGoalEntity::class,
         RepeatableQuestEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

@@ -150,7 +150,7 @@ class SyncRepository @Inject constructor(
                         val difficulty = mode.difficulty?.type.orEmpty()
                         mode.progress?.encounters.orEmpty()
                             .filter { it.last_kill_timestamp >= lastReset.toEpochMilli() }
-                            .map { RaidKillRecord(it.encounter.name.orEmpty(), difficulty) }
+                            .map { RaidKillRecord(it.encounter.name.orEmpty(), difficulty, inst.instance.id) }
                     }
                 }.orEmpty()
             val mythicRunsRecords = mythic?.current_period?.best_runs
@@ -162,9 +162,16 @@ class SyncRepository @Inject constructor(
                         inTime = it.is_completed_within_time,
                     )
                 }.orEmpty()
-            val delvesTotal = stats?.categories?.flatMap { it.flatten() }
-                ?.firstOrNull { it.id == catalogRepository.load().vault.delveStatisticId }
+            val catalog = catalogRepository.load()
+            val allStats = stats?.categories?.flatMap { it.flatten() }.orEmpty()
+            val delvesTotal = allStats
+                .firstOrNull { it.id == catalog.vault.delveStatisticId }
                 ?.quantity?.toInt() ?: 0
+            // Solo las estadísticas que alguna regla necesita: guardar las 1123
+                // que devuelve la API sería inflar cada snapshot sin motivo.
+            val trackedStats = allStats
+                .filter { it.id in catalog.trackedStatisticIds }
+                .associate { it.id to it.quantity.toInt() }
 
             // ANTES de guardar el nuevo snapshot: aprender qué misiones son
             // repetibles. Una misión que estaba completada y ya no lo está solo
@@ -210,6 +217,9 @@ class SyncRepository @Inject constructor(
                         ListSerializer(MythicRunRecord.serializer()), mythicRunsRecords,
                     ),
                     delvesCompletedTotal = delvesTotal,
+                    statisticsJson = json.encodeToString(
+                        MapSerializer(Int.serializer(), Int.serializer()), trackedStats,
+                    ),
                 ),
             )
             snapshotDao.pruneOlderThan(now.minus(Duration.ofDays(21)))
@@ -281,11 +291,21 @@ class SyncRepository @Inject constructor(
         val preReset = snapshotDao.lastBefore(characterId, lastReset)
         val latest = snapshotDao.latest(characterId)
         val repeatable = repeatableQuestDao.ids().toSet()
+        val worldBossInstances = catalogRepository.load().weeklyTasks
+            .filter { it.category == com.azeroth.companion.core.model.TaskCategory.WORLD_BOSS }
+            .flatMap { it.lootInstanceIds }
+            .toSet()
         val current = latest?.toView()?.let { view ->
+            val kills = decodeList(
+                ListSerializer(RaidKillRecord.serializer()), latest.raidKillsThisWeekJson,
+            )
             view.copy(
-                raidBossKillsThisWeek = decodeList(
-                    ListSerializer(RaidKillRecord.serializer()), latest.raidKillsThisWeekJson,
-                ).size,
+                // Un jefe de mundo es una instancia de un solo jefe: si se cuenta
+                // junto a la banda, la fila de banda se marcaría por matar al de mundo.
+                raidBossKillsThisWeek = kills.count { it.instanceId !in worldBossInstances },
+                worldBossKillsThisWeek = kills.count { it.instanceId in worldBossInstances },
+                statistics = decodeMap(latest.statisticsJson),
+                statisticsBeforeReset = preReset?.let { decodeMap(it.statisticsJson) }.orEmpty(),
                 delvesThisWeek = preReset?.let {
                     (latest.delvesCompletedTotal - it.delvesCompletedTotal).coerceAtLeast(0)
                 } ?: 0,
@@ -330,6 +350,12 @@ class SyncRepository @Inject constructor(
             }
         }
     }
+
+    private fun decodeMap(raw: String?): Map<Int, Int> = runCatching {
+        raw?.let {
+            json.decodeFromString(MapSerializer(Int.serializer(), Int.serializer()), it)
+        }.orEmpty()
+    }.getOrDefault(emptyMap())
 
     private fun <T> decodeList(
         serializer: kotlinx.serialization.KSerializer<List<T>>,

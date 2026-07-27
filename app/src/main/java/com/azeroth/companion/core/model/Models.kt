@@ -178,7 +178,7 @@ data class TaskState(
 
 /** Actividades que la API fecha, así que se saben exactas sin línea base. */
 @Serializable
-enum class WeeklyActivityKind { MYTHIC_PLUS, RAID_BOSS, DELVE, REPEATABLE_QUEST }
+enum class WeeklyActivityKind { MYTHIC_PLUS, RAID_BOSS, WORLD_BOSS, DELVE, REPEATABLE_QUEST }
 
 @Serializable
 sealed interface DetectionRule {
@@ -218,6 +218,15 @@ sealed interface DetectionRule {
     @Serializable
     @SerialName("ActivityThisWeek")
     data class ActivityThisWeek(val activity: WeeklyActivityKind, val min: Int = 1) : DetectionRule
+
+    /**
+     * Diferencia de una estadística del perfil desde el último snapshot previo
+     * al reset. Cubre lo que no tiene misión ni fecha: Delves (40734) o combate
+     * en campos de batalla (382). Necesita una lectura anterior al reset.
+     */
+    @Serializable
+    @SerialName("StatisticDelta")
+    data class StatisticDelta(val statisticId: Int, val min: Int = 1) : DetectionRule
 
     @Serializable
     @SerialName("ManualOnly")
