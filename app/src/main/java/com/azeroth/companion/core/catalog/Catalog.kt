@@ -32,6 +32,12 @@ data class Catalog(
      * su diferencia semanal. Solo estas: la API devuelve más de mil.
      */
     val trackedStatisticIds: List<Int> = listOf(40734, 382),
+    /**
+     * Zonas donde salen las misiones de mundo de la expansión actual. Sirven
+     * para reconocer una misión de mundo por su zona, sin listar sus IDs: rotan
+     * cada día y serían imposibles de mantener a mano.
+     */
+    val worldQuestAreaIds: List<Int> = emptyList(),
 )
 
 /** Temporada en curso. La fecha de cierre es SIEMPRE estimada (§8.3). */

@@ -359,6 +359,21 @@ nombre correcto y la detección por reputación, y queda dicho que no está conf
 *Idiomas.* Los textos de "Esta semana", el botín y la ficha de misión pasan a recursos, con las 86
 claves traducidas en los dos idiomas y una prueba que compara ambos ficheros.
 
+**v2.5.1** — Encontrada la semanal de Tormentarion, y nombres de misión sin pedir nada a la API.
+
+*Tormentarion.* La v2.5.0 la dejó sin verificar. El asalto **son las tres torres**: "A la torre
+norte" (91345), "central" (91462) y "sur" (91463), presentes en 10-11 de 75 personajes. La misión
+"Ataque de Tormentarion" (91464) que se usaba antes es, otra vez, un marcador que la API no expone.
+Se llegó a ellas mirando el vecindario de IDs del marcador: sus vecinas inmediatas eran las torres.
+El listado público de zonas de Wowhead sirvió de referencia para acotar las cuatro zonas de misiones
+de mundo de Midnight (Bosque Canción Eterna, Harandar, Zul'Aman y Tormenta del Vacío); los IDs de
+misión salen, como siempre, de la API oficial.
+
+*Nombres de misión horneados de verdad.* Antes solo se guardaban los de las misiones que pertenecen a
+una cadena, y las repetibles y las de mundo no pertenecen a ninguna: la pantalla semanal tenía que
+pedirlas a la API una a una para poder nombrarlas. Ahora van todas las descargadas, así que
+"Repetibles detectadas" y "Otras misiones desde el reset" salen instantáneas y sin conexión.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json`, `quests_es/en.json`, `quest_meta.json`,
 `areas_es/en.json` y `mounts.json` a partir de las tablas DB2 de wago.tools (datos del propio cliente
