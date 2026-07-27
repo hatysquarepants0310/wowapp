@@ -114,6 +114,31 @@ data class SnapshotEntity(
     val delvesCompletedTotal: Int = 0,
 )
 
+/**
+ * Misión que se ha demostrado REPETIBLE: estaba completada en un snapshot y
+ * dejó de estarlo en otro posterior, así que Blizzard la reinició. Es la forma
+ * de saber qué misiones son semanales sin depender de una lista curada a mano:
+ * las que se aprenden aquí y aparecen completadas hoy son, necesariamente, cosas
+ * hechas en el periodo actual.
+ */
+@Entity(tableName = "repeatable_quest")
+data class RepeatableQuestEntity(
+    @PrimaryKey val questId: Int,
+    val learnedAt: Instant,
+)
+
+@Dao
+interface RepeatableQuestDao {
+    @Upsert
+    suspend fun upsertAll(quests: List<RepeatableQuestEntity>)
+
+    @Query("SELECT questId FROM repeatable_quest")
+    suspend fun ids(): List<Int>
+
+    @Query("SELECT COUNT(*) FROM repeatable_quest")
+    suspend fun count(): Int
+}
+
 @Dao
 interface TaskStateDao {
     @Upsert
@@ -193,6 +218,10 @@ interface SnapshotDao {
     @Query("SELECT * FROM snapshot WHERE characterId = :characterId AND takenAt < :before ORDER BY takenAt DESC LIMIT 1")
     suspend fun lastBefore(characterId: Long, before: Instant): SnapshotEntity?
 
+    /** Todos los snapshots del personaje, del más antiguo al más nuevo. */
+    @Query("SELECT * FROM snapshot WHERE characterId = :characterId ORDER BY takenAt ASC")
+    suspend fun allFor(characterId: Long): List<SnapshotEntity>
+
     @Query("DELETE FROM snapshot WHERE takenAt < :before")
     suspend fun pruneOlderThan(before: Instant)
 }
@@ -205,8 +234,9 @@ interface SnapshotDao {
         SnapshotEntity::class,
         ProgressionStateEntity::class,
         SeasonalGoalEntity::class,
+        RepeatableQuestEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -217,4 +247,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun snapshotDao(): SnapshotDao
     abstract fun progressionDao(): ProgressionDao
     abstract fun seasonalGoalDao(): SeasonalGoalDao
+    abstract fun repeatableQuestDao(): RepeatableQuestDao
 }

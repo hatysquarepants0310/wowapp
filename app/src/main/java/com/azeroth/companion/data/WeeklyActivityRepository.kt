@@ -43,6 +43,10 @@ data class WeeklyActivity(
     val hasBaseline: Boolean = false,
     val syncedAt: Instant? = null,
     val hasCharacter: Boolean = false,
+    /** Semanales repetibles APRENDIDAS que figuran completadas ahora mismo. */
+    val repeatableDone: List<WeeklyQuestDone> = emptyList(),
+    /** Cuántas repetibles conoce ya la app (0 = todavía aprendiendo). */
+    val learnedRepeatables: Int = 0,
 )
 
 @Singleton
@@ -53,6 +57,7 @@ class WeeklyActivityRepository @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val eventsRepository: EventsRepository,
     private val apiFactory: BlizzardApiFactory,
+    private val repeatableQuestDao: com.azeroth.companion.core.database.RepeatableQuestDao,
     private val json: Json,
 ) {
     private var questNames: Map<Int, String>? = null
@@ -86,6 +91,12 @@ class WeeklyActivityRepository @Inject constructor(
             ?.toSet()
         val newQuests = questIdsBefore?.let { (questIdsNow - it).sorted() }.orEmpty()
 
+        // Una repetible que figura completada AHORA se hizo necesariamente en el
+        // periodo actual, porque Blizzard las reinicia en cada reset. No hace
+        // falta línea base ni acertar ningún ID a mano.
+        val repeatable = repeatableQuestDao.ids().toSet()
+        val repeatableDone = questIdsNow.filter { it in repeatable }.sorted()
+
         return WeeklyActivity(
             mythicRuns = runs.sortedByDescending { it.level },
             raidKills = kills,
@@ -96,6 +107,8 @@ class WeeklyActivityRepository @Inject constructor(
             hasBaseline = baseline != null,
             syncedAt = current.takenAt,
             hasCharacter = true,
+            repeatableDone = resolveNames(repeatableDone),
+            learnedRepeatables = repeatable.size,
         )
     }
 

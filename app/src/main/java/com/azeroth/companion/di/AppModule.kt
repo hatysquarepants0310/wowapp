@@ -62,6 +62,10 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideRepeatableQuestDao(db: AppDatabase) = db.repeatableQuestDao()
+
+    @Provides
+    @Singleton
     fun provideAnchorCalibrator() = AnchorCalibrator()
 
     @Provides

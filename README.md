@@ -284,6 +284,31 @@ game"). Copiar esos números sería usar datos ajenos sin permiso, así que la a
 es público y explica cada número; el campo `knownDropRates` del catálogo está para que la comunidad
 aporte tasas medidas, y esas ganan sobre cualquier estimación.
 
+**v2.3.0** — Las semanales por fin se marcan, porque dejan de depender de adivinar IDs de misión.
+
+*Qué estaba mal de verdad.* La v2.1.0 sacó las semanales de las misiones que Blizzard nombra
+`"Midnight: <actividad>"`, dando por hecho que eran las semanales del jugador. No lo son: son
+marcadores internos que **la API no expone**. Comprobado sobre 75 personajes activos sacados de las
+clasificaciones de PvP — 15 de los 16 IDs no aparecen en `/quests/completed` de *nadie*, y en la
+tabla DB2 los 15 comparten el mismo `UniqueBitFlag` (67601), señal de que no se almacenan
+individualmente. Por eso la casilla nunca se marcaba aunque la misión sí saliera completada en el
+resto de la app.
+
+*Cómo se arregla sin adivinar.* Cada semanal se apoya ahora en una señal que la API demuestra:
+
+- **Mazmorras Mythic+** y **jefes de banda**: la API fecha cada mazmorra y cada muerte, así que son
+  exactos desde el primer sync.
+- **Profundidades**: por diferencia de la estadística de Delves del perfil.
+- **Misiones semanales**: la app **aprende cuáles de tus misiones son repetibles** observando tus
+  propias sincronizaciones. Una misión que estaba completada y deja de estarlo solo puede haber sido
+  reiniciada por Blizzard, así que es semanal; y una repetible que figura completada hoy se hizo
+  necesariamente en este periodo. Sin listas curadas y sin nada que se pueda quedar obsoleto por
+  parche. Al actualizar se recorre el historial de snapshots ya guardado, así que si llevas semanas
+  con la app las semanales aparecen con nombre desde el primer sync.
+
+Cuando una fila no se puede medir todavía, la app dice por qué en lugar de mostrar un cero que
+parece un dato real.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json`, `quests_es/en.json`, `quest_meta.json`,
 `areas_es/en.json` y `mounts.json` a partir de las tablas DB2 de wago.tools (datos del propio cliente
