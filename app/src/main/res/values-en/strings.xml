@@ -97,4 +97,56 @@
     <string name="season_exclusive">Exclusive to the season</string>
     <string name="season_exclusive_hint">Mounts that only drop this season. Tap to see all the highlight loot with its drop chance.</string>
     <string name="season_see_all">See all the season\'s loot →</string>
+
+    <!-- Storylines -->
+    <string name="storylines_search_season">Search season</string>
+    <string name="storylines_search">Search storyline, campaign or zone</string>
+    <string name="storylines_need_sync">Log in and sync to see your real progress.</string>
+    <string name="storylines_current">CURRENT</string>
+    <string name="storylines_empty_season">No storylines classified in this season.</string>
+    <string name="storylines_progress">%1$d/%2$d storylines complete</string>
+    <string name="storylines_campaigns">%1$d campaigns</string>
+    <string name="storylines_required">%1$d / %2$d required quests</string>
+    <string name="storylines_optional">%1$d/%2$d optional · not needed to complete the storyline</string>
+    <string name="storylines_optional_tag">optional</string>
+    <string name="storylines_open_detail">Open full detail (zone, loot and TomTom) →</string>
+    <string name="storylines_other">Other storylines</string>
+
+    <!-- Home -->
+    <string name="dashboard_no_events">No upcoming events in the catalog.</string>
+    <string name="dashboard_active_character">Active character</string>
+    <string name="dashboard_see_roster">See roster →</string>
+    <string name="dashboard_not_synced">Not synced yet</string>
+    <string name="dashboard_synced_ago">Synced %1$d min ago</string>
+    <string name="dashboard_stale">⚠ Data is %1$d min old — it may not reflect what you just did in game</string>
+    <string name="vault_need_sync">Sync to estimate your Great Vault.</string>
+    <string name="vault_row_raid">Raid</string>
+    <string name="vault_row_mplus">Mythic+</string>
+    <string name="vault_row_world">World</string>
+    <string name="vault_none_unlocked">No reward unlocked yet this week.</string>
+    <string name="vault_unlocked">%1$d reward(s) unlocked · best predicted ilvl %2$d. You claim only ONE.</string>
+    <string name="vault_world_pending">World will be counted from the next reset: the API only gives the running delve total and the app has no earlier reading to compare against yet.</string>
+    <string name="vault_ready">ready</string>
+
+    <!-- Navigation and the "More" hub -->
+    <string name="title_content">Content</string>
+    <string name="title_storylines">Storylines</string>
+    <string name="title_quests_zone">Quests by zone</string>
+    <string name="title_event">Event</string>
+    <string name="title_this_week">This week</string>
+    <string name="title_seasons_mplus">M+ seasons</string>
+    <string name="title_season_rewards">Season rewards</string>
+    <string name="title_season_loot">Season loot</string>
+    <string name="title_quest">Quest</string>
+    <string name="more_content_desc">Dungeons, raids, bosses and M+ affixes</string>
+    <string name="more_storylines_desc">Every storyline with your progress, campaign by campaign</string>
+    <string name="more_quests_desc">Each zone with your completed quests, ticked automatically</string>
+    <string name="more_events_desc">Timers, cadence and rewards for every event</string>
+    <string name="more_weekly_desc">M+, bosses, delves and quests done since the reset</string>
+    <string name="more_progression_desc">Great Vault, Folio, Prey and Delves</string>
+    <string name="more_seasons_desc">Your Mythic+ history and progress by season</string>
+    <string name="more_seasonloot_desc">Exclusive mounts and gear, with image and drop chance</string>
+    <string name="more_seasonal_desc">Goals with a deadline and how feasible they are</string>
+    <string name="more_roster_desc">All your characters and their mount attempts</string>
+    <string name="more_settings_desc">Account, region, updates, data and diagnostics</string>
 </resources>

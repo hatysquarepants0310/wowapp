@@ -74,7 +74,7 @@ fun DashboardScreen(
                     }
                 }
             } else {
-                Text("Sin eventos próximos en el catálogo.")
+                Text(stringResource(R.string.dashboard_no_events))
             }
         }
 
@@ -85,8 +85,8 @@ fun DashboardScreen(
         }
 
         state.activeCharacterName?.let { name ->
-            SectionCard("Personaje activo") {
-                androidx.compose.material3.TextButton(onClick = onOpenRoster) { Text("Ver roster →") }
+            SectionCard(stringResource(R.string.dashboard_active_character)) {
+                androidx.compose.material3.TextButton(onClick = onOpenRoster) { Text(stringResource(R.string.dashboard_see_roster)) }
                 Text("$name${state.activeCharacterRealm?.let { " · $it" } ?: ""}",
                     style = MaterialTheme.typography.titleMedium)
                 Text("${state.activeCharacterClass ?: ""} · ilvl ${state.activeCharacterIlvl}",
@@ -96,14 +96,14 @@ fun DashboardScreen(
                 if (syncedAt != null) {
                     val minutes = java.time.Duration.between(syncedAt, java.time.Instant.now()).toMinutes()
                     Text(
-                        if (minutes > 30) "⚠ Datos de hace $minutes min — pueden no reflejar acciones recientes in-game"
-                        else "Sincronizado hace $minutes min",
+                        if (minutes > 30) stringResource(R.string.dashboard_stale, minutes)
+                        else stringResource(R.string.dashboard_synced_ago, minutes),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (minutes > 30) MaterialTheme.colorScheme.secondary
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    Text("Aún sin sincronizar", style = MaterialTheme.typography.bodySmall,
+                    Text(stringResource(R.string.dashboard_not_synced), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -115,16 +115,16 @@ fun DashboardScreen(
             if (vault != null) {
                 // Rejilla 3x3 como la interfaz del juego: una fila por fuente,
                 // tres recompensas por fila que se desbloquean por umbrales.
-                VaultGridRow("Banda", vault.raidSlots)
-                VaultGridRow("Mythic+", vault.mythicPlusSlots)
-                VaultGridRow("Mundo", vault.worldSlots)
+                VaultGridRow(stringResource(R.string.vault_row_raid), vault.raidSlots)
+                VaultGridRow(stringResource(R.string.vault_row_mplus), vault.mythicPlusSlots)
+                VaultGridRow(stringResource(R.string.vault_row_world), vault.worldSlots)
                 Spacer(Modifier.height(6.dp))
                 val unlocked = (vault.raidSlots.predictedRewardIlvl +
                     vault.mythicPlusSlots.predictedRewardIlvl +
                     vault.worldSlots.predictedRewardIlvl).filterNotNull()
                 Text(
-                    if (unlocked.isEmpty()) "Aún sin recompensas desbloqueadas esta semana."
-                    else "${unlocked.size} recompensa(s) desbloqueada(s) · mejor ilvl previsto ${unlocked.max()}. Solo se reclama UNA.",
+                    if (unlocked.isEmpty()) stringResource(R.string.vault_none_unlocked)
+                    else stringResource(R.string.vault_unlocked, unlocked.size, unlocked.max()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -134,9 +134,7 @@ fun DashboardScreen(
                 // al reset para saber cuáles son de esta semana.
                 if (state.worldBaselineMissing) {
                     Text(
-                        "Mundo se contará a partir del próximo reset: la API solo da el " +
-                            "total acumulado de Delves y la app aún no tiene una lectura " +
-                            "previa con la que comparar.",
+                        stringResource(R.string.vault_world_pending),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.padding(top = 4.dp),
@@ -145,7 +143,7 @@ fun DashboardScreen(
                 Spacer(Modifier.height(4.dp))
                 ConfidenceBadge(vault.confidence)
             } else {
-                Text("Sincroniza para estimar tu Gran Bóveda.",
+                Text(stringResource(R.string.vault_need_sync),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -154,10 +152,9 @@ fun DashboardScreen(
         // Lo exclusivo de la temporada: se pierde cuando la temporada cierra, así
         // que merece estar en Inicio y no enterrado en un submenú.
         if (state.seasonMounts.isNotEmpty()) {
-            SectionCard("Exclusivo de la temporada") {
+            SectionCard(stringResource(R.string.season_exclusive)) {
                 Text(
-                    "Monturas que solo caen en esta temporada. Toca para ver todo el " +
-                        "botín destacado con su probabilidad.",
+                    stringResource(R.string.season_exclusive_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -166,7 +163,7 @@ fun DashboardScreen(
                     LootRow(mount, onClick = { onOpenSeasonLoot() })
                 }
                 androidx.compose.material3.TextButton(onClick = onOpenSeasonLoot) {
-                    Text("Ver todo el botín de la temporada →")
+                    Text(stringResource(R.string.season_see_all))
                 }
             }
         }
@@ -217,7 +214,7 @@ private fun VaultGridRow(label: String, slot: com.azeroth.companion.core.model.S
                         if (unlocked) {
                             Text("★", style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.primary)
-                            Text(ilvl?.let { "ilvl $it" } ?: "listo",
+                            Text(ilvl?.let { "ilvl $it" } ?: stringResource(R.string.vault_ready),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer)
                         } else {

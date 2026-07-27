@@ -134,20 +134,19 @@ private data class Destination(val route: String, val labelRes: Int, val icon: a
 
 /** Títulos de las subpantallas para la barra superior con botón atrás. */
 private val subScreenTitles = mapOf(
-    "content" to "Contenido",
-    "storylines" to "Historias",
-    "quests" to "Misiones por zona",
-    "events" to "Eventos",
-    "event" to "Evento",
-    "weekly" to "Esta semana",
-    "progression" to "Progresión",
-    "seasons" to "Temporadas M+",
-    "seasonal" to "Recompensas de temporada",
-    "seasonloot" to "Botín de la temporada",
-    "quest/{questId}" to "Misión",
-    "content/{instanceId}/{bossId}" to "Contenido",
-    "roster" to "Roster",
-    "settings" to "Ajustes",
+    "content" to R.string.title_content,
+    "storylines" to R.string.title_storylines,
+    "quests" to R.string.title_quests_zone,
+    "events" to R.string.nav_events,
+    "event" to R.string.title_event,
+    "weekly" to R.string.title_this_week,
+    "progression" to R.string.nav_progression,
+    "seasons" to R.string.title_seasons_mplus,
+    "seasonal" to R.string.title_season_rewards,
+    "seasonloot" to R.string.title_season_loot,
+    "quest" to R.string.title_quest,
+    "roster" to R.string.nav_roster,
+    "settings" to R.string.nav_settings,
 )
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -165,13 +164,13 @@ private fun AppScaffold(startEventId: String?) {
     // Las subpantallas de "Más" necesitan salida visible: sin esto parecía que
     // te quedabas atrapado hasta usar el botón atrás del sistema.
     val isSubScreen = currentRoute != null && currentRoute !in rootRoutes
-    val subTitle = subScreenTitles[currentRoute?.substringBefore('/')]
+    val subTitleRes = subScreenTitles[currentRoute?.substringBefore('/')]
 
     Scaffold(
         topBar = {
             if (isSubScreen) {
                 androidx.compose.material3.TopAppBar(
-                    title = { Text(subTitle ?: "") },
+                    title = { Text(subTitleRes?.let { stringResource(it) } ?: "") },
                     navigationIcon = {
                         androidx.compose.material3.IconButton(
                             onClick = { navController.popBackStack() },
@@ -303,27 +302,27 @@ private fun MoreScreen(onNavigate: (String) -> Unit) {
     val teal = androidx.compose.ui.graphics.Color(0xFF4FB6A6)
     val rose = androidx.compose.ui.graphics.Color(0xFFE07A9B)
     val items = listOf(
-        MoreItem("content", "Contenido", "Mazmorras, bandas, jefes y afijos de M+",
+        MoreItem("content", stringResource(R.string.title_content), stringResource(R.string.more_content_desc),
             Icons.AutoMirrored.Filled.MenuBook, purple),
-        MoreItem("storylines", "Historias", "Todas las storylines con tu progreso ✓, estilo Wowhead",
+        MoreItem("storylines", stringResource(R.string.title_storylines), stringResource(R.string.more_storylines_desc),
             Icons.Filled.AutoStories, rose),
-        MoreItem("quests", "Misiones por zona", "Cada zona con tus misiones completadas automáticamente",
+        MoreItem("quests", stringResource(R.string.title_quests_zone), stringResource(R.string.more_quests_desc),
             Icons.Filled.Explore, teal),
-        MoreItem("events", "Eventos", "Temporizadores, cadencia y recompensas de cada evento",
+        MoreItem("events", stringResource(R.string.nav_events), stringResource(R.string.more_events_desc),
             Icons.Filled.Timer, gold),
-        MoreItem("weekly", "Esta semana", "M+, jefes, Delves y misiones hechas desde el reset",
+        MoreItem("weekly", stringResource(R.string.title_this_week), stringResource(R.string.more_weekly_desc),
             Icons.Filled.Checklist, teal),
-        MoreItem("progression", "Progresión", "Gran Bóveda, Folio, Presas y Delves",
+        MoreItem("progression", stringResource(R.string.nav_progression), stringResource(R.string.more_progression_desc),
             Icons.Filled.TrendingUp, purple),
-        MoreItem("seasons", "Temporadas M+", "Tu historial y progreso por temporada de Mythic+",
+        MoreItem("seasons", stringResource(R.string.title_seasons_mplus), stringResource(R.string.more_seasons_desc),
             Icons.Filled.EmojiEvents, gold),
-        MoreItem("seasonloot", "Botín de la temporada", "Monturas y equipo exclusivos, con imagen y probabilidad",
+        MoreItem("seasonloot", stringResource(R.string.title_season_loot), stringResource(R.string.more_seasonloot_desc),
             Icons.Filled.Diamond, purple),
-        MoreItem("seasonal", "Recompensas de temporada", "Objetivos con fecha límite y viabilidad",
+        MoreItem("seasonal", stringResource(R.string.title_season_rewards), stringResource(R.string.more_seasonal_desc),
             Icons.Filled.CalendarMonth, rose),
-        MoreItem("roster", "Roster", "Todos tus personajes y sus intentos de montura",
+        MoreItem("roster", stringResource(R.string.nav_roster), stringResource(R.string.more_roster_desc),
             Icons.Filled.Groups, teal),
-        MoreItem("settings", "Ajustes", "Cuenta, región, actualización, datos y diagnóstico",
+        MoreItem("settings", stringResource(R.string.nav_settings), stringResource(R.string.more_settings_desc),
             Icons.Filled.Settings, gold),
     )
     LazyColumn(
