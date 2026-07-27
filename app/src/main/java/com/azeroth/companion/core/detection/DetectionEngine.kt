@@ -23,6 +23,11 @@ data class SnapshotView(
     val delvesThisWeek: Int = 0,
     /** Misiones repetibles APRENDIDAS que ahora figuran completadas. */
     val repeatableQuestsDoneThisWeek: Int = 0,
+    /** Jefes de mundo derrotados tras el reset (instancias de un solo jefe). */
+    val worldBossKillsThisWeek: Int = 0,
+    /** Estadísticas acumuladas y su valor en el snapshot previo al reset. */
+    val statistics: Map<Int, Int> = emptyMap(),
+    val statisticsBeforeReset: Map<Int, Int> = emptyMap(),
 )
 
 data class DetectionResult(val completions: Int, val confidence: Confidence)
@@ -79,12 +84,27 @@ class DetectionEngine {
                         current?.mythicPlusRunsThisWeek ?: 0
                     com.azeroth.companion.core.model.WeeklyActivityKind.RAID_BOSS ->
                         current?.raidBossKillsThisWeek ?: 0
+                    com.azeroth.companion.core.model.WeeklyActivityKind.WORLD_BOSS ->
+                        current?.worldBossKillsThisWeek ?: 0
                     com.azeroth.companion.core.model.WeeklyActivityKind.DELVE ->
                         current?.delvesThisWeek ?: 0
                     com.azeroth.companion.core.model.WeeklyActivityKind.REPEATABLE_QUEST ->
                         current?.repeatableQuestsDoneThisWeek ?: 0
                 }
                 estimated(if (value >= rule.min) value else 0)
+            }
+
+            is DetectionRule.StatisticDelta -> {
+                val before = current?.statisticsBeforeReset?.get(rule.statisticId)
+                val now = current?.statistics?.get(rule.statisticId)
+                // Sin lectura previa al reset no se puede afirmar nada: un 0 aquí
+                // sería inventarse un dato, no medirlo.
+                if (before == null || now == null) {
+                    DetectionResult(0, Confidence.PREDICTED)
+                } else {
+                    val delta = (now - before).coerceAtLeast(0)
+                    estimated(if (delta >= rule.min) delta else 0)
+                }
             }
 
             DetectionRule.ManualOnly -> DetectionResult(0, Confidence.PREDICTED)

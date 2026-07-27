@@ -309,6 +309,32 @@ resto de la app.
 Cuando una fila no se puede medir todavía, la app dice por qué en lugar de mostrar un cero que
 parece un dato real.
 
+**v2.4.0** — Vuelven las 16 semanales con nombre, ahora con los IDs de misión **reales**.
+
+La v2.1.0 las sacó de las misiones que Blizzard llama `"Midnight: <actividad>"`. La v2.3.0 comprobó
+que esos IDs no existen para la API y las sustituyó por cuatro filas genéricas de actividad, lo que
+perdía la lista. Esta versión recupera las 16 con nombre y les da una señal que sí funciona.
+
+*Cómo se encontraron los IDs buenos.* Buscando en el catálogo de misiones de la API (28 206 con
+nombre en español e inglés) las familias reales de cada actividad, y **verificando cada candidata
+contra 75 personajes activos** sacados de las clasificaciones de PvP. Ejemplos: la semanal de Abismos
+no es "Midnight: Abismos" sino la familia "Se busca surcabismos: `<abismo>`" (15 variantes, 66 de 75
+personajes); la de Enfrentamientos extramundos es "Enfrentamiento en Val/Naigtal", no el marcador. 14
+de las 16 quedan con señal verificada sobre personajes reales; las otras dos llevan IDs con nombre
+correcto que, en el peor caso, simplemente no se marcan.
+
+*Doble señal donde se puede.* Calabozos y Banda se marcan con las mazmorras y jefes que la API fecha;
+Abismos acepta tanto sus misiones como la diferencia de la estadística de Delves; Campos de batalla
+usa la diferencia de muertes honorables en BG; jefe de mundo se distingue de la banda por instancia,
+para que matar al de mundo no marque la fila de banda.
+
+*Red de seguridad.* Debajo de la lista, la app enseña las misiones repetibles que ha aprendido de tus
+propias sincronizaciones, con su nombre. Si alguna semanal cambia de ID en un parche, sigues viendo
+lo que has hecho.
+
+*Guardia contra la regresión.* Un test falla la compilación si alguna semanal vuelve a apoyarse en un
+ID marcador o en una regla que no puede dispararse.
+
 ### Pipeline de datos
 `tools/build_storylines.py` regenera `storylines.json`, `quests_es/en.json`, `quest_meta.json`,
 `areas_es/en.json` y `mounts.json` a partir de las tablas DB2 de wago.tools (datos del propio cliente

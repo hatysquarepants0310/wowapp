@@ -133,16 +133,19 @@ fun WeeklyScreen(
         // Las semanales que el jugador HA HECHO, por nombre. Salen de las
         // misiones repetibles que la app ha aprendido de su propia cuenta: no
         // dependen de una lista de IDs escrita a mano.
-        section("Semanales hechas", a.repeatableDone.size) {
+        // Red de seguridad: aunque el catálogo no cubra una semanal concreta, la
+        // app aprende qué misiones son repetibles observando tus propios syncs y
+        // las muestra aquí POR NOMBRE, así que nunca te quedas sin ver lo hecho.
+        section("Repetibles detectadas", a.repeatableDone.size) {
             when {
                 a.learnedRepeatables == 0 -> Empty(
-                    "La app está aprendiendo cuáles de tus misiones son repetibles " +
-                        "comparando tus sincronizaciones. En cuanto reconozca la primera, " +
-                        "aparecerán aquí por nombre y se marcarán solas.",
+                    "La app aprende cuáles de tus misiones son repetibles comparando " +
+                        "tus sincronizaciones. En cuanto reconozca la primera, aparecerá " +
+                        "aquí por nombre.",
                 )
                 a.repeatableDone.isEmpty() -> Empty(
-                    "Ninguna semanal hecha todavía en este periodo " +
-                        "(${a.learnedRepeatables} misiones repetibles conocidas).",
+                    "Ninguna repetible hecha en este periodo " +
+                        "(${a.learnedRepeatables} conocidas).",
                 )
                 else -> a.repeatableDone.forEach { q -> LineRow("☑", q.name, "hecha") }
             }

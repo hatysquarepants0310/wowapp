@@ -27,6 +27,11 @@ data class Catalog(
     val season: SeasonInfo = SeasonInfo(),
     /** ID de expansión en el journal de Blizzard para listar mazmorras y bandas. */
     val journalExpansionId: Int = 516,
+    /**
+     * Estadísticas del perfil que se guardan en cada snapshot para poder medir
+     * su diferencia semanal. Solo estas: la API devuelve más de mil.
+     */
+    val trackedStatisticIds: List<Int> = listOf(40734, 382),
 )
 
 /** Temporada en curso. La fecha de cierre es SIEMPRE estimada (§8.3). */

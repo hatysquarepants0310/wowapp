@@ -24,7 +24,12 @@ data class MythicRunRecord(val name: String = "", val level: Int = 0, val inTime
 
 /** Un jefe de banda derrotado después del último reset, con su dificultad. */
 @Serializable
-data class RaidKillRecord(val name: String = "", val difficulty: String = "")
+data class RaidKillRecord(
+    val name: String = "",
+    val difficulty: String = "",
+    /** Instancia del jefe: distingue la banda de temporada de un jefe de mundo. */
+    val instanceId: Int = 0,
+)
 
 data class WeeklyQuestDone(val id: Int, val name: String)
 

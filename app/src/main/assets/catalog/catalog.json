@@ -1,5 +1,5 @@
 {
-  "catalogVersion": 4,
+  "catalogVersion": 6,
   "gameVersion": "12.1",
   "updatedAt": "2026-07-23T00:00:00Z",
   "resets": [
@@ -280,15 +280,340 @@
   ],
   "weeklyTasks": [
     {
+      "id": "weekly_world_quests",
+      "category": "WORLD_EVENT",
+      "title": {
+        "es_MX": "Misiones de mundo",
+        "en_US": "World Quests"
+      },
+      "description": {
+        "es_MX": "Se marca cuando la app detecta varias misiones repetibles hechas.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "ActivityThisWeek",
+        "activity": "REPEATABLE_QUEST",
+        "min": 3
+      },
+      "priorityWeight": 60,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_arcantina",
+      "category": "WEEKLY_QUEST",
+      "title": {
+        "es_MX": "Arcantina",
+        "en_US": "Arcantina"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          86903,
+          90718
+        ]
+      },
+      "priorityWeight": 60,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_housing",
+      "category": "WEEKLY_QUEST",
+      "title": {
+        "es_MX": "Viviendas",
+        "en_US": "Housing"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          94379,
+          94416,
+          94455
+        ]
+      },
+      "priorityWeight": 40,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_saltheril",
+      "category": "WEEKLY_QUEST",
+      "title": {
+        "es_MX": "Velada de Saltheril",
+        "en_US": "Saltheril's Soiree"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          89285,
+          89286,
+          89287,
+          89307,
+          89308,
+          89309,
+          89311,
+          89312,
+          89313,
+          89314,
+          89315,
+          89316,
+          91627
+        ]
+      },
+      "priorityWeight": 55,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_abundance",
+      "category": "WEEKLY_QUEST",
+      "title": {
+        "es_MX": "Abundancia",
+        "en_US": "Abundance"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          89507,
+          91930,
+          91932,
+          91933,
+          92418,
+          93931,
+          94361,
+          94834
+        ]
+      },
+      "priorityWeight": 55,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_stormarion",
+      "category": "WORLD_EVENT",
+      "title": {
+        "es_MX": "Ataque de Tormentarion",
+        "en_US": "Stormarion Assault"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "AnyOf",
+        "rules": [
+          {
+            "type": "QuestCompleted",
+            "questIds": [
+              91464
+            ]
+          },
+          {
+            "type": "ReputationGain",
+            "factionId": 2701,
+            "minDelta": 2000
+          }
+        ]
+      },
+      "priorityWeight": 70,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_delves",
+      "category": "DELVE",
+      "title": {
+        "es_MX": "Abismos",
+        "en_US": "Delves"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "AnyOf",
+        "rules": [
+          {
+            "type": "QuestCompleted",
+            "questIds": [
+              85648,
+              85649,
+              85664,
+              85666,
+              85667,
+              93372,
+              93384,
+              93385,
+              93386,
+              93409,
+              93410,
+              93416,
+              93421,
+              93427,
+              93428
+            ]
+          },
+          {
+            "type": "StatisticDelta",
+            "statisticId": 40734,
+            "min": 1
+          }
+        ]
+      },
+      "priorityWeight": 85,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_prey",
+      "category": "PREY_HUNT",
+      "title": {
+        "es_MX": "Presa",
+        "en_US": "Prey"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          88982,
+          90093,
+          90538,
+          91095,
+          91096,
+          91097,
+          91098,
+          91099,
+          91100,
+          91101,
+          91102,
+          91103,
+          91104,
+          91105,
+          91106,
+          91107,
+          91108,
+          91109,
+          91110,
+          91111,
+          91112,
+          91113,
+          91114,
+          91115,
+          91116,
+          91117,
+          91118,
+          91119,
+          91120,
+          91121,
+          91122,
+          91123,
+          91124,
+          91210,
+          91211,
+          91212,
+          91213,
+          91214,
+          91215,
+          91216,
+          91217,
+          91218,
+          91219,
+          91220,
+          91221,
+          91222,
+          91223,
+          91224,
+          91225,
+          91226,
+          91227,
+          91228,
+          91229,
+          91230,
+          91231,
+          91232,
+          91233,
+          91234,
+          91235,
+          91236,
+          91237,
+          91238,
+          91239,
+          91240,
+          91241,
+          91242,
+          91243,
+          91244,
+          91245,
+          91246,
+          91247,
+          91248,
+          91249,
+          91250,
+          91251,
+          91252,
+          91253,
+          91254,
+          91255,
+          91256,
+          91257,
+          91258,
+          91259,
+          91260,
+          91261,
+          91262,
+          91263,
+          91264,
+          91265,
+          91266,
+          91267,
+          91268,
+          91269,
+          92926,
+          95114
+        ]
+      },
+      "priorityWeight": 70,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
       "id": "weekly_dungeons",
       "category": "WEEKLY_QUEST",
       "title": {
-        "es_MX": "Mazmorras Mythic+",
-        "en_US": "Mythic+ dungeons"
+        "es_MX": "Calabozos",
+        "en_US": "Dungeons"
       },
       "description": {
-        "es_MX": "Se marca con las mazmorras que la API fecha después del reset.",
-        "en_US": "Ticks from the dungeons the API timestamps after the reset."
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
       },
       "resetPeriod": "WEEKLY",
       "maxCompletions": 99,
@@ -314,12 +639,12 @@
       "id": "weekly_raid",
       "category": "WEEKLY_QUEST",
       "title": {
-        "es_MX": "Jefes de banda",
-        "en_US": "Raid bosses"
+        "es_MX": "Banda",
+        "en_US": "Raid"
       },
       "description": {
-        "es_MX": "Se marca con los jefes que la API fecha después del reset.",
-        "en_US": "Ticks from the bosses the API timestamps after the reset."
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
       },
       "resetPeriod": "WEEKLY",
       "maxCompletions": 99,
@@ -335,45 +660,149 @@
       ]
     },
     {
-      "id": "weekly_delves",
-      "category": "DELVE",
+      "id": "weekly_world_boss",
+      "category": "WORLD_BOSS",
       "title": {
-        "es_MX": "Profundidades",
-        "en_US": "Delves"
+        "es_MX": "Jefe de mundo",
+        "en_US": "World Boss"
       },
       "description": {
-        "es_MX": "Por diferencia de la estadística de Delves; necesita una lectura anterior al reset.",
-        "en_US": "From the delve statistic difference; needs a reading from before the reset."
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
       },
       "resetPeriod": "WEEKLY",
       "maxCompletions": 99,
       "detectionRule": {
         "type": "ActivityThisWeek",
-        "activity": "DELVE",
+        "activity": "WORLD_BOSS",
         "min": 1
       },
-      "priorityWeight": 85,
+      "priorityWeight": 75,
+      "isRemovedAtSeasonEnd": true,
+      "lootInstanceIds": [
+        1305,
+        1314
+      ]
+    },
+    {
+      "id": "weekly_battlegrounds",
+      "category": "PVP",
+      "title": {
+        "es_MX": "Campos de batalla",
+        "en_US": "Battlegrounds"
+      },
+      "description": {
+        "es_MX": "Se marca si has sumado muertes honorables en campos de batalla.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "StatisticDelta",
+        "statisticId": 382,
+        "min": 1
+      },
+      "priorityWeight": 50,
       "isRemovedAtSeasonEnd": true
     },
     {
-      "id": "weekly_repeatables",
-      "category": "WEEKLY_QUEST",
+      "id": "weekly_world_tour",
+      "category": "WORLD_EVENT",
       "title": {
-        "es_MX": "Misiones semanales",
-        "en_US": "Weekly quests"
+        "es_MX": "Tour mundial",
+        "en_US": "World Tour"
       },
       "description": {
-        "es_MX": "Misiones repetibles que la app ha aprendido de tu cuenta y hoy figuran completadas.",
-        "en_US": "Repeatable quests the app learned from your account that are completed right now."
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
       },
       "resetPeriod": "WEEKLY",
       "maxCompletions": 99,
       "detectionRule": {
-        "type": "ActivityThisWeek",
-        "activity": "REPEATABLE_QUEST",
-        "min": 1
+        "type": "QuestCompleted",
+        "questIds": [
+          95245
+        ]
+      },
+      "priorityWeight": 50,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_void_assaults",
+      "category": "WORLD_EVENT",
+      "title": {
+        "es_MX": "Asaltos del Vacío",
+        "en_US": "Void Assaults"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          94385,
+          94386
+        ]
       },
       "priorityWeight": 70,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_ritual_sites",
+      "category": "WORLD_EVENT",
+      "title": {
+        "es_MX": "Sitios de ritual",
+        "en_US": "Ritual Sites"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          95547,
+          96728,
+          96729,
+          96730,
+          96731,
+          96732,
+          96733
+        ]
+      },
+      "priorityWeight": 65,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
+      "id": "weekly_offworld",
+      "category": "WEEKLY_QUEST",
+      "title": {
+        "es_MX": "Enfrentamientos extramundos",
+        "en_US": "Offworld Showdowns"
+      },
+      "description": {
+        "es_MX": "Semanal de Midnight, detectada desde tu perfil.",
+        "en_US": "Midnight weekly, detected from your profile."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          96713,
+          96714,
+          96716,
+          96717,
+          96718,
+          96720
+        ]
+      },
+      "priorityWeight": 45,
       "isRemovedAtSeasonEnd": true
     },
     {
@@ -535,5 +964,9 @@
         "en_US": "Rotating zone"
       }
     }
+  ],
+  "trackedStatisticIds": [
+    40734,
+    382
   ]
 }

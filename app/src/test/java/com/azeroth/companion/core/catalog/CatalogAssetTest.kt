@@ -50,12 +50,57 @@ class CatalogAssetTest {
         val manual = weeklies.filter { it.detectionRule == DetectionRule.ManualOnly }
         assertEquals(emptyList<String>(), manual.map { it.id })
 
-        val unprovable = weeklies.filterNot { it.detectionRule is DetectionRule.ActivityThisWeek }
-        assertEquals(
-            "semanales que no se apoyan en una señal medida",
-            emptyList<String>(),
-            unprovable.map { it.id },
+        weeklies.forEach { task ->
+            assertTrue(
+                "la semanal ${task.id} no se apoya en ninguna señal medible",
+                canFire(task.detectionRule),
+            )
+        }
+    }
+
+    /**
+     * Guardia contra la regresión concreta: los IDs de las misiones marcador
+     * "Midnight: X" no aparecen en /quests/completed de NADIE (comprobado sobre
+     * 75 personajes activos) y en DB2 comparten un mismo UniqueBitFlag, señal de
+     * que no se almacenan individualmente. Ninguna regla puede depender de ellos.
+     */
+    @Test
+    fun `ninguna semanal depende de las misiones marcador`() {
+        val catalog = json.decodeFromString(
+            Catalog.serializer(), File(assets, "catalog.json").readText(),
         )
+        val dead = setOf(
+            93766, 93767, 93769, 93889, 93890, 93892, 93909, 93910,
+            93911, 93912, 93913, 94457, 95842, 95843, 96727,
+        )
+        catalog.weeklyTasks.forEach { task ->
+            val used = questIds(task.detectionRule).filter { it in dead }
+            assertEquals("la semanal ${task.id} usa IDs marcador", emptyList<Int>(), used)
+        }
+    }
+
+    private fun canFire(rule: DetectionRule): Boolean = when (rule) {
+        is DetectionRule.QuestCompleted -> rule.questIds.isNotEmpty()
+        is DetectionRule.QuestDelta -> rule.questIds.isNotEmpty()
+        is DetectionRule.ActivityThisWeek,
+        is DetectionRule.StatisticDelta,
+        is DetectionRule.ReputationGain,
+        is DetectionRule.MythicPlusRuns,
+        is DetectionRule.RaidBossKills,
+        is DetectionRule.AchievementCriteria,
+        is DetectionRule.CurrencyThreshold,
+        -> true
+        is DetectionRule.AnyOf -> rule.rules.any { canFire(it) }
+        is DetectionRule.AllOf -> rule.rules.isNotEmpty() && rule.rules.all { canFire(it) }
+        DetectionRule.ManualOnly -> false
+    }
+
+    private fun questIds(rule: DetectionRule): List<Int> = when (rule) {
+        is DetectionRule.QuestCompleted -> rule.questIds
+        is DetectionRule.QuestDelta -> rule.questIds
+        is DetectionRule.AnyOf -> rule.rules.flatMap { questIds(it) }
+        is DetectionRule.AllOf -> rule.rules.flatMap { questIds(it) }
+        else -> emptyList()
     }
 
     @Test
