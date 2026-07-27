@@ -1,5 +1,5 @@
 {
-  "catalogVersion": 6,
+  "catalogVersion": 7,
   "gameVersion": "12.1",
   "updatedAt": "2026-07-23T00:00:00Z",
   "resets": [
@@ -301,6 +301,32 @@
       "isRemovedAtSeasonEnd": true
     },
     {
+      "id": "weekly_seeking_knowledge",
+      "category": "WEEKLY_QUEST",
+      "title": {
+        "es_MX": "Búsqueda de conocimiento",
+        "en_US": "Seeking Knowledge"
+      },
+      "description": {
+        "es_MX": "Serie rotatoria de 5 semanas del Omnium.",
+        "en_US": "The Omnium's rotating five-week series."
+      },
+      "resetPeriod": "WEEKLY",
+      "maxCompletions": 99,
+      "detectionRule": {
+        "type": "QuestCompleted",
+        "questIds": [
+          96410,
+          96441,
+          96442,
+          96443,
+          96444
+        ]
+      },
+      "priorityWeight": 65,
+      "isRemovedAtSeasonEnd": true
+    },
+    {
       "id": "weekly_arcantina",
       "category": "WEEKLY_QUEST",
       "title": {
@@ -435,7 +461,7 @@
           {
             "type": "ReputationGain",
             "factionId": 2701,
-            "minDelta": 2000
+            "minDelta": 1500
           }
         ]
       },
@@ -744,7 +770,8 @@
         "type": "QuestCompleted",
         "questIds": [
           94385,
-          94386
+          94386,
+          96442
         ]
       },
       "priorityWeight": 70,

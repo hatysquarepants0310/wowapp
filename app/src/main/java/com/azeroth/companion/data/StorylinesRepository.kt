@@ -148,6 +148,7 @@ class StorylinesRepository @Inject constructor(
     private var questNames: Map<Int, String>? = null
     private var questMeta: Map<Int, List<Int>>? = null
     private var areaNames: Map<Int, String>? = null
+    private var coords: Map<Int, List<Double>>? = null
     private val questDetailCache = mutableMapOf<Int, QuestDetail>()
 
     private fun spanish(): Boolean =
@@ -187,6 +188,34 @@ class StorylinesRepository @Inject constructor(
                 .mapKeys { (k, _) -> k.toInt() }
         }.orEmpty().also { areaNames = it }
     }
+
+    /**
+     * Coordenada del punto de la misión: [uiMapId, x, y]. La genera
+     * tools/build_quest_coords.py desde las tablas QuestPOI del cliente.
+     */
+    private suspend fun coords(): Map<Int, List<Double>> = withContext(Dispatchers.IO) {
+        coords?.let { return@withContext it }
+        readAsset("catalog/quest_coords.json") {
+            json.decodeFromString(
+                MapSerializer(String.serializer(), ListSerializer(Double.serializer())), it,
+            ).mapKeys { (k, _) -> k.toInt() }
+        }.orEmpty().also { coords = it }
+    }
+
+    /**
+     * Comando de TomTom para llegar al punto de la misión, listo para pegar en
+     * el chat del juego. Null si el cliente no publica un punto para esa misión.
+     */
+    suspend fun tomTomCommand(questId: Int, questName: String): String? {
+        val c = coords()[questId] ?: return null
+        val map = c.getOrNull(0)?.toInt() ?: return null
+        val x = c.getOrNull(1) ?: return null
+        val y = c.getOrNull(2) ?: return null
+        return "/way #$map ${trim(x)} ${trim(y)} $questName"
+    }
+
+    private fun trim(v: Double): String =
+        if (v == v.toLong().toDouble()) v.toLong().toString() else String.format("%.1f", v)
 
     private fun <T> readAsset(path: String, parse: (String) -> T): T? = runCatching {
         parse(context.assets.open(path).bufferedReader().use { it.readText() })
@@ -345,6 +374,42 @@ class StorylinesRepository @Inject constructor(
      * La recompensa de misión no es aleatoria: si hay un solo objeto está
      * garantizado y, si hay varios, el juego te deja elegir uno.
      */
+    /**
+     * Nombre y estado de una lista de misiones, con las completadas primero.
+     * Lo usan las semanales para enseñar de qué misiones se componen.
+     */
+    suspend fun questsFor(questIds: List<Int>, limit: Int = 12): List<WeeklyQuestDone> {
+        if (questIds.isEmpty()) return emptyList()
+        val names = names()
+        val completed = completedQuestIds()
+        return questIds
+            .sortedByDescending { it in completed }
+            .take(limit)
+            .map { WeeklyQuestDone(it, names[it] ?: "#$it", it in completed) }
+    }
+
+    /** Ficha completa de una misión, mire desde donde se mire en la app. */
+    suspend fun fullDetail(questId: Int): QuestFullDetail {
+        val names = names()
+        val meta = meta()[questId]
+        val areaNames = areas()
+        val completed = completedQuestIds()
+        val name = names[questId] ?: "Misión #$questId"
+        val story = file().storylines.firstOrNull { questId in it.questIds }
+        val detail = questDetail(questId)
+        return QuestFullDetail(
+            id = questId,
+            name = name,
+            completed = questId in completed,
+            zone = meta?.getOrNull(0)?.takeIf { it != 0 }?.let { areaNames[it] },
+            minLevel = meta?.getOrNull(1) ?: 0,
+            storyline = story?.label(spanish()),
+            description = detail.description,
+            rewards = detail.rewards,
+            tomTom = tomTomCommand(questId, name),
+        )
+    }
+
     suspend fun questDetail(questId: Int): QuestDetail {
         questDetailCache[questId]?.let { return it }
         val region = settingsRepository.settings.first().region
@@ -372,3 +437,17 @@ class StorylinesRepository @Inject constructor(
 }
 
 data class QuestDetail(val description: String?, val rewards: List<QuestReward>)
+
+/** Todo lo que la app sabe de una misión, para la pantalla de detalle. */
+data class QuestFullDetail(
+    val id: Int,
+    val name: String,
+    val completed: Boolean,
+    val zone: String?,
+    val minLevel: Int,
+    val storyline: String?,
+    val description: String?,
+    val rewards: List<QuestReward>,
+    /** Comando /way de TomTom, o null si el cliente no publica el punto. */
+    val tomTom: String?,
+)
