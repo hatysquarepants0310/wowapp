@@ -1,5 +1,5 @@
 {
-  "catalogVersion": 7,
+  "catalogVersion": 8,
   "gameVersion": "12.1",
   "updatedAt": "2026-07-23T00:00:00Z",
   "resets": [
@@ -455,6 +455,9 @@
           {
             "type": "QuestCompleted",
             "questIds": [
+              91345,
+              91462,
+              91463,
               91464
             ]
           },
@@ -995,5 +998,11 @@
   "trackedStatisticIds": [
     40734,
     382
+  ],
+  "worldQuestAreaIds": [
+    15968,
+    15355,
+    15947,
+    15458
   ]
 }

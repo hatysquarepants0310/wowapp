@@ -244,21 +244,26 @@ def main(d):
         "storylines": storylines,
     })
 
-    # Nombres de misión y metadatos, solo de las misiones que alguna historia usa.
+    # Nombres y metadatos de TODAS las misiones descargadas, no solo de las que
+    # pertenecen a una cadena: las repetibles y las de mundo no están en ninguna,
+    # y son justo las que la pantalla semanal necesita nombrar. Sin esto la app
+    # tenía que pedirlas a la API una a una.
+    named = sorted(q for q in set(qes) | set(qen) if (qes.get(q) or qen.get(q) or {}).get('n'))
     write(ASSETS, 'quests_es.json',
-          {str(q): (qes.get(q) or {}).get('n', '') for q in sorted(used_quests)
+          {str(q): (qes.get(q) or {}).get('n', '') for q in named
            if (qes.get(q) or {}).get('n')})
     write(ASSETS, 'quests_en.json',
-          {str(q): (qen.get(q) or {}).get('n', '') for q in sorted(used_quests)
+          {str(q): (qen.get(q) or {}).get('n', '') for q in named
            if (qen.get(q) or {}).get('n')})
     meta = {}
-    for q in sorted(used_quests):
+    for q in named:
         r = qen.get(q) or {}
         a, lvl = r.get('a') or 0, r.get('l') or 0
         if a or lvl:
             meta[str(q)] = [a, lvl]
     write(ASSETS, 'quest_meta.json', meta)
     areas = {a for a, _ in meta.values() if a}
+    print(f'  (misiones nombradas: {len(named)}, de cadenas: {len(used_quests)})')
     write(ASSETS, 'areas_es.json', {str(a): aes[a] for a in sorted(areas) if a in aes})
     write(ASSETS, 'areas_en.json', {str(a): aen[a] for a in sorted(areas) if a in aen})
 
