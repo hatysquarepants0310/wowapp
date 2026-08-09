@@ -63,12 +63,21 @@ class ProgressionRepository @Inject constructor(
         val lastReset = eventsRepository.resetClock().lastWeeklyReset(now)
         val current = snapshotDao.latest(characterId)
 
-        val raidIlvls = decode(
-            ListSerializer(RaidKillRecord.serializer()), current?.raidKillsThisWeekJson,
-        ).map { kill ->
-            catalog.vault.raidIlvlByDifficulty[kill.difficulty]
-                ?: catalog.vault.raidSlotIlvl.firstOrNull() ?: 0
-        }
+        // Un jefe cuenta UNA vez por semana, aunque se mate en varias
+        // dificultades, y aporta el nivel de la mejor de ellas: es como funciona
+        // la Bóveda en el juego. Antes se contaba cada par jefe+dificultad, así
+        // que limpiar la banda en normal y en heroico daba 2x jefes y desbloqueaba
+        // casillas que el juego no daba.
+        val raidIlvls = VaultCalculator.raidTiersByBoss(
+            decode(
+                ListSerializer(RaidKillRecord.serializer()), current?.raidKillsThisWeekJson,
+            ).map { kill ->
+                kill.name to (
+                    catalog.vault.raidIlvlByDifficulty[kill.difficulty]
+                        ?: catalog.vault.raidSlotIlvl.firstOrNull() ?: 0
+                    )
+            },
+        )
         val mythicIlvls = decode(
             ListSerializer(MythicRunRecord.serializer()), current?.mythicLevelsThisWeekJson,
         ).map { run ->
@@ -97,11 +106,23 @@ class ProgressionRepository @Inject constructor(
         rules: com.azeroth.companion.core.catalog.VaultRules,
     ): Int {
         val baseline = snapshotDao.lastBefore(characterId, lastReset)
-        val delves = if (baseline != null && current != null) {
+        val statDelta = if (baseline != null && current != null) {
             (current.delvesCompletedTotal - baseline.delvesCompletedTotal).coerceAtLeast(0)
         } else {
             0
         }
+        // Cada Delve generosa tiene su "Se busca surcabismos" semanal, que
+        // Blizzard reinicia en cada reset: contarlas da el dato exacto de la
+        // semana sin necesitar una lectura previa. La estadística acumulada
+        // sigue como respaldo por si el jugador hizo Delves sin la misión.
+        val delveQuests = delveQuestIds()
+        val fromQuests = if (delveQuests.isEmpty() || current == null) {
+            0
+        } else {
+            decode(ListSerializer(Int.serializer()), current.completedQuestIdsJson)
+                .count { it in delveQuests }
+        }
+        val delves = maxOf(statDelta, fromQuests)
         val states = taskStateDao.observeForCharacter(characterId).first()
         val tasks = states
             .filter { it.taskId in rules.worldContributingTaskIds }
@@ -110,14 +131,38 @@ class ProgressionRepository @Inject constructor(
         return delves + tasks
     }
 
+    /** IDs de las misiones semanales de Delve declaradas en el catálogo. */
+    private suspend fun delveQuestIds(): Set<Int> {
+        val task = catalogRepository.load().weeklyTasks.firstOrNull { it.id == DELVE_TASK_ID }
+            ?: return emptySet()
+        return questIdsOf(task.detectionRule)
+    }
+
+    private fun questIdsOf(rule: com.azeroth.companion.core.model.DetectionRule): Set<Int> =
+        when (rule) {
+            is com.azeroth.companion.core.model.DetectionRule.QuestCompleted -> rule.questIds.toSet()
+            is com.azeroth.companion.core.model.DetectionRule.AnyOf ->
+                rule.rules.flatMap { questIdsOf(it) }.toSet()
+            else -> emptySet()
+        }
+
     /**
-     * Si no hay snapshot anterior al reset no se puede saber cuántas Delves son
-     * de esta semana: la estadística del perfil es acumulada. La UI lo dice en
-     * lugar de mostrar un 0 que parece un dato real.
+     * Si no hay snapshot anterior al reset NI misiones de Delve completadas, no
+     * se puede saber cuántas Delves son de esta semana: la estadística del
+     * perfil es acumulada. La UI lo dice en lugar de mostrar un 0 que parece un
+     * dato real.
      */
     suspend fun worldBaselineMissing(characterId: Long): Boolean {
         val lastReset = eventsRepository.resetClock().lastWeeklyReset(Instant.now())
-        return snapshotDao.lastBefore(characterId, lastReset) == null
+        if (snapshotDao.lastBefore(characterId, lastReset) != null) return false
+        val current = snapshotDao.latest(characterId) ?: return true
+        val delveQuests = delveQuestIds()
+        return decode(ListSerializer(Int.serializer()), current.completedQuestIdsJson)
+            .none { it in delveQuests }
+    }
+
+    private companion object {
+        const val DELVE_TASK_ID = "weekly_delves"
     }
 
     private fun <T> decode(

@@ -65,6 +65,19 @@ object AppModule {
     fun provideRepeatableQuestDao(db: AppDatabase) = db.repeatableQuestDao()
 
     @Provides
+    fun provideAuctionPriceDao(db: AppDatabase) = db.auctionPriceDao()
+
+    /**
+     * La casa de subastas solo necesita saber en qué reino conectado está el
+     * personaje activo; se ata aquí para no acoplar la economía al roster.
+     */
+    @Provides
+    @Singleton
+    fun provideCharacterRepositoryPort(
+        resolver: com.azeroth.companion.data.ConnectedRealmResolver,
+    ): com.azeroth.companion.data.CharacterRepositoryPort = resolver
+
+    @Provides
     @Singleton
     fun provideAnchorCalibrator() = AnchorCalibrator()
 

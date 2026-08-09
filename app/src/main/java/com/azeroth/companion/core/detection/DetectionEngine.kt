@@ -28,6 +28,13 @@ data class SnapshotView(
     /** Estadísticas acumuladas y su valor en el snapshot previo al reset. */
     val statistics: Map<Int, Int> = emptyMap(),
     val statisticsBeforeReset: Map<Int, Int> = emptyMap(),
+    /**
+     * Misiones completadas según el último snapshot ANTERIOR al reset semanal.
+     * `null` significa que no existe tal snapshot (instalación reciente), no
+     * que el personaje no tuviera ninguna: la diferencia importa, porque sin
+     * esa lectura no se puede afirmar que algo se hizo esta semana.
+     */
+    val questsBeforeReset: Set<Int>? = null,
 )
 
 data class DetectionResult(val completions: Int, val confidence: Confidence)
@@ -45,8 +52,25 @@ class DetectionEngine {
             // después de hacer la misión veía siempre 0 (el snapshot base y el
             // actual eran el mismo).
             is DetectionRule.QuestCompleted -> {
-                val done = current?.completedQuestIds?.count { it in rule.questIds } ?: 0
-                estimated(done * rule.countsAs)
+                val now = current?.completedQuestIds.orEmpty()
+                val before = current?.questsBeforeReset
+                when {
+                    // Con una lectura anterior al reset la respuesta es exacta,
+                    // valga la misión para una semana o para siempre.
+                    before != null -> {
+                        val done = (now - before).count { it in rule.questIds }
+                        DetectionResult(
+                            (done * rule.countsAs).coerceAtLeast(0),
+                            if (done > 0) Confidence.CONFIRMED else Confidence.ESTIMATED,
+                        )
+                    }
+                    // Sin esa lectura, solo las repetibles admiten conclusión:
+                    // si está marcada es que se hizo tras el último reset.
+                    rule.repeatable -> estimated(now.count { it in rule.questIds } * rule.countsAs)
+                    // Series rotatorias sin línea base: no se puede saber si esa
+                    // semana concreta se hizo hace un mes o ayer.
+                    else -> DetectionResult(0, Confidence.PREDICTED)
+                }
             }
 
             is DetectionRule.QuestDelta -> {

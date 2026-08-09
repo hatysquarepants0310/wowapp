@@ -81,4 +81,27 @@ class VaultCalculatorTest {
         assertEquals(listOf<Int?>(632, 619, null), vault.raidSlots.predictedRewardIlvl)
         assertEquals(0, vault.mythicPlusSlots.current)
     }
+
+    /**
+     * Regresión: matar a los mismos jefes en dos dificultades contaba el doble.
+     * La Bóveda cuenta cada jefe UNA vez y premia por su mejor dificultad, así
+     * que 6 jefes en normal + los mismos 6 en heroico son 6 jefes a nivel
+     * heroico, no 12.
+     */
+    @Test
+    fun `un jefe matado en varias dificultades cuenta una vez`() {
+        val kills = listOf(
+            "Jefe A" to 619, "Jefe B" to 619, "Jefe C" to 619,
+            "Jefe A" to 632, "Jefe B" to 632, "Jefe C" to 632,
+        )
+        val tiers = VaultCalculator.raidTiersByBoss(kills)
+        assertEquals(3, tiers.size)
+        assertEquals(listOf(632, 632, 632), tiers.sorted().reversed())
+    }
+
+    @Test
+    fun `sin jefes repetidos la lista queda igual`() {
+        val kills = listOf("Jefe A" to 606, "Jefe B" to 632)
+        assertEquals(setOf(606, 632), VaultCalculator.raidTiersByBoss(kills).toSet())
+    }
 }

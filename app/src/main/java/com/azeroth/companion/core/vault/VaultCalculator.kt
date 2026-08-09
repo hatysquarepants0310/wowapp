@@ -72,6 +72,20 @@ object VaultCalculator {
         confidence = Confidence.ESTIMATED,
     )
 
+    /**
+     * Nivel de recompensa de cada JEFE distinto matado esta semana.
+     *
+     * La Bóveda cuenta cada jefe una sola vez por semana aunque se mate en
+     * varias dificultades, y premia por la mejor de ellas. Antes se contaba
+     * cada par jefe+dificultad, así que limpiar la banda en normal y luego en
+     * heroico daba el doble de jefes y desbloqueaba casillas que el juego no
+     * daba.
+     *
+     * [kills] son pares (nombre del jefe, ilvl de esa dificultad).
+     */
+    fun raidTiersByBoss(kills: List<Pair<String, Int>>): List<Int> =
+        kills.groupBy { it.first }.map { (_, group) -> group.maxOf { it.second } }
+
     data class UpgradePlan(
         val stepsAffordable: Int,
         val ilvlGain: Int,

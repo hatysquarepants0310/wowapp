@@ -149,4 +149,52 @@
     <string name="more_seasonal_desc">Goals with a deadline and how feasible they are</string>
     <string name="more_roster_desc">All your characters and their mount attempts</string>
     <string name="more_settings_desc">Account, region, updates, data and diagnostics</string>
+
+    <!-- Auction house -->
+    <string name="title_auctions">Auction House</string>
+    <string name="auctions_subtitle">Real market prices, aggregated from the official dump</string>
+    <string name="auctions_scope_commodities">Commodities (region)</string>
+    <string name="auctions_scope_realm">Your realm</string>
+    <string name="auctions_search_hint">Search an item</string>
+    <string name="auctions_tab_expensive">Priciest</string>
+    <string name="auctions_tab_traded">Most traded</string>
+    <string name="auctions_empty">No prices yet</string>
+    <string name="auctions_empty_detail">Tap Refresh to download the market dump.</string>
+    <string name="auctions_row_stock">%1$d for sale · %2$d listings</string>
+    <string name="auctions_never_loaded">Never refreshed</string>
+    <string name="auctions_updated_ago">Updated %1$d min ago</string>
+    <string name="auctions_item_count">%1$d items priced</string>
+    <string name="auctions_download_warning">Blizzard publishes the whole market at once: the download is around 20 MB and refreshes hourly.</string>
+    <string name="auctions_refresh">Refresh</string>
+
+    <!-- News -->
+    <string name="title_news">News</string>
+    <string name="news_subtitle">The latest from World of Warcraft, read right here</string>
+    <string name="news_error">Could not load the news</string>
+    <string name="news_empty">No news right now</string>
+    <string name="news_load_more">Load more</string>
+    <string name="news_open_original">View on worldofwarcraft.com</string>
+    <string name="news_days_ago">%1$d days ago</string>
+    <string name="news_yesterday">yesterday</string>
+    <string name="news_hours_ago">%1$d h ago</string>
+    <string name="news_just_now">just now</string>
+
+    <!-- Live map -->
+    <string name="title_live">Azeroth Now</string>
+    <string name="live_subtitle">What is happening in the world</string>
+    <string name="live_subtitle_character">Quests and events for %1$s</string>
+    <string name="live_refresh">Refresh</string>
+    <string name="live_events">Events</string>
+    <string name="live_now">LIVE</string>
+    <string name="live_map">Map</string>
+    <string name="live_quests_here">Quests in this zone</string>
+    <string name="live_no_quests">No active quests to place</string>
+    <string name="live_no_quests_detail">Pick up quests in game and they show up here with their exact position.</string>
+    <string name="live_map_note">Positions come from the client tables, the same ones TomTom uses. The backdrop is drawn here: the map art belongs to Blizzard and is not shipped with the app.</string>
+    <string name="more_auctions_desc">Market prices for your region and realm</string>
+    <string name="more_news_desc">Official news without leaving the app</string>
+    <string name="more_live_desc">Events and active quests on the map</string>
+    <string name="more_group_world">The world</string>
+    <string name="more_group_progress">Your progress</string>
+    <string name="more_group_content">Content and settings</string>
 </resources>

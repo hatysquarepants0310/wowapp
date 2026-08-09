@@ -1,12 +1,9 @@
 package com.azeroth.companion.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,34 +13,37 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
 import com.azeroth.companion.core.model.Confidence
+import com.azeroth.companion.ui.theme.Positive
+import com.azeroth.companion.ui.theme.TextLow
+import com.azeroth.companion.ui.theme.Warning
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
 
-/** Badge de confianza (§2.4): todo dato inferido se marca visualmente. */
+/**
+ * Badge de confianza (§2.4): todo dato inferido se marca visualmente. Antes era
+ * un rectángulo de color sólido que gritaba más que el propio dato; ahora es
+ * una etiqueta discreta, porque su papel es matizar, no competir.
+ */
 @Composable
 fun ConfidenceBadge(confidence: Confidence, modifier: Modifier = Modifier) {
     val (label, color) = when (confidence) {
-        Confidence.CONFIRMED -> "CONFIRMADO" to Color(0xFF2EA043)
-        Confidence.ESTIMATED -> "ESTIMADO" to Color(0xFFF0B429)
-        Confidence.PREDICTED -> "PREDICHO" to Color(0xFF8B949E)
+        Confidence.CONFIRMED -> "Confirmado" to Positive
+        Confidence.ESTIMATED -> "Estimado" to Warning
+        Confidence.PREDICTED -> "Predicho" to TextLow
     }
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall,
-        color = Color.Black,
-        modifier = modifier
-            .background(color, RoundedCornerShape(4.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    )
+    Pill(label, modifier, color = color)
 }
 
 /** Cuenta regresiva que se refresca cada segundo (§9.1). */
 @Composable
-fun CountdownText(target: Instant, modifier: Modifier = Modifier, style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.displaySmall) {
+fun CountdownText(
+    target: Instant,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.displaySmall,
+) {
     var now by remember { mutableStateOf(Instant.now()) }
     LaunchedEffect(target) {
         while (true) {
@@ -68,15 +68,20 @@ fun formatDuration(d: Duration): String {
     }
 }
 
+/**
+ * Bloque de sección.
+ *
+ * Ya no dibuja una tarjeta: el título va como etiqueta y el contenido respira
+ * sobre el fondo de la pantalla. Apilar diez tarjetas idénticas hacía que todo
+ * pesara lo mismo y no hubiera dónde mirar primero; con la etiqueta y el
+ * espacio, la jerarquía la marca el contenido. Quien necesite fondo propio usa
+ * [Panel] explícitamente.
+ */
 @Composable
 fun SectionCard(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            content()
-        }
+    Column(modifier.fillMaxWidth()) {
+        SectionHeader(title)
+        content()
+        Spacer(Modifier.height(Spacing.sm))
     }
 }

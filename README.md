@@ -47,7 +47,10 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 
 | Pantalla | Qué hace |
 |---|---|
-| **Inicio** | Cuenta regresiva al próximo evento, reset semanal, Gran Bóveda, top pendientes |
+| **Inicio** | Cuenta regresiva al próximo evento, reset semanal, Gran Bóveda 3×3, exclusivos de temporada |
+| **Ahora en Azeroth** | Eventos activos con cuenta atrás y tus misiones aceptadas situadas sobre el mapa de su zona |
+| **Noticias** | Las noticias oficiales de WoW leídas dentro de la app, en nativo (texto e imágenes), no un enlace al navegador |
+| **Casa de subastas** | Precios reales de mercancías de tu región y de las subastas de tu reino, con buscador por objeto |
 | **Eventos** | Timeline de ocurrencias con fases, mecánicas y botón de calibración |
 | **Checklist previa** | Al tocar la notificación: los 8 puntos de verificación del evento (¿estás fuera de raid? ¿tienes Núcleos?) |
 | **Semanal** | Checklist agrupada por categoría con detección automática de progreso y override manual siempre disponible |
@@ -382,8 +385,31 @@ del juego, la misma fuente que usa Wowhead: `QuestLine`, `QuestLineXQuest`, `Cam
 la zona de cada misión. `tools/build_season_loot.py` genera `season_loot.json` recorriendo el journal
 oficial de la expansión actual (instancias → jefes → objetos → imagen), que es lo que alimenta el
 botín con imagen y probabilidad. `tools/build_quest_coords.py` genera `quest_coords.json` con el
-punto de cada misión para el comando de TomTom. Se ejecuta por parche, offline; la app solo
+punto de cada misión para el comando de TomTom. `tools/build_items.py` genera `items_es/en.json` e
+`item_quality.json` con los nombres de los objetos que aparecen en la casa de subastas (la API de
+subastas solo devuelve IDs, y resolverlos en caliente serían decenas de miles de peticiones por
+actualización). `tools/build_weeklies.py` deriva los IDs de misión de cada semanal a partir de los
+nombres ya horneados, en lugar de escogerlos a mano: así no vuelve a colarse una misión en dos
+semanales a la vez. Se ejecuta por parche, offline; la app solo
 consume los JSON horneados — cero dependencia de esas fuentes en tiempo de ejecución.
+
+### Qué NO se puede saber desde la API
+
+Verificado endpoint por endpoint, para que nadie pierda el tiempo buscándolo:
+
+- **La Gran Bóveda no existe en la API web.** El índice del perfil no la lista y los cinco nombres
+  candidatos devuelven 404. Los addons como Midnight Routine la leen desde DENTRO del juego con
+  `C_WeeklyRewards.GetActivities()`, que es otra superficie distinta. La app reconstruye la Bóveda
+  con lo que sí es exacto: jefes de banda y llaves M+ vienen fechados, y las Delves de la semana
+  salen de sus misiones semanales.
+- **No hay listado global de misiones de mundo activas.** Solo se pueden situar las que tu personaje
+  tiene aceptadas (`/quests` → `in_progress`).
+- **Banco, bolsas e inventario:** 404. **Chat de hermandad:** no existe endpoint.
+- **Noticias:** Blizzard no publica RSS ni API; la app lee su web oficial y conserva el enlace a la
+  fuente en cada artículo.
+
+El arte de los mapas del juego no se distribuye con la app: el mapa se dibuja en vectorial y solo
+las **coordenadas** (que son información, no arte) salen de las tablas del cliente.
 
 ## Contribuir
 

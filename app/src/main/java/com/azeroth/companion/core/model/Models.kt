@@ -182,9 +182,25 @@ enum class WeeklyActivityKind { MYTHIC_PLUS, RAID_BOSS, WORLD_BOSS, DELVE, REPEA
 
 @Serializable
 sealed interface DetectionRule {
+    /**
+     * Misiones que marcan la tarea. [repeatable] distingue dos comportamientos
+     * que la API NO deja diferenciar y que se confundían hasta ahora:
+     *
+     *  - Repetible (por defecto): Blizzard borra la marca de completada en cada
+     *    reset, así que verla presente ya significa "hecha esta semana".
+     *  - No repetible: series rotatorias como "Búsqueda de conocimiento semana
+     *    N de 5", donde cada semana es una misión DISTINTA que queda completada
+     *    para siempre. Con presencia absoluta, la tarea se quedaba marcada el
+     *    resto de la temporada. Para estas solo vale la comparación contra el
+     *    último snapshot anterior al reset.
+     */
     @Serializable
     @SerialName("QuestCompleted")
-    data class QuestCompleted(val questIds: List<Int>, val countsAs: Int = 1) : DetectionRule
+    data class QuestCompleted(
+        val questIds: List<Int>,
+        val countsAs: Int = 1,
+        val repeatable: Boolean = true,
+    ) : DetectionRule
 
     @Serializable
     @SerialName("QuestDelta")

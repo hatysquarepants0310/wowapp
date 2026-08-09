@@ -147,6 +147,7 @@ class StorylinesRepository @Inject constructor(
     private var fileCache: StorylinesFile? = null
     private var questNames: Map<Int, String>? = null
     private var questMeta: Map<Int, List<Int>>? = null
+    private var mapNames: Map<Int, String>? = null
     private var areaNames: Map<Int, String>? = null
     private var coords: Map<Int, List<Double>>? = null
     private val questDetailCache = mutableMapOf<Int, QuestDetail>()
@@ -201,6 +202,31 @@ class StorylinesRepository @Inject constructor(
             ).mapKeys { (k, _) -> k.toInt() }
         }.orEmpty().also { coords = it }
     }
+
+    /** Nombres de los mapas de zona, para etiquetar el mapa en vivo. */
+    private suspend fun maps(): Map<Int, String> = withContext(Dispatchers.IO) {
+        mapNames?.let { return@withContext it }
+        val asset = if (spanish()) "catalog/maps_es.json" else "catalog/maps_en.json"
+        readAsset(asset) {
+            json.decodeFromString(MapSerializer(String.serializer(), String.serializer()), it)
+                .mapKeys { (k, _) -> k.toInt() }
+        }.orEmpty().also { mapNames = it }
+    }
+
+    /** Nombre de una zona por su UiMapID. */
+    suspend fun mapName(uiMapId: Int): String? = maps()[uiMapId]
+
+    /** Punto de la misión como (uiMapId, x, y), o null si el cliente no publica uno. */
+    suspend fun questCoordinates(questId: Int): Triple<Int, Double, Double>? {
+        val c = coords()[questId] ?: return null
+        val map = c.getOrNull(0)?.toInt() ?: return null
+        val x = c.getOrNull(1) ?: return null
+        val y = c.getOrNull(2) ?: return null
+        return Triple(map, x, y)
+    }
+
+    /** Zona (areaId) de la misión según el catálogo horneado. */
+    suspend fun questAreaId(questId: Int): Int? = meta()[questId]?.getOrNull(0)
 
     /**
      * Comando de TomTom para llegar al punto de la misión, listo para pegar en
