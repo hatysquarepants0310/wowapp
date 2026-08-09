@@ -147,6 +147,10 @@ private val subScreenTitles = mapOf(
     "quest" to R.string.title_quest,
     "roster" to R.string.nav_roster,
     "settings" to R.string.nav_settings,
+    "auctions" to R.string.title_auctions,
+    "news" to R.string.title_news,
+    "article" to R.string.title_news,
+    "live" to R.string.title_live,
 )
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -280,6 +284,22 @@ private fun AppScaffold(startEventId: String?) {
             composable("seasonal") { SeasonalScreen() }
             composable("roster") { RosterScreen() }
             composable("settings") { SettingsScreen() }
+            composable("auctions") { com.azeroth.companion.feature.auctions.AuctionsScreen() }
+            composable("news") {
+                com.azeroth.companion.feature.news.NewsScreen(
+                    onOpenArticle = { navController.navigate("article/$it") },
+                )
+            }
+            composable("article/{articleId}") { entry ->
+                com.azeroth.companion.feature.news.ArticleScreen(
+                    articleId = entry.arguments?.getString("articleId").orEmpty(),
+                )
+            }
+            composable("live") {
+                com.azeroth.companion.feature.live.LiveMapScreen(
+                    onOpenQuest = { navController.navigate("quest/$it") },
+                )
+            }
             composable("more") {
                 MoreScreen(onNavigate = { route -> navController.navigate(route) })
             }
@@ -297,61 +317,80 @@ private data class MoreItem(
 
 @Composable
 private fun MoreScreen(onNavigate: (String) -> Unit) {
-    val purple = androidx.compose.ui.graphics.Color(0xFF9B7BFF)
-    val gold = androidx.compose.ui.graphics.Color(0xFFD9A441)
-    val teal = androidx.compose.ui.graphics.Color(0xFF4FB6A6)
-    val rose = androidx.compose.ui.graphics.Color(0xFFE07A9B)
-    val items = listOf(
-        MoreItem("content", stringResource(R.string.title_content), stringResource(R.string.more_content_desc),
-            Icons.AutoMirrored.Filled.MenuBook, purple),
-        MoreItem("storylines", stringResource(R.string.title_storylines), stringResource(R.string.more_storylines_desc),
-            Icons.Filled.AutoStories, rose),
-        MoreItem("quests", stringResource(R.string.title_quests_zone), stringResource(R.string.more_quests_desc),
-            Icons.Filled.Explore, teal),
-        MoreItem("events", stringResource(R.string.nav_events), stringResource(R.string.more_events_desc),
-            Icons.Filled.Timer, gold),
-        MoreItem("weekly", stringResource(R.string.title_this_week), stringResource(R.string.more_weekly_desc),
-            Icons.Filled.Checklist, teal),
-        MoreItem("progression", stringResource(R.string.nav_progression), stringResource(R.string.more_progression_desc),
-            Icons.Filled.TrendingUp, purple),
-        MoreItem("seasons", stringResource(R.string.title_seasons_mplus), stringResource(R.string.more_seasons_desc),
-            Icons.Filled.EmojiEvents, gold),
-        MoreItem("seasonloot", stringResource(R.string.title_season_loot), stringResource(R.string.more_seasonloot_desc),
-            Icons.Filled.Diamond, purple),
-        MoreItem("seasonal", stringResource(R.string.title_season_rewards), stringResource(R.string.more_seasonal_desc),
-            Icons.Filled.CalendarMonth, rose),
-        MoreItem("roster", stringResource(R.string.nav_roster), stringResource(R.string.more_roster_desc),
-            Icons.Filled.Groups, teal),
-        MoreItem("settings", stringResource(R.string.nav_settings), stringResource(R.string.more_settings_desc),
-            Icons.Filled.Settings, gold),
+    val purple = androidx.compose.ui.graphics.Color(0xFFA98BFF)
+    val gold = androidx.compose.ui.graphics.Color(0xFFE0B457)
+    val teal = androidx.compose.ui.graphics.Color(0xFF6FC7C0)
+    val rose = androidx.compose.ui.graphics.Color(0xFFE08AA6)
+
+    // Agrupado por para qué sirve cada cosa. Once entradas seguidas en una
+    // lista plana obligaban a leerlas todas para encontrar una; con tres grupos
+    // cortos se llega por descarte.
+    val groups = listOf(
+        stringResource(R.string.more_group_world) to listOf(
+            MoreItem("live", stringResource(R.string.title_live), stringResource(R.string.more_live_desc),
+                Icons.Filled.Explore, teal),
+            MoreItem("news", stringResource(R.string.title_news), stringResource(R.string.more_news_desc),
+                Icons.AutoMirrored.Filled.MenuBook, rose),
+            MoreItem("events", stringResource(R.string.nav_events), stringResource(R.string.more_events_desc),
+                Icons.Filled.Timer, gold),
+            MoreItem("auctions", stringResource(R.string.title_auctions), stringResource(R.string.more_auctions_desc),
+                Icons.Filled.Diamond, gold),
+        ),
+        stringResource(R.string.more_group_progress) to listOf(
+            MoreItem("weekly", stringResource(R.string.title_this_week), stringResource(R.string.more_weekly_desc),
+                Icons.Filled.Checklist, teal),
+            MoreItem("progression", stringResource(R.string.nav_progression), stringResource(R.string.more_progression_desc),
+                Icons.Filled.TrendingUp, purple),
+            MoreItem("seasons", stringResource(R.string.title_seasons_mplus), stringResource(R.string.more_seasons_desc),
+                Icons.Filled.EmojiEvents, gold),
+            MoreItem("roster", stringResource(R.string.nav_roster), stringResource(R.string.more_roster_desc),
+                Icons.Filled.Groups, teal),
+        ),
+        stringResource(R.string.more_group_content) to listOf(
+            MoreItem("content", stringResource(R.string.title_content), stringResource(R.string.more_content_desc),
+                Icons.AutoMirrored.Filled.MenuBook, purple),
+            MoreItem("storylines", stringResource(R.string.title_storylines), stringResource(R.string.more_storylines_desc),
+                Icons.Filled.AutoStories, rose),
+            MoreItem("quests", stringResource(R.string.title_quests_zone), stringResource(R.string.more_quests_desc),
+                Icons.Filled.Explore, teal),
+            MoreItem("seasonloot", stringResource(R.string.title_season_loot), stringResource(R.string.more_seasonloot_desc),
+                Icons.Filled.Diamond, purple),
+            MoreItem("seasonal", stringResource(R.string.title_season_rewards), stringResource(R.string.more_seasonal_desc),
+                Icons.Filled.CalendarMonth, rose),
+            MoreItem("settings", stringResource(R.string.nav_settings), stringResource(R.string.more_settings_desc),
+                Icons.Filled.Settings, gold),
+        ),
     )
-    LazyColumn(
-        Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
-    ) {
-        items(items) { item ->
-            Card(Modifier.fillMaxWidth().clickable { onNavigate(item.route) }) {
-                androidx.compose.foundation.layout.Row(
-                    Modifier.fillMaxWidth().padding(14.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp),
-                ) {
-                    androidx.compose.foundation.layout.Box(
-                        Modifier
-                            .size(46.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(item.tint.copy(alpha = 0.18f)),
-                        contentAlignment = androidx.compose.ui.Alignment.Center,
-                    ) {
-                        Icon(item.icon, contentDescription = null, tint = item.tint)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(item.title, style = MaterialTheme.typography.titleMedium)
-                        Text(item.subtitle, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+
+    com.azeroth.companion.ui.components.Screen {
+        groups.forEach { (title, items) ->
+            item { com.azeroth.companion.ui.components.SectionHeader(title) }
+            items(items.size) { index ->
+                val entry = items[index]
+                MoreRow(entry, onNavigate)
+                if (index < items.lastIndex) com.azeroth.companion.ui.components.Divider()
             }
         }
     }
+}
+
+@Composable
+private fun MoreRow(item: MoreItem, onNavigate: (String) -> Unit) {
+    com.azeroth.companion.ui.components.ListRow(
+        title = item.title,
+        subtitle = item.subtitle,
+        onClick = { onNavigate(item.route) },
+        leading = {
+            androidx.compose.foundation.layout.Box(
+                Modifier
+                    .size(38.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(item.tint.copy(alpha = 0.16f)),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                Icon(item.icon, contentDescription = null, tint = item.tint,
+                    modifier = Modifier.size(19.dp))
+            }
+        },
+    )
 }

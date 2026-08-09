@@ -1,5 +1,5 @@
 {
-  "catalogVersion": 8,
+  "catalogVersion": 9,
   "gameVersion": "12.1",
   "updatedAt": "2026-07-23T00:00:00Z",
   "resets": [
@@ -321,7 +321,8 @@
           96442,
           96443,
           96444
-        ]
+        ],
+        "repeatable": false
       },
       "priorityWeight": 65,
       "isRemovedAtSeasonEnd": true
@@ -344,7 +345,8 @@
         "questIds": [
           86903,
           90718
-        ]
+        ],
+        "repeatable": true
       },
       "priorityWeight": 60,
       "isRemovedAtSeasonEnd": true
@@ -365,10 +367,108 @@
       "detectionRule": {
         "type": "QuestCompleted",
         "questIds": [
-          94379,
-          94416,
-          94455
-        ]
+          92437,
+          92961,
+          92962,
+          92963,
+          92964,
+          92965,
+          92966,
+          92967,
+          92968,
+          92969,
+          92970,
+          92971,
+          92972,
+          92973,
+          92974,
+          92975,
+          92976,
+          92977,
+          92978,
+          92979,
+          92980,
+          92981,
+          92982,
+          92983,
+          92984,
+          92985,
+          92986,
+          92987,
+          92988,
+          92989,
+          92990,
+          92991,
+          92992,
+          92993,
+          92994,
+          92995,
+          92996,
+          92997,
+          92998,
+          92999,
+          93000,
+          93001,
+          93002,
+          93003,
+          93004,
+          93005,
+          93006,
+          93007,
+          93008,
+          93009,
+          93073,
+          93074,
+          93075,
+          93077,
+          93078,
+          93079,
+          93080,
+          93081,
+          93082,
+          93083,
+          93084,
+          93085,
+          93087,
+          93088,
+          93091,
+          93097,
+          93098,
+          93099,
+          93100,
+          93101,
+          93102,
+          93103,
+          93104,
+          93105,
+          93106,
+          93107,
+          93108,
+          93109,
+          93110,
+          93111,
+          93115,
+          93131,
+          93132,
+          93133,
+          93134,
+          93135,
+          93136,
+          93137,
+          93138,
+          93139,
+          93140,
+          93141,
+          93142,
+          93143,
+          93147,
+          93148,
+          93149,
+          93150,
+          93151,
+          93152
+        ],
+        "repeatable": true
       },
       "priorityWeight": 40,
       "isRemovedAtSeasonEnd": true
@@ -402,7 +502,8 @@
           89315,
           89316,
           91627
-        ]
+        ],
+        "repeatable": true
       },
       "priorityWeight": 55,
       "isRemovedAtSeasonEnd": true
@@ -423,15 +524,14 @@
       "detectionRule": {
         "type": "QuestCompleted",
         "questIds": [
-          89507,
           91930,
           91932,
           91933,
-          92418,
           93931,
           94361,
           94834
-        ]
+        ],
+        "repeatable": true
       },
       "priorityWeight": 55,
       "isRemovedAtSeasonEnd": true
@@ -459,7 +559,8 @@
               91462,
               91463,
               91464
-            ]
+            ],
+            "repeatable": true
           },
           {
             "type": "ReputationGain",
@@ -490,11 +591,6 @@
           {
             "type": "QuestCompleted",
             "questIds": [
-              85648,
-              85649,
-              85664,
-              85666,
-              85667,
               93372,
               93384,
               93385,
@@ -505,7 +601,8 @@
               93421,
               93427,
               93428
-            ]
+            ],
+            "repeatable": true
           },
           {
             "type": "StatisticDelta",
@@ -533,9 +630,6 @@
       "detectionRule": {
         "type": "QuestCompleted",
         "questIds": [
-          88982,
-          90093,
-          90538,
           91095,
           91096,
           91097,
@@ -628,7 +722,8 @@
           91269,
           92926,
           95114
-        ]
+        ],
+        "repeatable": true
       },
       "priorityWeight": 70,
       "isRemovedAtSeasonEnd": true
@@ -751,7 +846,8 @@
         "type": "QuestCompleted",
         "questIds": [
           95245
-        ]
+        ],
+        "repeatable": true
       },
       "priorityWeight": 50,
       "isRemovedAtSeasonEnd": true
@@ -773,9 +869,9 @@
         "type": "QuestCompleted",
         "questIds": [
           94385,
-          94386,
-          96442
-        ]
+          94386
+        ],
+        "repeatable": true
       },
       "priorityWeight": 70,
       "isRemovedAtSeasonEnd": true
@@ -794,15 +890,27 @@
       "resetPeriod": "WEEKLY",
       "maxCompletions": 99,
       "detectionRule": {
-        "type": "QuestCompleted",
-        "questIds": [
-          95547,
-          96728,
-          96729,
-          96730,
-          96731,
-          96732,
-          96733
+        "type": "AnyOf",
+        "rules": [
+          {
+            "type": "QuestCompleted",
+            "questIds": [
+              95547
+            ],
+            "repeatable": true
+          },
+          {
+            "type": "QuestCompleted",
+            "questIds": [
+              96728,
+              96729,
+              96730,
+              96731,
+              96732,
+              96733
+            ],
+            "repeatable": false
+          }
         ]
       },
       "priorityWeight": 65,
@@ -824,13 +932,20 @@
       "detectionRule": {
         "type": "QuestCompleted",
         "questIds": [
+          93423,
+          93424,
+          93425,
+          93426,
           96713,
           96714,
           96716,
           96717,
           96718,
-          96720
-        ]
+          96720,
+          96725,
+          96726
+        ],
+        "repeatable": true
       },
       "priorityWeight": 45,
       "isRemovedAtSeasonEnd": true

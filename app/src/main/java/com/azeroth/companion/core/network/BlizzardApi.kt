@@ -32,6 +32,19 @@ interface BlizzardApi {
         @Query("namespace") namespace: String,
     ): CompletedQuestsDto
 
+    /**
+     * Misiones ACEPTADAS ahora mismo. Es la única ventana en vivo al mundo que
+     * da la API: no existe endpoint con las misiones de mundo activas de la
+     * región, solo las que este personaje lleva en el registro.
+     */
+    @GET("/profile/wow/character/{realm}/{name}/quests")
+    suspend fun activeQuests(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): ActiveQuestsDto
+
     @GET("/profile/wow/character/{realm}/{name}/reputations")
     suspend fun reputations(
         @Path("realm") realmSlug: String,
@@ -78,6 +91,18 @@ interface BlizzardApi {
         @Path("name") name: String,
         @Query("namespace") namespace: String,
     ): StatisticsDto
+
+    /**
+     * Reino por slug. Solo hace falta para saber a qué reino CONECTADO
+     * pertenece: la casa de subastas de equipo se publica por grupo de reinos,
+     * no por reino suelto.
+     */
+    @GET("/data/wow/realm/{realm}")
+    suspend fun realm(
+        @Path("realm") realmSlug: String,
+        @Query("namespace") namespace: String,
+        @Query("locale") locale: String = "es_MX",
+    ): RealmDto
 
     @GET("/profile/wow/character/{realm}/{name}/equipment")
     suspend fun equipment(
@@ -450,3 +475,29 @@ data class MythicSeasonDto(
 
 @Serializable
 data class MythicRatingDto(val rating: Double = 0.0)
+
+/**
+ * Reino y su grupo de reinos conectados. Solo se usa `connected_realm.href`,
+ * del que hay que extraer el ID: la API no lo devuelve suelto en ningún campo.
+ */
+@Serializable
+data class RealmDto(
+    val id: Int = 0,
+    val name: String? = null,
+    val slug: String? = null,
+    val connected_realm: HrefDto? = null,
+)
+
+@Serializable
+data class HrefDto(val href: String = "") {
+    /** `…/connected-realm/76?namespace=…` → 76 */
+    val connectedRealmId: Int?
+        get() = Regex("""connected-realm/(\d+)""").find(href)?.groupValues?.get(1)?.toIntOrNull()
+}
+
+/** Misiones del registro del personaje. `in_progress` son las aceptadas. */
+@Serializable
+data class ActiveQuestsDto(val in_progress: List<QuestRefDto> = emptyList())
+
+@Serializable
+data class QuestRefDto(val id: Int = 0, val name: String? = null)

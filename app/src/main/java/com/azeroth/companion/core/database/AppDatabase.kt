@@ -141,6 +141,49 @@ interface RepeatableQuestDao {
     suspend fun count(): Int
 }
 
+/**
+ * Precio agregado de un objeto en la casa de subastas. El volcado que publica
+ * Blizzard son 24 MB por región; aquí solo queda el resumen por objeto, que es
+ * lo único que se consulta.
+ *
+ * [scope] es 0 para las mercancías de toda la región y el ID del reino
+ * conectado para el resto: son dos mercados distintos y mezclarlos daría
+ * precios que no existen en ninguno de los dos.
+ */
+@Entity(tableName = "auction_price", primaryKeys = ["scope", "itemId"])
+data class AuctionPriceEntity(
+    val scope: Int,
+    val itemId: Int,
+    val minUnitPrice: Long,
+    val quantity: Long,
+    val listings: Int,
+    val updatedAt: Instant,
+)
+
+@Dao
+interface AuctionPriceDao {
+    @Upsert
+    suspend fun upsertAll(prices: List<AuctionPriceEntity>)
+
+    @Query("DELETE FROM auction_price WHERE scope = :scope")
+    suspend fun clearScope(scope: Int)
+
+    @Query("SELECT * FROM auction_price WHERE scope = :scope AND itemId IN (:itemIds)")
+    suspend fun forItems(scope: Int, itemIds: List<Int>): List<AuctionPriceEntity>
+
+    @Query("SELECT * FROM auction_price WHERE scope = :scope ORDER BY minUnitPrice DESC LIMIT :limit")
+    suspend fun mostExpensive(scope: Int, limit: Int): List<AuctionPriceEntity>
+
+    @Query("SELECT * FROM auction_price WHERE scope = :scope ORDER BY quantity DESC LIMIT :limit")
+    suspend fun mostTraded(scope: Int, limit: Int): List<AuctionPriceEntity>
+
+    @Query("SELECT MAX(updatedAt) FROM auction_price WHERE scope = :scope")
+    suspend fun updatedAt(scope: Int): Instant?
+
+    @Query("SELECT COUNT(*) FROM auction_price WHERE scope = :scope")
+    suspend fun count(scope: Int): Int
+}
+
 @Dao
 interface TaskStateDao {
     @Upsert
@@ -237,8 +280,9 @@ interface SnapshotDao {
         ProgressionStateEntity::class,
         SeasonalGoalEntity::class,
         RepeatableQuestEntity::class,
+        AuctionPriceEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -250,4 +294,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun progressionDao(): ProgressionDao
     abstract fun seasonalGoalDao(): SeasonalGoalDao
     abstract fun repeatableQuestDao(): RepeatableQuestDao
+    abstract fun auctionPriceDao(): AuctionPriceDao
 }

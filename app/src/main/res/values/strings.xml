@@ -149,4 +149,52 @@
     <string name="more_seasonal_desc">Objetivos con fecha límite y viabilidad</string>
     <string name="more_roster_desc">Todos tus personajes y sus intentos de montura</string>
     <string name="more_settings_desc">Cuenta, región, actualización, datos y diagnóstico</string>
+
+    <!-- Casa de subastas -->
+    <string name="title_auctions">Casa de subastas</string>
+    <string name="auctions_subtitle">Precios reales del mercado, agregados desde el volcado oficial</string>
+    <string name="auctions_scope_commodities">Mercancías (región)</string>
+    <string name="auctions_scope_realm">Tu reino</string>
+    <string name="auctions_search_hint">Buscar un objeto</string>
+    <string name="auctions_tab_expensive">Más caros</string>
+    <string name="auctions_tab_traded">Más movidos</string>
+    <string name="auctions_empty">Sin precios todavía</string>
+    <string name="auctions_empty_detail">Pulsa Actualizar para descargar el volcado del mercado.</string>
+    <string name="auctions_row_stock">%1$d en venta · %2$d subastas</string>
+    <string name="auctions_never_loaded">Nunca actualizado</string>
+    <string name="auctions_updated_ago">Actualizado hace %1$d min</string>
+    <string name="auctions_item_count">%1$d objetos con precio</string>
+    <string name="auctions_download_warning">Blizzard publica el mercado entero de golpe: la descarga ronda los 20 MB y se renueva cada hora.</string>
+    <string name="auctions_refresh">Actualizar</string>
+
+    <!-- Noticias -->
+    <string name="title_news">Noticias</string>
+    <string name="news_subtitle">Lo último de World of Warcraft, leído aquí dentro</string>
+    <string name="news_error">No se pudieron cargar las noticias</string>
+    <string name="news_empty">No hay noticias ahora mismo</string>
+    <string name="news_load_more">Cargar más</string>
+    <string name="news_open_original">Ver en worldofwarcraft.com</string>
+    <string name="news_days_ago">hace %1$d días</string>
+    <string name="news_yesterday">ayer</string>
+    <string name="news_hours_ago">hace %1$d h</string>
+    <string name="news_just_now">justo ahora</string>
+
+    <!-- Mapa en vivo -->
+    <string name="title_live">Ahora en Azeroth</string>
+    <string name="live_subtitle">Lo que está pasando en el mundo</string>
+    <string name="live_subtitle_character">Misiones y eventos de %1$s</string>
+    <string name="live_refresh">Actualizar</string>
+    <string name="live_events">Eventos</string>
+    <string name="live_now">EN CURSO</string>
+    <string name="live_map">Mapa</string>
+    <string name="live_quests_here">Misiones en esta zona</string>
+    <string name="live_no_quests">Sin misiones activas que situar</string>
+    <string name="live_no_quests_detail">Acepta misiones en el juego y aparecerán aquí con su posición exacta.</string>
+    <string name="live_map_note">Las posiciones salen de las tablas del cliente, las mismas que usa TomTom. El fondo se dibuja aquí: el arte del mapa es de Blizzard y no se distribuye con la app.</string>
+    <string name="more_auctions_desc">Precios del mercado de tu región y tu reino</string>
+    <string name="more_news_desc">Las noticias oficiales, sin salir de la app</string>
+    <string name="more_live_desc">Eventos y misiones activas sobre el mapa</string>
+    <string name="more_group_world">El mundo</string>
+    <string name="more_group_progress">Tu progreso</string>
+    <string name="more_group_content">Contenido y ajustes</string>
 </resources>

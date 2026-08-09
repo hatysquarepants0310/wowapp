@@ -296,9 +296,11 @@ class SyncRepository @Inject constructor(
             .flatMap { it.lootInstanceIds }
             .toSet()
         val current = latest?.toView()?.let { view ->
+            // Un jefe matado en varias dificultades sigue siendo un jefe: para
+            // contar la actividad de la semana se agrupa por nombre e instancia.
             val kills = decodeList(
                 ListSerializer(RaidKillRecord.serializer()), latest.raidKillsThisWeekJson,
-            )
+            ).distinctBy { it.instanceId to it.name }
             view.copy(
                 // Un jefe de mundo es una instancia de un solo jefe: si se cuenta
                 // junto a la banda, la fila de banda se marcaría por matar al de mundo.
@@ -306,6 +308,9 @@ class SyncRepository @Inject constructor(
                 worldBossKillsThisWeek = kills.count { it.instanceId in worldBossInstances },
                 statistics = decodeMap(latest.statisticsJson),
                 statisticsBeforeReset = preReset?.let { decodeMap(it.statisticsJson) }.orEmpty(),
+                questsBeforeReset = preReset?.let {
+                    decodeList(ListSerializer(Int.serializer()), it.completedQuestIdsJson).toSet()
+                },
                 delvesThisWeek = preReset?.let {
                     (latest.delvesCompletedTotal - it.delvesCompletedTotal).coerceAtLeast(0)
                 } ?: 0,
