@@ -62,10 +62,20 @@ class AuctionDownloader @Inject constructor(
     }
 
     /**
-     * Recorre `{"auctions":[{item:{id},unit_price|buyout|bid,quantity},…]}` sin
-     * materializar la lista. `unit_price` solo existe en mercancías; el equipo
-     * usa `buyout`, y si alguien listó sin compra directa queda `bid`, que es lo
-     * único que se puede afirmar de esa subasta.
+     * Recorre `{"auctions":[{item:{id},unit_price|bid|buyout,quantity},…]}` sin
+     * materializar la lista.
+     *
+     * Los dos volcados usan campos distintos y NO significan lo mismo:
+     *
+     *  - Mercancías: `unit_price` ya es el precio POR UNIDAD, y `quantity` es
+     *    el tamaño del lote. Dividir uno por otro daría un precio inventado.
+     *  - Reino: `buyout` es el precio del LOTE ENTERO, así que ahí sí hay que
+     *    dividir para poder comparar con lo anterior.
+     *
+     * `bid` solo se usa cuando no hay compra directa: es lo único que se puede
+     * afirmar de esa subasta. Se guardan los tres por separado porque los
+     * campos llegan en orden `bid, buyout` y quedarse con el primero que
+     * aparece habría hecho ganar siempre a la puja.
      */
     internal fun aggregate(reader: JsonReader): List<AuctionPrice> {
         val minPrice = HashMap<Int, Long>()
@@ -81,7 +91,9 @@ class AuctionDownloader @Inject constructor(
             reader.beginArray()
             while (reader.hasNext()) {
                 var itemId = 0
-                var price = 0L
+                var unitPrice = 0L
+                var buyout = 0L
+                var bid = 0L
                 var quantity = 1L
                 reader.beginObject()
                 while (reader.hasNext()) {
@@ -94,19 +106,22 @@ class AuctionDownloader @Inject constructor(
                             }
                             reader.endObject()
                         }
-                        "unit_price" -> price = reader.nextLong()
-                        "buyout" -> if (price == 0L) price = reader.nextLong() else reader.skipValue()
-                        "bid" -> if (price == 0L) price = reader.nextLong() else reader.skipValue()
+                        "unit_price" -> unitPrice = reader.nextLong()
+                        "buyout" -> buyout = reader.nextLong()
+                        "bid" -> bid = reader.nextLong()
                         "quantity" -> quantity = reader.nextLong()
                         else -> reader.skipValue()
                     }
                 }
                 reader.endObject()
-                if (itemId != 0 && price > 0) {
-                    // El precio de una subasta de equipo es por lote, no por
-                    // unidad: dividir da el mismo "por unidad" que en mercancías
-                    // y permite comparar sin mezclar dos escalas distintas.
-                    val unit = if (quantity > 1) price / quantity else price
+
+                val lot = if (buyout > 0) buyout else bid
+                val unit = when {
+                    unitPrice > 0 -> unitPrice
+                    lot > 0 && quantity > 1 -> lot / quantity
+                    else -> lot
+                }
+                if (itemId != 0 && unit > 0) {
                     val previous = minPrice[itemId]
                     if (previous == null || unit < previous) minPrice[itemId] = unit
                     quantities[itemId] = (quantities[itemId] ?: 0L) + quantity

@@ -171,8 +171,30 @@ interface AuctionPriceDao {
     @Query("SELECT * FROM auction_price WHERE scope = :scope AND itemId IN (:itemIds)")
     suspend fun forItems(scope: Int, itemIds: List<Int>): List<AuctionPriceEntity>
 
-    @Query("SELECT * FROM auction_price WHERE scope = :scope ORDER BY minUnitPrice DESC LIMIT :limit")
-    suspend fun mostExpensive(scope: Int, limit: Int): List<AuctionPriceEntity>
+    /**
+     * Lo más caro que de verdad está en venta.
+     *
+     * Sin filtrar, esta lista era inútil: decenas de objetos empatados en el
+     * tope de precio de la casa (9.999.999,99 de oro), que es lo que se pone
+     * cuando se lista algo sin intención de venderlo. Se descartan los que
+     * tocan el tope y los que tienen menos de tres subastas, para que un solo
+     * precio absurdo no encabece la lista.
+     */
+    @Query(
+        "SELECT * FROM auction_price WHERE scope = :scope AND minUnitPrice < :cap " +
+            "AND listings >= :minListings ORDER BY minUnitPrice DESC LIMIT :limit",
+    )
+    suspend fun mostExpensive(
+        scope: Int,
+        limit: Int,
+        cap: Long = PRICE_CAP_COPPER,
+        minListings: Int = 3,
+    ): List<AuctionPriceEntity>
+
+    companion object {
+        /** Tope de precio de una subasta: 9.999.999,99 de oro = 99.999.999.900 de cobre. */
+        const val PRICE_CAP_COPPER = 99_999_999_900L
+    }
 
     @Query("SELECT * FROM auction_price WHERE scope = :scope ORDER BY quantity DESC LIMIT :limit")
     suspend fun mostTraded(scope: Int, limit: Int): List<AuctionPriceEntity>
