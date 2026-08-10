@@ -28,6 +28,11 @@ data class WeeklyState(
     val lootByTask: Map<String, List<com.azeroth.companion.data.LootEntry>> = emptyMap(),
     /** Misiones concretas de cada semanal, para poder abrir su ficha. */
     val questsByTask: Map<String, List<com.azeroth.companion.data.WeeklyQuestDone>> = emptyMap(),
+    /** Misiones de la semana, una por una, agrupadas por actividad. */
+    val vaultQuests: com.azeroth.companion.data.VaultQuestsSnapshot =
+        com.azeroth.companion.data.VaultQuestsSnapshot(),
+    /** Grupos desplegados de esa lista. */
+    val expandedGroups: Set<String> = emptySet(),
 )
 
 /**
@@ -47,7 +52,15 @@ class WeeklyViewModel @Inject constructor(
     private val activeCharacter: ActiveCharacter,
     private val seasonLootRepository: com.azeroth.companion.data.SeasonLootRepository,
     private val storylinesRepository: com.azeroth.companion.data.StorylinesRepository,
+    private val vaultQuestsRepository: com.azeroth.companion.data.VaultQuestsRepository,
 ) : ViewModel() {
+
+    fun toggleGroup(taskId: String) {
+        val current = _state.value.expandedGroups
+        _state.value = _state.value.copy(
+            expandedGroups = if (taskId in current) current - taskId else current + taskId,
+        )
+    }
 
     private val _state = MutableStateFlow(WeeklyState())
     val state: StateFlow<WeeklyState> = _state
@@ -95,6 +108,15 @@ class WeeklyViewModel @Inject constructor(
         viewModelScope.launch {
             val activity = weeklyActivityRepository.load()
             _state.value = _state.value.copy(loading = false, activity = activity)
+        }
+        viewModelScope.launch {
+            val quests = runCatching { vaultQuestsRepository.load() }.getOrNull() ?: return@launch
+            _state.value = _state.value.copy(
+                vaultQuests = quests,
+                // Los grupos que aportan a la bóveda vienen abiertos: son la
+                // razón por la que se entra a esta pantalla.
+                expandedGroups = quests.groups.filter { it.feedsVault }.map { it.taskId }.toSet(),
+            )
         }
         viewModelScope.launch {
             val settings = settingsRepository.settings.first()

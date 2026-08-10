@@ -1,5 +1,5 @@
 {
-  "catalogVersion": 9,
+  "catalogVersion": 10,
   "gameVersion": "12.1",
   "updatedAt": "2026-07-23T00:00:00Z",
   "resets": [
@@ -1119,5 +1119,13 @@
     15355,
     15947,
     15458
-  ]
+  ],
+  "vault": {
+    "worldContributingTaskIds": [
+      "weekly_delves",
+      "weekly_world_boss",
+      "weekly_void_assaults",
+      "weekly_ritual_sites"
+    ]
+  }
 }

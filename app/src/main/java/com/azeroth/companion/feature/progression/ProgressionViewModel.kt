@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.azeroth.companion.core.catalog.CatalogRepository
 import com.azeroth.companion.core.catalog.EconomyRules
 import com.azeroth.companion.core.database.CharacterDao
-import com.azeroth.companion.core.model.GreatVaultProgress
 import com.azeroth.companion.data.ProgressionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +15,6 @@ import javax.inject.Inject
 
 data class ProgressionUiState(
     val loading: Boolean = true,
-    val vault: GreatVaultProgress? = null,
     val economy: EconomyRules = EconomyRules(),
     val synced: Boolean = false,
 )
@@ -41,10 +39,9 @@ class ProgressionViewModel @Inject constructor(
             runCatching {
                 val economy = catalogRepository.load().economy
                 val active = characterDao.observeAll().first().firstOrNull()
-                val vault = active?.let { progressionRepository.computeVault(it.id) }
                 _state.value = ProgressionUiState(
                     loading = false,
-                    vault = vault,
+                    
                     economy = economy,
                     synced = active?.lastSyncedAt != null,
                 )

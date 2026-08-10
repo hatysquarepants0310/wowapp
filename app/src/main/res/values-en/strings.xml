@@ -197,4 +197,26 @@
     <string name="more_group_world">The world</string>
     <string name="more_group_progress">Your progress</string>
     <string name="more_group_content">Content and settings</string>
+    <string name="your_week">Your week</string>
+    <string name="your_week_open">See quests</string>
+    <string name="week_raid_bosses">Raid bosses</string>
+    <string name="week_mplus">M+ keys</string>
+    <string name="week_best_key">best +%1$d</string>
+    <string name="week_vault_quests">Vault quests</string>
+    <string name="week_note">Only what Blizzard confirms with a timestamp: bosses and keys carry their own kill/completion time. The Great Vault itself cannot be read from outside the game.</string>
+    <string name="vault_quests_title">This week\'s quests</string>
+    <string name="vault_quests_progress">Feeding the vault</string>
+    <string name="vault_quests_feeds">VAULT</string>
+    <string name="vault_quests_hint">Resets every week. Tap any quest for its loot, zone and TomTom command.</string>
+    <string name="season_owned">%1$d of %2$d obtained</string>
+    <string name="title_score">Score and raids</string>
+    <string name="score_subtitle">Mythic+ and progress for %1$s</string>
+    <string name="score_mplus">Mythic+ score</string>
+    <string name="score_source">Calculated by Raider.IO from your keys. Blizzard publishes the dungeons, but not a score.</string>
+    <string name="score_this_week">This week\'s keys</string>
+    <string name="score_best_runs">Your best keys</string>
+    <string name="score_raids">Season raids</string>
+    <string name="score_raid_detail">Normal %1$d · Heroic %2$d · Mythic %3$d</string>
+    <string name="score_unavailable">No Raider.IO data</string>
+    <string name="more_score_desc">Your M+ score, your keys and raid progress</string>
 </resources>

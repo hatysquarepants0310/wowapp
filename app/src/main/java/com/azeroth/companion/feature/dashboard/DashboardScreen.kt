@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,8 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.azeroth.companion.R
-import com.azeroth.companion.core.model.SlotProgress
 import com.azeroth.companion.ui.components.ConfidenceBadge
+import com.azeroth.companion.ui.components.ProgressTrack
 import com.azeroth.companion.ui.components.CountdownText
 import com.azeroth.companion.ui.components.Divider
 import com.azeroth.companion.ui.components.HeroPanel
@@ -62,6 +61,7 @@ fun DashboardScreen(
     onOpenChecklist: (String) -> Unit,
     onOpenRoster: () -> Unit = {},
     onOpenSeasonLoot: () -> Unit = {},
+    onOpenWeekly: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -167,60 +167,56 @@ fun DashboardScreen(
             }
         }
 
-        // ---- Gran Bóveda -------------------------------------------------
-        item { SectionHeader(stringResource(R.string.great_vault)) }
+        // ---- Tu semana ---------------------------------------------------
+        //
+        // Antes aquí había una rejilla 3x3 de Gran Bóveda con el ilvl que iba a
+        // tocar en cada casilla. Era mentira: ni la API de Blizzard ni Raider.IO
+        // exponen la Bóveda, así que aquello se deducía comparando lecturas
+        // guardadas y acertaba de casualidad. Ahora se enseña solo lo que la
+        // API afirma con fecha propia, y para saber qué falta por hacer está la
+        // lista de misiones de la semana.
         item {
-            val vault = state.vault
-            if (vault == null) {
-                Panel {
-                    Text(
-                        stringResource(R.string.vault_need_sync),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SectionHeader(
+                stringResource(R.string.your_week),
+                action = stringResource(R.string.your_week_open),
+                onAction = onOpenWeekly,
+            )
+        }
+        item {
+            Panel(padding = PaddingValues(Spacing.lg)) {
+                Row {
+                    WeekStat(
+                        stringResource(R.string.week_raid_bosses),
+                        state.raidBossesThisWeek.toString(),
+                        Modifier.weight(1f),
+                    )
+                    WeekStat(
+                        stringResource(R.string.week_mplus),
+                        state.mythicRunsThisWeek.toString(),
+                        Modifier.weight(1f),
+                        hint = state.bestKeyThisWeek
+                            .takeIf { it > 0 }
+                            ?.let { stringResource(R.string.week_best_key, it) },
+                    )
+                    WeekStat(
+                        stringResource(R.string.week_vault_quests),
+                        "${state.vaultQuestsDone}/${state.vaultQuestsTotal}",
+                        Modifier.weight(1f),
                     )
                 }
-            } else {
-                Panel(padding = PaddingValues(Spacing.lg)) {
-                    VaultRow(stringResource(R.string.vault_row_raid), vault.raidSlots)
+                if (state.vaultQuestsTotal > 0) {
                     Spacer(Modifier.height(Spacing.lg))
-                    VaultRow(stringResource(R.string.vault_row_mplus), vault.mythicPlusSlots)
-                    Spacer(Modifier.height(Spacing.lg))
-                    VaultRow(stringResource(R.string.vault_row_world), vault.worldSlots)
-
-                    Spacer(Modifier.height(Spacing.lg))
-                    Divider()
-                    Spacer(Modifier.height(Spacing.md))
-                    val unlocked = (
-                        vault.raidSlots.predictedRewardIlvl +
-                            vault.mythicPlusSlots.predictedRewardIlvl +
-                            vault.worldSlots.predictedRewardIlvl
-                        ).filterNotNull()
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            if (unlocked.isEmpty()) {
-                                stringResource(R.string.vault_none_unlocked)
-                            } else {
-                                stringResource(R.string.vault_unlocked, unlocked.size, unlocked.max())
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (unlocked.isEmpty()) {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
-                        ConfidenceBadge(vault.confidence)
-                    }
-                    if (state.worldBaselineMissing) {
-                        Spacer(Modifier.height(Spacing.sm))
-                        Text(
-                            stringResource(R.string.vault_world_pending),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Warning,
-                        )
-                    }
+                    ProgressTrack(
+                        state.vaultQuestsDone.toFloat() / state.vaultQuestsTotal,
+                        color = Gold,
+                    )
                 }
+                Spacer(Modifier.height(Spacing.md))
+                Text(
+                    stringResource(R.string.week_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
 
@@ -234,14 +230,41 @@ fun DashboardScreen(
                 )
             }
             item {
-                Text(
-                    stringResource(R.string.season_exclusive_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                // Sí se puede saber qué monturas tienes: la colección del
+                // personaje viene en /collections/mounts, así que el check y el
+                // porcentaje son datos reales, no una estimación.
+                val owned = state.seasonMounts.count { it.owned }
+                val total = state.seasonMounts.size
+                Panel(padding = PaddingValues(Spacing.lg)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            stringResource(R.string.season_owned, owned, total),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            "${if (total == 0) 0 else owned * 100 / total}%",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Gold,
+                        )
+                    }
+                    Spacer(Modifier.height(Spacing.md))
+                    ProgressTrack(
+                        if (total == 0) 0f else owned.toFloat() / total,
+                        color = Gold,
+                    )
+                    Spacer(Modifier.height(Spacing.md))
+                    Text(
+                        stringResource(R.string.season_exclusive_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-            items(minOf(3, state.seasonMounts.size)) { index ->
-                LootRow(state.seasonMounts[index], onClick = { onOpenSeasonLoot() })
+            // Primero lo que falta: lo ya conseguido no es una tarea pendiente.
+            val pending = state.seasonMounts.sortedBy { it.owned }
+            items(minOf(3, pending.size)) { index ->
+                LootRow(pending[index], onClick = { onOpenSeasonLoot() })
             }
         }
     }
@@ -274,74 +297,28 @@ private fun SyncFreshness(syncedAt: Instant?) {
     }
 }
 
-/**
- * Una fila de la Bóveda tal como se ve en el juego: tres casillas que se abren
- * al llegar a cada umbral. Las cerradas no gritan: son un hueco vacío con su
- * número, y solo las abiertas llevan color, que es lo que hay que mirar.
- */
+/** Un dato de la semana: cifra grande y etiqueta pequeña encima. */
 @Composable
-private fun VaultRow(label: String, slot: SlotProgress) {
-    Column {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(label, style = MaterialTheme.typography.titleSmall)
+private fun WeekStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    hint: String? = null,
+) {
+    Column(modifier) {
+        Text(
+            label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(Spacing.xs))
+        Text(value, style = MaterialTheme.typography.headlineMedium)
+        if (hint != null) {
             Text(
-                "${slot.current}/${slot.thresholds.lastOrNull() ?: 0}",
-                style = MaterialTheme.typography.labelMedium,
+                hint,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        Spacer(Modifier.height(Spacing.sm))
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            slot.thresholds.forEachIndexed { index, threshold ->
-                val unlocked = slot.current >= threshold
-                val ilvl = slot.predictedRewardIlvl.getOrNull(index)
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(54.dp)
-                        .clip(RoundedCornerShape(Radius.sm))
-                        .background(
-                            if (unlocked) {
-                                Gold.copy(alpha = 0.16f)
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHigh
-                            },
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        if (unlocked) {
-                            Text(
-                                ilvl?.toString() ?: stringResource(R.string.vault_ready),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Gold,
-                            )
-                            Text(
-                                "ilvl",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        } else {
-                            Box(
-                                Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.outline),
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
-                            Text(
-                                "$threshold",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }
