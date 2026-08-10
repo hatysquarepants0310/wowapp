@@ -68,5 +68,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
+          # Sin esto el tag se crea sobre la rama POR DEFECTO, no sobre el
+          # commit que se acaba de construir: por eso v2.0.0, v2.1.0 … y 3.0.0
+          # apuntaban todos al mismo commit antiguo de main mientras el APK sí
+          # era el correcto. Quien abriera el código de una release veía otra
+          # versión distinta de la que se había descargado.
+          target_commitish: ${{ github.sha }}
           files: azeroth-companion-*.apk
           generate_release_notes: true
