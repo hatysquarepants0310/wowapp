@@ -216,6 +216,13 @@ class StorylinesRepository @Inject constructor(
     /** Nombre de una zona por su UiMapID. */
     suspend fun mapName(uiMapId: Int): String? = maps()[uiMapId]
 
+    /** Nombre de la misión en el idioma del usuario, del catálogo horneado. */
+    suspend fun questName(questId: Int): String? = names()[questId]?.takeIf { it.isNotBlank() }
+
+    /** Zona de la misión, ya traducida. */
+    suspend fun questZoneName(questId: Int): String? =
+        questAreaId(questId)?.let { areas()[it] }?.takeIf { it.isNotBlank() }
+
     /** Punto de la misión como (uiMapId, x, y), o null si el cliente no publica uno. */
     suspend fun questCoordinates(questId: Int): Triple<Int, Double, Double>? {
         val c = coords()[questId] ?: return null

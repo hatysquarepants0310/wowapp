@@ -23,7 +23,7 @@ import androidx.lifecycle.viewModelScope
 import com.azeroth.companion.core.database.CharacterDao
 import com.azeroth.companion.core.database.TaskStateDao
 import com.azeroth.companion.core.datastore.SettingsRepository
-import com.azeroth.companion.core.model.GreatVaultProgress
+import com.azeroth.companion.data.WeekSummary
 import com.azeroth.companion.data.EventsRepository
 import com.azeroth.companion.data.ProgressionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,7 +42,7 @@ data class RosterRow(
     val activeSpec: String?,
     val ilvl: Int,
     val isActive: Boolean,
-    val vault: GreatVaultProgress?,
+    val week: WeekSummary,
     /** Intentos de montura del Stormarion restantes esta semana (límite por personaje). */
     val mountAttemptsLeft: Int,
 )
@@ -71,7 +71,8 @@ class RosterViewModel @Inject constructor(
                 val settings = settingsRepository.settings.first()
                 val lastReset = eventsRepository.resetClock().lastWeeklyReset(Instant.now())
                 val rows = characterDao.observeAll().first().map { c ->
-                    val vault = runCatching { progressionRepository.computeVault(c.id) }.getOrNull()
+                    val week = runCatching { progressionRepository.weekSummary(c.id) }
+                        .getOrDefault(WeekSummary())
                     val stormarion = taskStateDao.get(c.id, "weekly_stormarion_assault")
                         ?.takeIf { !it.periodStart.isBefore(lastReset) }
                     RosterRow(
@@ -82,7 +83,7 @@ class RosterViewModel @Inject constructor(
                         activeSpec = c.activeSpec,
                         ilvl = c.equippedItemLevel,
                         isActive = c.id == settings.activeCharacterId,
-                        vault = vault,
+                        week = week,
                         mountAttemptsLeft = (2 - (stormarion?.completions ?: 0)).coerceAtLeast(0),
                     )
                 }
@@ -142,14 +143,14 @@ fun RosterScreen(viewModel: RosterViewModel = hiltViewModel()) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    row.vault?.let { v ->
-                        Text(
-                            "Bóveda — Banda ${v.raidSlots.current}/${v.raidSlots.thresholds.last()} · " +
-                                "M+ ${v.mythicPlusSlots.current}/${v.mythicPlusSlots.thresholds.last()} · " +
-                                "Mundo ${v.worldSlots.current}/${v.worldSlots.thresholds.last()}",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
+                    // Actividad de la semana con datos fechados por Blizzard.
+                    // Antes aquí iba una previsión de Gran Bóveda que la API no
+                    // permite sostener.
+                    Text(
+                        "Esta semana — ${row.week.raidBosses} jefes · " +
+                            "${row.week.mythicRuns} llaves · ${row.week.delves} abismos",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Text(
                         "Intentos de montura restantes esta semana: ${row.mountAttemptsLeft}/2",
                         style = MaterialTheme.typography.bodySmall,

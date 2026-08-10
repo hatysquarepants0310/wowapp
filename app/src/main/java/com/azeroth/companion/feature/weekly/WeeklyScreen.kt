@@ -75,6 +75,15 @@ fun WeeklyScreen(
 
         item { Summary(a) }
 
+        // Lo primero de la pantalla: qué misiones quedan por hacer esta semana.
+        // El resumen de actividad es contexto; esto es la acción.
+        vaultQuestsSection(
+            snapshot = state.vaultQuests,
+            expanded = state.expandedGroups,
+            onToggleGroup = viewModel::toggleGroup,
+            onOpenQuest = onOpenQuest,
+        )
+
         // Resumen por actividad. Cada fila se marca con una señal que la API
         // demuestra (mazmorras y jefes van fechados), no con IDs de misión
         // adivinados: los marcadores "Midnight: X" resultaron no existir en

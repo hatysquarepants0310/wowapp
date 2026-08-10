@@ -17,6 +17,15 @@ import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Actividad verificable de la semana en curso. */
+data class WeekSummary(
+    val raidBosses: Int = 0,
+    val mythicRuns: Int = 0,
+    val bestKey: Int = 0,
+    val delves: Int = 0,
+    val since: Instant? = null,
+)
+
 @Singleton
 class ProgressionRepository @Inject constructor(
     private val progressionDao: ProgressionDao,
@@ -129,6 +138,38 @@ class ProgressionRepository @Inject constructor(
             .filter { !it.periodStart.isBefore(lastReset) }
             .sumOf { it.completions }
         return delves + tasks
+    }
+
+    /**
+     * Lo que este personaje ha hecho desde el último reset, con datos que la
+     * API fecha por sí sola.
+     *
+     * Sustituye a `computeVault`, que predecía las casillas de la Gran Bóveda y
+     * el ilvl de cada una. Aquello no se podía sostener: la Bóveda no está en la
+     * API de Blizzard ni en la de Raider.IO, así que se deducía comparando
+     * lecturas guardadas y fallaba en cuanto faltaba una. Estas tres cifras, en
+     * cambio, salen de marcas de tiempo del propio Blizzard.
+     */
+    suspend fun weekSummary(characterId: Long): WeekSummary {
+        val now = Instant.now()
+        val lastReset = eventsRepository.resetClock().lastWeeklyReset(now)
+        val current = snapshotDao.latest(characterId) ?: return WeekSummary()
+        val kills = decode(
+            ListSerializer(RaidKillRecord.serializer()), current.raidKillsThisWeekJson,
+        ).distinctBy { it.instanceId to it.name }
+        val runs = decode(
+            ListSerializer(MythicRunRecord.serializer()), current.mythicLevelsThisWeekJson,
+        )
+        val delveQuests = delveQuestIds()
+        val delves = decode(ListSerializer(Int.serializer()), current.completedQuestIdsJson)
+            .count { it in delveQuests }
+        return WeekSummary(
+            raidBosses = kills.size,
+            mythicRuns = runs.size,
+            bestKey = runs.maxOfOrNull { it.level } ?: 0,
+            delves = delves,
+            since = lastReset,
+        )
     }
 
     /** IDs de las misiones semanales de Delve declaradas en el catálogo. */

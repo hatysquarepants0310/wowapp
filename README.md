@@ -47,13 +47,14 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 
 | Pantalla | Qué hace |
 |---|---|
-| **Inicio** | Cuenta regresiva al próximo evento, reset semanal, Gran Bóveda 3×3, exclusivos de temporada |
+| **Inicio** | Cuenta regresiva al próximo evento, reset semanal, tu actividad de la semana y exclusivos de temporada con progreso |
 | **Ahora en Azeroth** | Eventos activos con cuenta atrás y tus misiones aceptadas situadas sobre el mapa de su zona |
 | **Noticias** | Las noticias oficiales de WoW leídas dentro de la app, en nativo (texto e imágenes), no un enlace al navegador |
 | **Casa de subastas** | Precios reales de mercancías de tu región y de las subastas de tu reino, con buscador por objeto |
 | **Eventos** | Timeline de ocurrencias con fases, mecánicas y botón de calibración |
 | **Checklist previa** | Al tocar la notificación: los 8 puntos de verificación del evento (¿estás fuera de raid? ¿tienes Núcleos?) |
-| **Semanal** | Checklist agrupada por categoría con detección automática de progreso y override manual siempre disponible |
+| **Esta semana** | Cada misión semanal por separado, con su zona, tachada al completarla y pulsable para ver su botín y su TomTom. Las que aportan a la Bóveda van marcadas |
+| **Puntuación y bandas** | Tu score de mítica+, tus mejores llaves y las de la semana, y el progreso de banda por dificultad (Raider.IO) |
 | **Progresión** | Folio Omnium (con reglas de catch-up), Sistema de Presas, Campaña, Delves |
 | **Temporada** | Tracker de recompensas con fecha límite (FOMO) con filtro de viabilidad honesto |
 | **Contenido** | Afijos de Mythic+ de la semana + mazmorras y bandas de **cualquier expansión** con sus jefes (actual destacada, anteriores aparte) |
@@ -397,16 +398,22 @@ consume los JSON horneados — cero dependencia de esas fuentes en tiempo de eje
 
 Verificado endpoint por endpoint, para que nadie pierda el tiempo buscándolo:
 
-- **La Gran Bóveda no existe en la API web.** El índice del perfil no la lista y los cinco nombres
-  candidatos devuelven 404. Los addons como Midnight Routine la leen desde DENTRO del juego con
-  `C_WeeklyRewards.GetActivities()`, que es otra superficie distinta. La app reconstruye la Bóveda
-  con lo que sí es exacto: jefes de banda y llaves M+ vienen fechados, y las Delves de la semana
-  salen de sus misiones semanales.
+- **La Gran Bóveda no existe en ninguna API pública.** En la de Blizzard, el índice del perfil no la
+  lista y los cinco nombres candidatos devuelven 404. En la de Raider.IO, los campos `great_vault`,
+  `weekly_rewards` y `vault` se ignoran sin más. Los addons como Midnight Routine la leen desde
+  DENTRO del juego con `C_WeeklyRewards.GetActivities()`, que es otra superficie distinta.
+
+  La app **no** finge tenerla. Hubo una versión con la rejilla 3×3 y el ilvl previsto de cada
+  casilla; se quitó porque para rellenarla había que comparar lecturas guardadas y acertaba de
+  casualidad. En su lugar se enseña lo que Blizzard sí fecha por sí mismo —jefes de banda y llaves
+  M+ de la semana— y la lista de misiones que quedan por hacer.
 - **No hay listado global de misiones de mundo activas.** Solo se pueden situar las que tu personaje
   tiene aceptadas (`/quests` → `in_progress`).
 - **Banco, bolsas e inventario:** 404. **Chat de hermandad:** no existe endpoint.
 - **Noticias:** Blizzard no publica RSS ni API; la app lee su web oficial y conserva el enlace a la
   fuente en cada artículo.
+- **Lo que SÍ se puede saber:** qué monturas tienes (`/collections/mounts`), así que los exclusivos
+  de temporada llevan check y porcentaje de verdad, no una estimación.
 
 El arte de los mapas del juego no se distribuye con la app: el mapa se dibuja en vectorial y solo
 las **coordenadas** (que son información, no arte) salen de las tablas del cliente.

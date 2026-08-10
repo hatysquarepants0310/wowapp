@@ -32,9 +32,16 @@ data class DashboardState(
     val activeCharacterIlvl: Int = 0,
     val activeCharacterClass: String? = null,
     val lastSyncedAt: Instant? = null,
-    val vault: com.azeroth.companion.core.model.GreatVaultProgress? = null,
-    /** Sin lectura previa al reset no se puede saber qué Delves son de esta semana. */
-    val worldBaselineMissing: Boolean = false,
+    /**
+     * Lo que la API confirma de esta semana, con fecha propia de Blizzard: no
+     * hay ninguna comparación contra lecturas anteriores.
+     */
+    val raidBossesThisWeek: Int = 0,
+    val mythicRunsThisWeek: Int = 0,
+    val bestKeyThisWeek: Int = 0,
+    /** Misiones de bóveda hechas / disponibles esta semana. */
+    val vaultQuestsDone: Int = 0,
+    val vaultQuestsTotal: Int = 0,
     /** Monturas exclusivas de la temporada, para la tarjeta de Inicio. */
     val seasonMounts: List<com.azeroth.companion.data.LootEntry> = emptyList(),
 )
@@ -48,6 +55,8 @@ class DashboardViewModel @Inject constructor(
     private val progressionRepository: com.azeroth.companion.data.ProgressionRepository,
     private val settingsRepository: SettingsRepository,
     private val seasonLootRepository: com.azeroth.companion.data.SeasonLootRepository,
+    private val weeklyActivityRepository: com.azeroth.companion.data.WeeklyActivityRepository,
+    private val vaultQuestsRepository: com.azeroth.companion.data.VaultQuestsRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -72,12 +81,8 @@ class DashboardViewModel @Inject constructor(
                 roster.firstOrNull { it.id == settings.activeCharacterId }
                     ?: roster.firstOrNull()
             }.collect { active ->
-                val vault = runCatching {
-                    progressionRepository.computeVault(active?.id ?: 0L)
-                }.getOrNull()
-                val worldUnknown = runCatching {
-                    progressionRepository.worldBaselineMissing(active?.id ?: 0L)
-                }.getOrDefault(true)
+                val activity = runCatching { weeklyActivityRepository.load() }.getOrNull()
+                val vaultQuests = runCatching { vaultQuestsRepository.load() }.getOrNull()
                 // Se recalcula al cambiar de personaje: el "ya la tienes" depende
                 // de la colección del personaje activo.
                 val mounts = runCatching { seasonLootRepository.seasonMounts() }
@@ -88,8 +93,14 @@ class DashboardViewModel @Inject constructor(
                     activeCharacterIlvl = active?.equippedItemLevel ?: 0,
                     activeCharacterClass = active?.playableClass,
                     lastSyncedAt = active?.lastSyncedAt,
-                    vault = vault,
-                    worldBaselineMissing = worldUnknown,
+                    // Cada jefe cuenta una vez aunque se mate en varias
+                    // dificultades: es como lo cuenta el juego.
+                    raidBossesThisWeek = activity?.raidKills.orEmpty()
+                        .distinctBy { it.instanceId to it.name }.size,
+                    mythicRunsThisWeek = activity?.mythicRuns?.size ?: 0,
+                    bestKeyThisWeek = activity?.mythicRuns?.maxOfOrNull { it.level } ?: 0,
+                    vaultQuestsDone = vaultQuests?.vaultDone ?: 0,
+                    vaultQuestsTotal = vaultQuests?.vaultTotal ?: 0,
                     seasonMounts = mounts,
                 )
             }

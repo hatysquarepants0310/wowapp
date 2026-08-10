@@ -101,7 +101,11 @@ class LiveMapRepository @Inject constructor(
             val coords = storylinesRepository.questCoordinates(quest.id) ?: return@mapNotNull null
             MapPin(
                 questId = quest.id,
-                name = quest.name.orEmpty().ifBlank { "#${quest.id}" },
+                // El nombre del catálogo horneado va primero: está en el idioma
+                // que el usuario eligió en la app, mientras que el de la API
+                // viene en el del personaje y salía en inglés.
+                name = storylinesRepository.questName(quest.id)
+                    ?: quest.name.orEmpty().ifBlank { "#${quest.id}" },
                 uiMapId = coords.first,
                 x = coords.second,
                 y = coords.third,

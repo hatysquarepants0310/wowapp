@@ -197,4 +197,26 @@
     <string name="more_group_world">El mundo</string>
     <string name="more_group_progress">Tu progreso</string>
     <string name="more_group_content">Contenido y ajustes</string>
+    <string name="your_week">Tu semana</string>
+    <string name="your_week_open">Ver misiones</string>
+    <string name="week_raid_bosses">Jefes de banda</string>
+    <string name="week_mplus">Llaves M+</string>
+    <string name="week_best_key">mejor +%1$d</string>
+    <string name="week_vault_quests">Misiones de bóveda</string>
+    <string name="week_note">Solo lo que Blizzard confirma con fecha: jefes y llaves traen su marca de tiempo. La Gran Bóveda en sí no se puede leer desde fuera del juego.</string>
+    <string name="vault_quests_title">Misiones de esta semana</string>
+    <string name="vault_quests_progress">Aportan a la bóveda</string>
+    <string name="vault_quests_feeds">BÓVEDA</string>
+    <string name="vault_quests_hint">Se renueva en cada reset. Pulsa cualquier misión para ver su botín, su zona y el comando de TomTom.</string>
+    <string name="season_owned">%1$d de %2$d conseguidas</string>
+    <string name="title_score">Puntuación y bandas</string>
+    <string name="score_subtitle">Mítica+ y progreso de %1$s</string>
+    <string name="score_mplus">Puntuación mítica+</string>
+    <string name="score_source">La calcula Raider.IO a partir de tus llaves. Blizzard publica las mazmorras, pero no una puntuación.</string>
+    <string name="score_this_week">Llaves de esta semana</string>
+    <string name="score_best_runs">Tus mejores llaves</string>
+    <string name="score_raids">Bandas de la temporada</string>
+    <string name="score_raid_detail">Normal %1$d · Heroico %2$d · Mítico %3$d</string>
+    <string name="score_unavailable">Sin datos de Raider.IO</string>
+    <string name="more_score_desc">Tu puntuación M+, tus llaves y el progreso de banda</string>
 </resources>

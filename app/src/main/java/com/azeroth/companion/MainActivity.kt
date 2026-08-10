@@ -148,6 +148,7 @@ private val subScreenTitles = mapOf(
     "roster" to R.string.nav_roster,
     "settings" to R.string.nav_settings,
     "auctions" to R.string.title_auctions,
+    "score" to R.string.title_score,
     "news" to R.string.title_news,
     "article" to R.string.title_news,
     "live" to R.string.title_live,
@@ -220,6 +221,7 @@ private fun AppScaffold(startEventId: String?) {
                     onOpenChecklist = { navController.navigate("event/$it") },
                     onOpenRoster = { navController.navigate("roster") },
                     onOpenSeasonLoot = { navController.navigate("seasonloot") },
+                    onOpenWeekly = { navController.navigate("weekly") },
                 )
             }
             composable("events") {
@@ -284,6 +286,7 @@ private fun AppScaffold(startEventId: String?) {
             composable("seasonal") { SeasonalScreen() }
             composable("roster") { RosterScreen() }
             composable("settings") { SettingsScreen() }
+            composable("score") { com.azeroth.companion.feature.score.ScoreScreen() }
             composable("auctions") { com.azeroth.companion.feature.auctions.AuctionsScreen() }
             composable("news") {
                 com.azeroth.companion.feature.news.NewsScreen(
@@ -341,6 +344,8 @@ private fun MoreScreen(onNavigate: (String) -> Unit) {
                 Icons.Filled.Checklist, teal),
             MoreItem("progression", stringResource(R.string.nav_progression), stringResource(R.string.more_progression_desc),
                 Icons.Filled.TrendingUp, purple),
+            MoreItem("score", stringResource(R.string.title_score), stringResource(R.string.more_score_desc),
+                Icons.Filled.TrendingUp, gold),
             MoreItem("seasons", stringResource(R.string.title_seasons_mplus), stringResource(R.string.more_seasons_desc),
                 Icons.Filled.EmojiEvents, gold),
             MoreItem("roster", stringResource(R.string.nav_roster), stringResource(R.string.more_roster_desc),

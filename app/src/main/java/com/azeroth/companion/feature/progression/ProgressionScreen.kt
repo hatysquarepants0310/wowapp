@@ -33,7 +33,7 @@ import com.azeroth.companion.ui.components.SectionCard
 @Composable
 fun ProgressionScreen(viewModel: ProgressionViewModel = hiltViewModel()) {
     var tab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Bóveda", "Folio", "Presas", "Delves")
+    val tabs = listOf("Folio", "Presas", "Delves")
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize()) {
@@ -47,70 +47,22 @@ fun ProgressionScreen(viewModel: ProgressionViewModel = hiltViewModel()) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             when (tab) {
-                0 -> VaultTab(state)
-                1 -> InfoBlock(
+                0 -> InfoBlock(
                     "Árbol de 5 filas; se desbloquea 1 fila por reset semanal.",
                     "Cada fila ofrece 2–4 runas; eliges una y puedes recambiarla fuera de combate sin costo.",
                     "Catch-up: si vas atrasado, haces las semanas pendientes de forma secuencial, una a la vez, sin esperar el reset. No existe moneda para saltar pasos.",
                     "La questline inicia en Ciudad Solaz (\"La Llamada del Magister\") y sigue en la Isla de Quel'Danas.",
                     "⚠ Consulta la runa recomendada por clase ANTES de elegir la Runa Central: condiciona el resto de la build.",
                 )
-                2 -> InfoBlock(
+                1 -> InfoBlock(
                     "4 contratos simultáneos, uno por zona: Bosques de Canción Eterna, Zul'Aman, Harandar y Voidstorm.",
                     "La barra sube haciendo contenido de mundo en la zona: world quests, rares, tesoros, materiales de profesión, trampas y emboscadas.",
                     "Si la presa te embosca, sigue el rastro de niebla de sangre y atácala: también aumenta el progreso.",
                     "Al completar, Astalor revela la ubicación: se invoca, se mata y se reclama.",
                     "Límite: una cacería por dificultad, por semana, por zona. Recompensas: cofre hasta track Champion, Dawncrests, fragmentos de Restored Coffer Key y progreso al slot de mundo de la Bóveda.",
                 )
-                3 -> DelvesTab(state)
+                2 -> DelvesTab(state)
             }
-        }
-    }
-}
-
-@Composable
-private fun VaultTab(state: ProgressionUiState) {
-    val vault = state.vault
-    if (vault == null) {
-        Text(
-            "Inicia sesión con Battle.net en Ajustes: la Bóveda se calcula sola " +
-                "con tus runs de Mythic+, kills de banda y actividades de mundo.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        return
-    }
-    VaultSlotCard("Banda", vault.raidSlots)
-    VaultSlotCard("Mythic+", vault.mythicPlusSlots)
-    VaultSlotCard("Mundo", vault.worldSlots)
-    ConfidenceBadge(vault.confidence)
-    Text(
-        "La API de Blizzard no expone la Bóveda directamente: se estima desde tus " +
-            "runs, kills y actividades sincronizadas. Se reclama UNA recompensa por semana.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-@Composable
-private fun VaultSlotCard(label: String, slot: SlotProgress) {
-    SectionCard(label) {
-        Spacer(Modifier.height(6.dp))
-        val max = slot.thresholds.last()
-        Text("${slot.current}/$max", style = MaterialTheme.typography.headlineSmall)
-        LinearProgressIndicator(
-            progress = { (slot.current.toFloat() / max).coerceIn(0f, 1f) },
-            modifier = Modifier.padding(vertical = 6.dp),
-        )
-        slot.thresholds.forEachIndexed { i, threshold ->
-            val ilvl = slot.predictedRewardIlvl.getOrNull(i)
-            Text(
-                if (ilvl != null) "✓ Slot ${i + 1} desbloqueado ($threshold) — ilvl previsto $ilvl"
-                else "Slot ${i + 1}: faltan ${(threshold - slot.current).coerceAtLeast(0)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = if (ilvl != null) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

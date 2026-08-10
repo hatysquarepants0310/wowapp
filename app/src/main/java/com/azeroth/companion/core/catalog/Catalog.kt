@@ -64,10 +64,17 @@ data class VaultRules(
     val raidSlotIlvl: List<Int> = listOf(619, 622, 626),
     val mythicPlusSlotIlvl: List<Int> = listOf(619, 623, 626),
     val worldSlotIlvl: List<Int> = listOf(610, 616, 619),
-    /** IDs de tareas del catálogo que aportan al slot de mundo. */
+    /**
+     * IDs de tareas del catálogo que aportan a la fila de Mundo.
+     *
+     * Tienen que ser IDs que EXISTAN en `weeklyTasks`. La lista anterior
+     * ("delves_bountiful", "prey_eversong"…) no correspondía a ninguna tarea
+     * real, así que la fila de Mundo nunca recibía nada de aquí y el fallo
+     * pasaba inadvertido porque el catálogo tampoco traía bloque `vault` y se
+     * usaban estos valores por defecto.
+     */
     val worldContributingTaskIds: List<String> = listOf(
-        "delves_bountiful", "prey_eversong", "prey_zulaman", "prey_harandar",
-        "prey_voidstorm", "weekly_world_boss",
+        "weekly_delves", "weekly_world_boss", "weekly_void_assaults", "weekly_ritual_sites",
     ),
     /**
      * ilvl de la recompensa según la DIFICULTAD del jefe, igual que en el juego:
