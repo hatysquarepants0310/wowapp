@@ -31,7 +31,7 @@ import com.azeroth.companion.ui.components.ConfidenceBadge
 import com.azeroth.companion.ui.components.ProgressTrack
 import com.azeroth.companion.ui.components.CountdownText
 import com.azeroth.companion.ui.components.Divider
-import com.azeroth.companion.ui.components.HeroPanel
+import com.azeroth.companion.ui.components.DataRow
 import com.azeroth.companion.ui.components.LootRow
 import com.azeroth.companion.ui.components.Panel
 import com.azeroth.companion.ui.components.PanelTone
@@ -79,52 +79,63 @@ fun DashboardScreen(
             }
         }
 
-        // ---- Ancla: el próximo evento ------------------------------------
+        // ---- Franja de estado ---------------------------------------------
+        //
+        // Sustituye al panel con degradado, que era exactamente el default de
+        // plantilla de dashboard. Aquí va denso: qué pasa, dónde y cuánto falta,
+        // con la cuenta atrás alineada a la derecha.
         item {
-            HeroPanel {
-                Text(
-                    stringResource(R.string.next_event).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                )
-                Spacer(Modifier.height(Spacing.sm))
-                if (state.nextEventStartsAt != null) {
-                    Text(
-                        state.nextEventName,
-                        style = MaterialTheme.typography.headlineMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        state.nextEventZone,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
-                    )
-                    Spacer(Modifier.height(Spacing.lg))
-                    CountdownText(
-                        state.nextEventStartsAt!!,
-                        style = MaterialTheme.typography.displaySmall,
-                    )
-                    Spacer(Modifier.height(Spacing.md))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                    ) {
-                        ConfidenceBadge(state.nextEventConfidence)
-                        Pill(
-                            stringResource(R.string.prepare),
-                            color = MaterialTheme.colorScheme.primary,
-                            filled = true,
-                            modifier = Modifier.clickable {
-                                state.nextEventId?.let(onOpenChecklist)
-                            },
+            Panel(padding = PaddingValues(Spacing.md)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.next_event).uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Gold,
                         )
+                        if (state.nextEventStartsAt != null) {
+                            Text(
+                                state.nextEventName,
+                                style = MaterialTheme.typography.titleLarge,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                state.nextEventZone,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            Text(
+                                stringResource(R.string.dashboard_no_events),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
                     }
-                } else {
-                    Text(
-                        stringResource(R.string.dashboard_no_events),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
+                    if (state.nextEventStartsAt != null) {
+                        Spacer(Modifier.width(Spacing.md))
+                        Column(horizontalAlignment = Alignment.End) {
+                            CountdownText(
+                                state.nextEventStartsAt!!,
+                                style = MaterialTheme.typography.headlineSmall,
+                            )
+                            Spacer(Modifier.height(Spacing.xs))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                            ) {
+                                ConfidenceBadge(state.nextEventConfidence)
+                                Pill(
+                                    stringResource(R.string.prepare),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    filled = true,
+                                    modifier = Modifier.clickable {
+                                        state.nextEventId?.let(onOpenChecklist)
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -184,26 +195,21 @@ fun DashboardScreen(
         }
         item {
             Panel(padding = PaddingValues(Spacing.lg)) {
-                Row {
-                    WeekStat(
-                        stringResource(R.string.week_raid_bosses),
-                        state.raidBossesThisWeek.toString(),
-                        Modifier.weight(1f),
-                    )
-                    WeekStat(
-                        stringResource(R.string.week_mplus),
-                        state.mythicRunsThisWeek.toString(),
-                        Modifier.weight(1f),
-                        hint = state.bestKeyThisWeek
-                            .takeIf { it > 0 }
-                            ?.let { stringResource(R.string.week_best_key, it) },
-                    )
-                    WeekStat(
-                        stringResource(R.string.week_vault_quests),
-                        "${state.vaultQuestsDone}/${state.vaultQuestsTotal}",
-                        Modifier.weight(1f),
-                    )
-                }
+                DataRow(
+                    stringResource(R.string.week_raid_bosses),
+                    state.raidBossesThisWeek.toString(),
+                )
+                DataRow(
+                    stringResource(R.string.week_mplus),
+                    state.mythicRunsThisWeek.toString(),
+                    hint = state.bestKeyThisWeek.takeIf { it > 0 }
+                        ?.let { stringResource(R.string.week_best_key, it) },
+                )
+                DataRow(
+                    stringResource(R.string.week_vault_quests),
+                    "${state.vaultQuestsDone}/${state.vaultQuestsTotal}",
+                    valueColor = Gold,
+                )
                 if (state.vaultQuestsTotal > 0) {
                     Spacer(Modifier.height(Spacing.lg))
                     ProgressTrack(
@@ -213,7 +219,14 @@ fun DashboardScreen(
                 }
                 Spacer(Modifier.height(Spacing.md))
                 Text(
-                    stringResource(R.string.week_note),
+                    // Un 0 porque Blizzard todavía no publica la semana NO es
+                    // lo mismo que un 0 porque no has hecho nada, y confundirlo
+                    // era justo lo que hacía parecer roto el contador.
+                    if (state.weekStale) {
+                        stringResource(R.string.week_stale)
+                    } else {
+                        stringResource(R.string.week_note)
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -298,27 +311,3 @@ private fun SyncFreshness(syncedAt: Instant?) {
 }
 
 /** Un dato de la semana: cifra grande y etiqueta pequeña encima. */
-@Composable
-private fun WeekStat(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    hint: String? = null,
-) {
-    Column(modifier) {
-        Text(
-            label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(Spacing.xs))
-        Text(value, style = MaterialTheme.typography.headlineMedium)
-        if (hint != null) {
-            Text(
-                hint,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}

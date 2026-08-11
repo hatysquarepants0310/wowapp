@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -146,8 +147,13 @@ fun LiveMapScreen(
                 }
             }
             item {
+                // Pedir el arte al entrar en la zona; llega solo cuando esté.
+                androidx.compose.runtime.LaunchedEffect(zone.uiMapId) {
+                    viewModel.loadMapArt(zone.uiMapId)
+                }
                 ZoneMap(
                     zone = zone,
+                    art = state.maps[zone.uiMapId],
                     focused = focusedPin,
                     onPinTap = { focusedPin = it },
                 )
@@ -234,7 +240,12 @@ private fun ZoneChips(zones: List<LiveZone>, selected: Int, onSelect: (Int) -> U
  * por separado.
  */
 @Composable
-private fun ZoneMap(zone: LiveZone, focused: MapPin?, onPinTap: (MapPin) -> Unit) {
+private fun ZoneMap(
+    zone: LiveZone,
+    art: android.graphics.Bitmap?,
+    focused: MapPin?,
+    onPinTap: (MapPin) -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val grid = colors.outline
     val labelColor = colors.onSurfaceVariant
@@ -245,14 +256,27 @@ private fun ZoneMap(zone: LiveZone, focused: MapPin?, onPinTap: (MapPin) -> Unit
     // Dos misiones del mismo objetivo comparten coordenada casi exacta y se
     // dibujaban una encima de otra: se reparten en un pequeño abanico.
     val placed = remember(zone.uiMapId, zone.pins) { spread(zone.pins) }
+    val hasArt = art != null
+
+    // El mapa del juego manda en la proporción; sin arte, un 3:2 que es la
+    // forma habitual de un mapa de zona.
+    val ratio = art?.let { it.width.toFloat() / it.height } ?: 1.5f
 
     Box(
         Modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
+            .aspectRatio(ratio)
             .clip(RoundedCornerShape(Radius.md))
             .background(colors.surface),
     ) {
+        if (art != null) {
+            androidx.compose.foundation.Image(
+                bitmap = art.asImageBitmap(),
+                contentDescription = null,
+                contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         Canvas(
             Modifier
                 .fillMaxSize()
@@ -271,21 +295,18 @@ private fun ZoneMap(zone: LiveZone, focused: MapPin?, onPinTap: (MapPin) -> Unit
                     }
                 },
         ) {
-            // Rejilla cada 20 unidades, rotulada: da escala real sin fingir arte.
-            for (i in 1..4) {
-                val x = size.width * i / 5f
-                val y = size.height * i / 5f
-                drawLine(grid, Offset(x, 0f), Offset(x, size.height), 1f)
-                drawLine(grid, Offset(0f, y), Offset(size.width, y), 1f)
-                val label = (i * 20).toString()
-                drawText(
-                    textMeasurer, label, Offset(x + 4f, 4f),
-                    style = labelStyle,
-                )
-                drawText(
-                    textMeasurer, label, Offset(4f, y + 2f),
-                    style = labelStyle,
-                )
+            // La rejilla rotulada solo tiene sentido cuando NO hay mapa: sobre
+            // el arte real es ruido encima del dibujo.
+            if (!hasArt) {
+                for (i in 1..4) {
+                    val x = size.width * i / 5f
+                    val y = size.height * i / 5f
+                    drawLine(grid, Offset(x, 0f), Offset(x, size.height), 1f)
+                    drawLine(grid, Offset(0f, y), Offset(size.width, y), 1f)
+                    val label = (i * 20).toString()
+                    drawText(textMeasurer, label, Offset(x + 4f, 4f), style = labelStyle)
+                    drawText(textMeasurer, label, Offset(4f, y + 2f), style = labelStyle)
+                }
             }
 
             placed.forEachIndexed { index, (pin, point) ->
@@ -293,7 +314,13 @@ private fun ZoneMap(zone: LiveZone, focused: MapPin?, onPinTap: (MapPin) -> Unit
                 val color = pinColor(pin.kind)
                 val isFocused = pin.questId == focused?.questId
                 val radius = if (isFocused) 13f else 11f
-                drawCircle(color.copy(alpha = 0.25f), radius * 2.1f, center)
+                // Sobre el pergamino del mapa, un punto plano se pierde: un halo
+                // oscuro debajo lo despega del fondo sin taparlo.
+                if (hasArt) {
+                    drawCircle(Color.Black.copy(alpha = 0.55f), radius * 1.9f, center)
+                } else {
+                    drawCircle(color.copy(alpha = 0.25f), radius * 2.1f, center)
+                }
                 drawCircle(color, radius, center)
                 // Número dentro del punto: enlaza el mapa con la lista de abajo.
                 val number = textMeasurer.measure(

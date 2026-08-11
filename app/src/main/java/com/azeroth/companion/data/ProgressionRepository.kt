@@ -24,6 +24,8 @@ data class WeekSummary(
     val bestKey: Int = 0,
     val delves: Int = 0,
     val since: Instant? = null,
+    /** El perfil no refleja aún la semana: las cifras no son concluyentes. */
+    val stale: Boolean = false,
 )
 
 @Singleton
@@ -164,6 +166,7 @@ class ProgressionRepository @Inject constructor(
         val delves = decode(ListSerializer(Int.serializer()), current.completedQuestIdsJson)
             .count { it in delveQuests }
         return WeekSummary(
+            stale = current.profileStale,
             raidBosses = kills.size,
             mythicRuns = runs.size,
             bestKey = runs.maxOfOrNull { it.level } ?: 0,

@@ -114,6 +114,13 @@ data class SnapshotEntity(
     val delvesCompletedTotal: Int = 0,
     /** JSON: estadísticas acumuladas que el catálogo pide seguir (id -> valor). */
     val statisticsJson: String = "{}",
+    /**
+     * El perfil de Blizzard todavía no refleja la semana en curso: o anuncia un
+     * periodo de mítica+ anterior al vigente, o el personaje no se ha conectado
+     * desde el último reset. Con esto puesto, un 0 no significa "no has hecho
+     * nada" sino "Blizzard aún no lo sabe", y la UI tiene que decirlo.
+     */
+    val profileStale: Boolean = false,
 )
 
 /**
@@ -304,7 +311,7 @@ interface SnapshotDao {
         RepeatableQuestEntity::class,
         AuctionPriceEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
