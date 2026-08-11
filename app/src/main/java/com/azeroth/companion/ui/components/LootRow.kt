@@ -60,14 +60,19 @@ fun LootRow(
     showSource: Boolean = true,
     onClick: ((LootEntry) -> Unit)? = null,
 ) {
+    // El botín se presenta con el elemento firma de la app: el tooltip del
+    // juego. Fondo casi negro, borde de trim y el nombre en el color de la
+    // calidad, que es como el jugador lo lee sin tener que leerlo.
+    val border = qualityColor(entry.quality)
+    Tooltip(
+        title = entry.name,
+        titleColor = border,
+        onClick = onClick?.let { { it(entry) } },
+    ) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .let { m -> if (onClick != null) m.clickable { onClick(entry) } else m }
-            .padding(vertical = 6.dp),
+        Modifier.fillMaxWidth().padding(top = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        val border = qualityColor(entry.quality)
         Box(
             Modifier
                 .size(44.dp)
@@ -88,24 +93,8 @@ fun LootRow(
             }
         }
         Column(Modifier.weight(1f)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    entry.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = border,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                if (entry.owned) {
-                    Text(
-                        "✓ ya la tienes",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
+            if (entry.owned) {
+                TooltipEffect("✓ ya la tienes")
             }
             val bits = buildList {
                 slotLabel(entry.slot)?.let { add(it) }
@@ -157,6 +146,7 @@ fun LootRow(
                 )
             }
         }
+    }
     }
 }
 

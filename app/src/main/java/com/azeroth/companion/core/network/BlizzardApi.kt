@@ -128,6 +128,12 @@ interface BlizzardApi {
         @Query("namespace") namespace: String,
     ): MythicSeasonDto
 
+    /** Periodo semanal de mítica+ en curso, según Blizzard (no según nuestro reloj). */
+    @GET("/data/wow/mythic-keystone/period/index")
+    suspend fun mythicPeriodIndex(
+        @Query("namespace") namespace: String,
+    ): MythicPeriodIndexDto
+
     @GET("/data/wow/mythic-keystone/season/index")
     suspend fun mythicSeasonIndex(
         @Query("namespace") namespace: String,
@@ -265,8 +271,20 @@ data class StandingDto(val raw: Int = 0, val value: Int = 0, val max: Int = 0)
 @Serializable
 data class MythicKeystoneProfileDto(val current_period: CurrentPeriodDto? = null)
 
+/**
+ * El periodo que el PERFIL cree que es el actual. No tiene por qué serlo:
+ * Blizzard solo refresca el perfil cuando el personaje se conecta, así que
+ * justo después de un reset este `period.id` sigue siendo el de la semana
+ * pasada. Comparar contra él es lo que evita descartar las llaves buenas.
+ */
 @Serializable
-data class CurrentPeriodDto(val best_runs: List<MythicRunDto> = emptyList())
+data class CurrentPeriodDto(
+    val period: PeriodRefDto? = null,
+    val best_runs: List<MythicRunDto> = emptyList(),
+)
+
+@Serializable
+data class PeriodRefDto(val id: Int = 0)
 
 @Serializable
 data class MythicRunDto(
@@ -501,3 +519,8 @@ data class ActiveQuestsDto(val in_progress: List<QuestRefDto> = emptyList())
 
 @Serializable
 data class QuestRefDto(val id: Int = 0, val name: String? = null)
+
+
+/** Índice de periodos de mítica+: solo interesa cuál es el vigente ahora. */
+@Serializable
+data class MythicPeriodIndexDto(val current_period: PeriodRefDto? = null)

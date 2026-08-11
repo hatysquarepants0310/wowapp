@@ -219,4 +219,5 @@
     <string name="score_raid_detail">Normal %1$d · Heroic %2$d · Mythic %3$d</string>
     <string name="score_unavailable">No Raider.IO data</string>
     <string name="more_score_desc">Your M+ score, your keys and raid progress</string>
+    <string name="week_stale">Blizzard has not published your week yet: log into the game and sync again to refresh your profile. Until then these numbers are not conclusive.</string>
 </resources>

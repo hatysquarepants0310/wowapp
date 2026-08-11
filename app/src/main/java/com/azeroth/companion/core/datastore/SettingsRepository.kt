@@ -30,6 +30,12 @@ data class Settings(
     val viabilityFilterEnabled: Boolean,
     /** "es", "en" o null = seguir el idioma del sistema (autodetección). */
     val language: String?,
+    /**
+     * Descargar el arte de los mapas del juego para pintarlos de verdad.
+     * Son unos 500 kB por zona la primera vez y luego queda en caché; se puede
+     * apagar para no gastar datos, y entonces el mapa se dibuja sin fondo.
+     */
+    val downloadMapArt: Boolean = true,
 )
 
 @Singleton
@@ -48,6 +54,7 @@ class SettingsRepository @Inject constructor(
         val ACTIVE_CHARACTER = longPreferencesKey("active_character_id")
         val VIABILITY_FILTER = booleanPreferencesKey("viability_filter")
         val LANGUAGE = stringPreferencesKey("language")
+        val MAP_ART = booleanPreferencesKey("download_map_art")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -63,11 +70,16 @@ class SettingsRepository @Inject constructor(
             activeCharacterId = p[Keys.ACTIVE_CHARACTER],
             viabilityFilterEnabled = p[Keys.VIABILITY_FILTER] ?: false,
             language = p[Keys.LANGUAGE],
+            downloadMapArt = p[Keys.MAP_ART] ?: true,
         )
     }
 
     /** Idioma elegido, o null si se sigue el del sistema. Lectura síncrona para el arranque. */
     suspend fun language(): String? = context.dataStore.data.first()[Keys.LANGUAGE]
+
+    suspend fun setDownloadMapArt(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.MAP_ART] = enabled }
+    }
 
     suspend fun setLanguage(tag: String?) = context.dataStore.edit {
         if (tag == null) it.remove(Keys.LANGUAGE) else it[Keys.LANGUAGE] = tag

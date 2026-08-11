@@ -13,55 +13,58 @@ import androidx.compose.ui.unit.sp
 // ---------------------------------------------------------------------------
 // Paleta
 //
-// Noche amaderada: casi negro con un punto cálido, cuatro escalones de
-// elevación y un único acento morado (el color de Midnight). El dorado se
-// reserva para lo que de verdad es especial —recompensas, épico— y el rojo
-// solo para errores. Un acento que se usa para todo deja de ser un acento.
+// La referencia no es "fantasía": es la interfaz del propio juego, que es
+// oscura, metálica y con trim dorado. Ver docs/direccion-de-arte.md.
+//
+// El diseño anterior era el default número uno de los que hay que evitar:
+// negro cálido + acento morado + tarjetas redondeadas con sombra. Aquí el
+// fondo es negro AZULADO (el del tooltip del juego), el acento es azul runa y
+// la profundidad la da un borde, no una sombra. El morado se retira además
+// porque competía con el #A335EE de calidad épica, que es intocable.
 // ---------------------------------------------------------------------------
-internal val Ink = Color(0xFF0D0A07)        // fondo
-internal val Surface1 = Color(0xFF15110C)   // panel
-internal val Surface2 = Color(0xFF1D1811)   // panel elevado
-internal val Surface3 = Color(0xFF272016)   // panel sobre panel
-internal val Hairline = Color(0xFF2E2619)   // separadores: se intuyen, no se ven
+internal val Tinta = Color(0xFF0A0B0F)          // fondo
+internal val Piedra = Color(0xFF14161D)         // panel
+internal val PiedraAlta = Color(0xFF1D212B)     // panel sobre panel, filas alternas
+internal val Bisel = Color(0xFF3A3428)          // borde metálico apagado
+internal val OroTabardo = Color(0xFFC8A44D)     // trim vivo y títulos de sección
+internal val Pergamino = Color(0xFFE8DCC0)      // texto principal, hueso cálido
+internal val PergaminoMedio = Color(0xFF9A917E) // texto secundario
+internal val PergaminoTenue = Color(0xFF6B6555) // etiquetas y metadatos
+internal val Runa = Color(0xFF6E9FD4)           // único acento frío: lo interactivo
 
-internal val Arcane = Color(0xFFA98BFF)     // acento principal (Midnight)
-internal val ArcaneDim = Color(0xFF6B54B8)
-internal val ArcaneWash = Color(0xFF241C3D)  // fondo teñido del acento
-internal val Gold = Color(0xFFE0B457)        // recompensas y logros
-internal val GoldWash = Color(0xFF322512)
-
-internal val TextHigh = Color(0xFFF2EADD)    // títulos y cifras
-internal val TextMid = Color(0xFFB7A991)     // cuerpo secundario
-internal val TextLow = Color(0xFF7C7161)     // etiquetas y metadatos
+// Alias que el resto del código ya usa por nombre.
+internal val Gold = OroTabardo
+internal val Arcane = Runa
 
 internal val Positive = Color(0xFF5FCB7C)
 internal val Warning = Color(0xFFE2A33C)
 internal val Danger = Color(0xFFE5645B)
+internal val TextLow = PergaminoTenue
 
 private val Scheme = darkColorScheme(
-    primary = Arcane,
-    onPrimary = Color(0xFF150E29),
-    primaryContainer = ArcaneWash,
-    onPrimaryContainer = Color(0xFFDCCFFF),
-    inversePrimary = ArcaneDim,
-    secondary = Gold,
-    onSecondary = Color(0xFF1F1500),
-    secondaryContainer = GoldWash,
-    onSecondaryContainer = Color(0xFFF7DFA8),
+    primary = Runa,
+    onPrimary = Color(0xFF07131F),
+    primaryContainer = Color(0xFF16283A),
+    onPrimaryContainer = Color(0xFFC9DEF3),
+    inversePrimary = Color(0xFF44708F),
+    secondary = OroTabardo,
+    onSecondary = Color(0xFF1B1405),
+    secondaryContainer = Color(0xFF2C2412),
+    onSecondaryContainer = Color(0xFFF0DCA8),
     tertiary = Color(0xFF8FD3E8),
-    background = Ink,
-    onBackground = TextHigh,
-    surface = Surface1,
-    onSurface = TextHigh,
-    surfaceVariant = Surface2,
-    onSurfaceVariant = TextMid,
-    surfaceContainerLowest = Ink,
-    surfaceContainerLow = Surface1,
-    surfaceContainer = Surface2,
-    surfaceContainerHigh = Surface3,
-    surfaceContainerHighest = Surface3,
-    outline = Hairline,
-    outlineVariant = Color(0xFF241E15),
+    background = Tinta,
+    onBackground = Pergamino,
+    surface = Piedra,
+    onSurface = Pergamino,
+    surfaceVariant = PiedraAlta,
+    onSurfaceVariant = PergaminoMedio,
+    surfaceContainerLowest = Tinta,
+    surfaceContainerLow = Piedra,
+    surfaceContainer = Piedra,
+    surfaceContainerHigh = PiedraAlta,
+    surfaceContainerHighest = Color(0xFF262B38),
+    outline = Bisel,
+    outlineVariant = Color(0xFF23212A),
     scrim = Color(0xCC000000),
     error = Danger,
     onError = Color(0xFF2A0906),
@@ -87,21 +90,25 @@ private fun style(
     height: Int,
     weight: FontWeight,
     tracking: Double = 0.0,
+    // Cifras de ancho fijo. Sin esto, una columna de ilvl, de oro o de nivel de
+    // llave se descuadra al cambiar un dígito y la tabla entera baila.
+    tabular: Boolean = false,
 ) = TextStyle(
     fontSize = size.sp,
     lineHeight = height.sp,
     fontWeight = weight,
     letterSpacing = tracking.sp,
     lineHeightStyle = lineHeightStyle,
+    fontFeatureSettings = if (tabular) "tnum" else null,
 )
 
 internal val AppTypography = Typography(
-    displayLarge = style(44, 48, FontWeight.Bold, -1.0),
-    displayMedium = style(36, 40, FontWeight.Bold, -0.8),
-    displaySmall = style(30, 36, FontWeight.Bold, -0.6),
+    displayLarge = style(44, 48, FontWeight.Bold, -1.0, tabular = true),
+    displayMedium = style(36, 40, FontWeight.Bold, -0.8, tabular = true),
+    displaySmall = style(30, 36, FontWeight.Bold, -0.6, tabular = true),
     headlineLarge = style(26, 32, FontWeight.SemiBold, -0.4),
-    headlineMedium = style(22, 28, FontWeight.SemiBold, -0.3),
-    headlineSmall = style(19, 25, FontWeight.SemiBold, -0.2),
+    headlineMedium = style(22, 28, FontWeight.SemiBold, -0.3, tabular = true),
+    headlineSmall = style(19, 25, FontWeight.SemiBold, -0.2, tabular = true),
     titleLarge = style(17, 23, FontWeight.SemiBold, -0.1),
     titleMedium = style(15, 21, FontWeight.SemiBold),
     titleSmall = style(14, 20, FontWeight.Medium),
@@ -109,8 +116,8 @@ internal val AppTypography = Typography(
     bodyMedium = style(14, 21, FontWeight.Normal, 0.1),
     bodySmall = style(13, 19, FontWeight.Normal, 0.1),
     labelLarge = style(14, 18, FontWeight.SemiBold, 0.2),
-    labelMedium = style(12, 16, FontWeight.SemiBold, 0.6),
-    labelSmall = style(11, 14, FontWeight.Medium, 0.8),
+    labelMedium = style(12, 16, FontWeight.SemiBold, 0.6, tabular = true),
+    labelSmall = style(11, 14, FontWeight.Medium, 0.8, tabular = true),
 )
 
 @Composable

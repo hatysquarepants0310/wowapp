@@ -1,6 +1,7 @@
 package com.azeroth.companion.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,14 +60,22 @@ object Spacing {
     val xl: Dp = 24.dp
     val xxl: Dp = 32.dp
 
-    /** Margen lateral único de toda la app: la alineación es lo que da calma. */
-    val gutter: Dp = 20.dp
+    /**
+     * Margen lateral único de toda la app.
+     *
+     * Baja de 20dp a 14dp a propósito: los jugadores de WoW vienen de ElvUI y
+     * Details! y leen interfaces densas. Tres datos rodeados de aire no se leen
+     * como elegantes, se leen como una app que no sabe lo que estás haciendo.
+     */
+    val gutter: Dp = 14.dp
 }
 
 object Radius {
-    val sm: Dp = 8.dp
-    val md: Dp = 14.dp
-    val lg: Dp = 20.dp
+    // Radios bajos y borde en vez de sombra: es el trim metálico del juego, no
+    // la tarjeta redondeada con sombra difusa de una plantilla de dashboard.
+    val sm: Dp = 4.dp
+    val md: Dp = 6.dp
+    val lg: Dp = 8.dp
     val pill: Dp = 999.dp
 }
 
@@ -77,7 +86,7 @@ fun Screen(
     contentPadding: PaddingValues = PaddingValues(
         start = Spacing.gutter,
         end = Spacing.gutter,
-        top = Spacing.md,
+        top = Spacing.sm,
         bottom = Spacing.xxl,
     ),
     content: LazyListScope.() -> Unit,
@@ -87,7 +96,7 @@ fun Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         content = content,
     )
 }
@@ -106,16 +115,27 @@ fun SectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = Spacing.lg, bottom = Spacing.sm),
+            .padding(top = Spacing.md, bottom = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            title.uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Text(
+                title.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = com.azeroth.companion.ui.theme.OroTabardo,
+            )
+            // Filete: es como el juego separa secciones, y evita que la etiqueta
+            // flote sola en medio de la nada.
+            Spacer(Modifier.width(Spacing.sm))
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.outline),
+            )
+        }
         if (action != null && onAction != null) {
+            Spacer(Modifier.width(Spacing.sm))
             Text(
                 action,
                 style = MaterialTheme.typography.labelMedium,
@@ -138,7 +158,7 @@ fun Panel(
     modifier: Modifier = Modifier,
     tone: PanelTone = PanelTone.Default,
     onClick: (() -> Unit)? = null,
-    padding: PaddingValues = PaddingValues(Spacing.lg),
+    padding: PaddingValues = PaddingValues(Spacing.md),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -153,6 +173,8 @@ fun Panel(
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radius.md))
             .background(background)
+            // Profundidad por borde, nunca por sombra difusa.
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(Radius.md))
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(padding),
         content = content,
@@ -203,6 +225,47 @@ fun Metric(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * Fila de datos tabular: etiqueta a la izquierda, cifra alineada a la derecha.
+ *
+ * Es lo que sustituye a las tarjetas de métrica gigantes. Tres cifras enormes
+ * ocupaban media pantalla; así caben seis y se comparan de un vistazo, que es
+ * como lee esta gente.
+ */
+@Composable
+fun DataRow(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    valueColor: Color? = null,
+    hint: String? = null,
+) {
+    Row(
+        modifier.fillMaxWidth().padding(vertical = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        if (hint != null) {
+            Text(
+                hint,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(Spacing.sm))
+        }
+        Text(
+            value,
+            style = MaterialTheme.typography.titleMedium,
+            color = valueColor ?: MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 

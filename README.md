@@ -48,7 +48,7 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 | Pantalla | Qué hace |
 |---|---|
 | **Inicio** | Cuenta regresiva al próximo evento, reset semanal, tu actividad de la semana y exclusivos de temporada con progreso |
-| **Ahora en Azeroth** | Eventos activos con cuenta atrás y tus misiones aceptadas situadas sobre el mapa de su zona |
+| **Ahora en Azeroth** | Eventos activos con cuenta atrás y tus misiones situadas sobre el **mapa real del juego** |
 | **Noticias** | Las noticias oficiales de WoW leídas dentro de la app, en nativo (texto e imágenes), no un enlace al navegador |
 | **Casa de subastas** | Precios reales de mercancías de tu región y de las subastas de tu reino, con buscador por objeto |
 | **Eventos** | Timeline de ocurrencias con fases, mecánicas y botón de calibración |
@@ -64,6 +64,14 @@ cayeron. Esta app está diseñada para que eso **no pueda pasar**:
 | **Roster** | Alts con Bóveda, intentos de montura restantes y cambio de personaje activo |
 | **Widget** | Próximo evento en tu pantalla de inicio, sin abrir la app |
 | **Ajustes** | Cuenta Battle.net, región, legacy, exportar/importar datos, diagnóstico |
+
+## Diseño
+
+La dirección de arte, con su brainstorm y su autocrítica, está en
+[`docs/direccion-de-arte.md`](docs/direccion-de-arte.md). Resumen: la referencia es la interfaz del
+propio juego —oscura, metálica, densa— y el elemento firma es el **tooltip de WoW**, replicado y
+usado como unidad de contenido en toda la app. Los colores de calidad y de clase son los canónicos
+y no se reinterpretan.
 
 ## Arquitectura
 
@@ -415,8 +423,16 @@ Verificado endpoint por endpoint, para que nadie pierda el tiempo buscándolo:
 - **Lo que SÍ se puede saber:** qué monturas tienes (`/collections/mounts`), así que los exclusivos
   de temporada llevan check y porcentaje de verdad, no una estimación.
 
-El arte de los mapas del juego no se distribuye con la app: el mapa se dibuja en vectorial y solo
-las **coordenadas** (que son información, no arte) salen de las tablas del cliente.
+### Los mapas
+
+La app pinta el mapa REAL de cada zona, pero **el APK no lleva arte de Blizzard dentro**. Lo que se
+hornea es solo el índice de qué archivos componen cada zona (`map_tiles.json`: números, no
+imágenes). Las texturas las descarga el dispositivo del usuario la primera vez que abre una zona
+—doce casillas de 256×256— y se quedan en su caché; a partir de ahí el mapa abre sin red. Se puede
+desactivar en Ajustes, y entonces el mapa se dibuja con una rejilla de coordenadas.
+
+Los BLP del cliente se decodifican en el propio dispositivo (`BlpDecoder`, con DXT1/DXT3/DXT5),
+porque Android no entiende ese formato.
 
 ## Contribuir
 

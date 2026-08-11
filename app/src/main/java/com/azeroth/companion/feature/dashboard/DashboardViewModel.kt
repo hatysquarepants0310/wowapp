@@ -42,6 +42,8 @@ data class DashboardState(
     /** Misiones de bóveda hechas / disponibles esta semana. */
     val vaultQuestsDone: Int = 0,
     val vaultQuestsTotal: Int = 0,
+    /** Blizzard aún no publica la semana en curso para este personaje. */
+    val weekStale: Boolean = false,
     /** Monturas exclusivas de la temporada, para la tarjeta de Inicio. */
     val seasonMounts: List<com.azeroth.companion.data.LootEntry> = emptyList(),
 )
@@ -99,6 +101,7 @@ class DashboardViewModel @Inject constructor(
                         .distinctBy { it.instanceId to it.name }.size,
                     mythicRunsThisWeek = activity?.mythicRuns?.size ?: 0,
                     bestKeyThisWeek = activity?.mythicRuns?.maxOfOrNull { it.level } ?: 0,
+                    weekStale = activity?.profileStale ?: false,
                     vaultQuestsDone = vaultQuests?.vaultDone ?: 0,
                     vaultQuestsTotal = vaultQuests?.vaultTotal ?: 0,
                     seasonMounts = mounts,

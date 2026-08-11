@@ -132,8 +132,35 @@ class SyncRepository @Inject constructor(
                 ),
             )
 
-            val runsThisWeek = mythic?.current_period?.best_runs
-                ?.count { it.completed_timestamp >= lastReset.toEpochMilli() } ?: 0
+            // El periodo vigente lo dice Blizzard, no nuestro reloj.
+            //
+            // BUG que esto arregla: la app filtraba `current_period.best_runs`
+            // por su propio `lastReset` y devolvía 0 con la bóveda llena.
+            // Blizzard solo refresca el perfil cuando el personaje se conecta,
+            // así que tras un reset el perfil sigue anunciando el periodo
+            // anterior; comprobado con un personaje real: 8 llaves dentro de
+            // `current_period`, todas descartadas por ser anteriores al reset
+            // recién ocurrido.
+            //
+            // Si el periodo del perfil ES el vigente, sus llaves son las de esta
+            // semana y se cuentan todas: Blizzard ya las acotó. Si es anterior,
+            // el perfil está desfasado y hay que decirlo, no enseñar un 0.
+            val livePeriod = runCatching {
+                api.mythicPeriodIndex(region.namespaceDynamic).current_period?.id
+            }.getOrNull()
+            val profilePeriod = mythic?.current_period?.period?.id
+            val periodIsCurrent = livePeriod == null || profilePeriod == null ||
+                profilePeriod == livePeriod
+            val freshRuns = if (periodIsCurrent) {
+                mythic?.current_period?.best_runs.orEmpty()
+            } else {
+                emptyList()
+            }
+            val runsThisWeek = freshRuns.size
+            // El perfil no refleja la semana en curso si el personaje no se ha
+            // conectado desde el reset: entonces no se puede afirmar nada.
+            val profileStale = !periodIsCurrent ||
+                (profile.last_login_timestamp?.let { it < lastReset.toEpochMilli() } ?: false)
             val raidKills = raids?.expansions?.flatMap { it.instances }
                 ?.associate { it.instance.id to it.modes.sumOf { m -> m.progress?.completed_count ?: 0 } }
                 ?: emptyMap()
@@ -153,9 +180,8 @@ class SyncRepository @Inject constructor(
                             .map { RaidKillRecord(it.encounter.name.orEmpty(), difficulty, inst.instance.id) }
                     }
                 }.orEmpty()
-            val mythicRunsRecords = mythic?.current_period?.best_runs
-                ?.filter { it.completed_timestamp >= lastReset.toEpochMilli() }
-                ?.map {
+            val mythicRunsRecords = freshRuns
+                .map {
                     MythicRunRecord(
                         name = it.dungeon?.name.orEmpty(),
                         level = it.keystone_level,
@@ -220,6 +246,7 @@ class SyncRepository @Inject constructor(
                     statisticsJson = json.encodeToString(
                         MapSerializer(Int.serializer(), Int.serializer()), trackedStats,
                     ),
+                    profileStale = profileStale,
                 ),
             )
             snapshotDao.pruneOlderThan(now.minus(Duration.ofDays(21)))

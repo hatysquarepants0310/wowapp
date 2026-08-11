@@ -52,6 +52,11 @@ data class WeeklyActivity(
     val repeatableDone: List<WeeklyQuestDone> = emptyList(),
     /** Cuántas repetibles conoce ya la app (0 = todavía aprendiendo). */
     val learnedRepeatables: Int = 0,
+    /**
+     * Blizzard aún no refleja la semana en curso en el perfil. Un 0 aquí no
+     * significa "no has hecho nada", sino "no se puede saber todavía".
+     */
+    val profileStale: Boolean = false,
 )
 
 @Singleton
@@ -114,6 +119,7 @@ class WeeklyActivityRepository @Inject constructor(
             hasCharacter = true,
             repeatableDone = resolveNames(repeatableDone),
             learnedRepeatables = repeatable.size,
+            profileStale = current.profileStale,
         )
     }
 
