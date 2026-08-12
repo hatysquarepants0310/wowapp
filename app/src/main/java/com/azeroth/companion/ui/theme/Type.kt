@@ -78,6 +78,13 @@ private fun style(
  */
 val NumberStyle: TextStyle = style(Mono, 14, 20, FontWeight.SemiBold, tabular = true)
 
+/**
+ * La cifra protagonista de un bloque: el ilvl, la puntuación, el oro. También
+ * monoespaciada, porque es justo la que el usuario compara entre personajes o
+ * entre semanas; si baila al cambiar un dígito, la comparación se pierde.
+ */
+val BigNumberStyle: TextStyle = style(Mono, 26, 32, FontWeight.SemiBold, -0.3, tabular = true)
+
 internal val AppTypography = Typography(
     // Display: la lapidaria. Nombres propios y cifras protagonistas.
     displayLarge = style(Display, 38, 44, FontWeight.Bold, -0.5, tabular = true),

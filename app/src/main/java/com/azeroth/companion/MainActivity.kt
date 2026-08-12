@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -245,10 +246,25 @@ private fun AppScaffold(startEventId: String?) {
         androidx.compose.runtime.LaunchedEffect(startEventId) {
             if (startEventId != null) navController.navigate("event/$startEventId")
         }
+        // Tope de ancho para toda la app, en un solo sitio.
+        //
+        // Salió de mirar la captura a 1440: nada desbordaba, pero una fila de
+        // datos dejaba la etiqueta pegada al borde izquierdo y su cifra a casi
+        // dos mil píxeles a la derecha. El ojo no une las dos cosas, así que la
+        // tabla dejaba de ser legible justo donde había más sitio. Una columna
+        // única estirada a lo ancho es además la firma de "diseño de móvil que
+        // nadie volvió a mirar en grande".
+        //
+        // Los marcos del juego tampoco se estiran con la resolución: son de
+        // tamaño fijo y van centrados. Aquí igual.
+        Box(
+            Modifier.fillMaxSize().padding(padding),
+            contentAlignment = androidx.compose.ui.Alignment.TopCenter,
+        ) {
         NavHost(
             navController = navController,
             startDestination = "dashboard",
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.widthIn(max = com.azeroth.companion.ui.components.Spacing.maxContent),
         ) {
             composable("dashboard") {
                 DashboardScreen(
@@ -356,6 +372,7 @@ private fun AppScaffold(startEventId: String?) {
             composable("more") {
                 MoreScreen(onNavigate = { route -> navController.navigate(route) })
             }
+        }
         }
     }
 }
