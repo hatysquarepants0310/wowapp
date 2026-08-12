@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.events
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -25,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azeroth.companion.ui.components.WowButton
 import com.azeroth.companion.R
 import com.azeroth.companion.core.model.EventCadence
 import com.azeroth.companion.core.model.WorldEventDefinition
@@ -63,7 +65,7 @@ fun EventsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(state.rows, key = { it.definition.id }) { row ->
-            Card(Modifier.fillMaxWidth().clickable { onOpenDetail(row.definition.id) }) {
+            Panel(Modifier.fillMaxWidth().clickable { onOpenDetail(row.definition.id) }, padding = PaddingValues(0.dp)) {
                 Column(Modifier.padding(16.dp)) {
                     Text(localized(row.definition.name), style = MaterialTheme.typography.titleMedium)
                     Text("${row.definition.zone} · ${cadenceLabel(row.definition.cadence)}",
@@ -146,9 +148,10 @@ fun EventDetailScreen(
         }
 
         Spacer(Modifier.height(4.dp))
-        OutlinedButton(onClick = { viewModel.markEventJustStarted(def.id) }) {
-            Text(stringResource(R.string.event_just_started))
-        }
+        WowButton(
+            stringResource(R.string.event_just_started),
+            onClick = { viewModel.markEventJustStarted(def.id) },
+        )
         Text("Úsalo para calibrar el horario si tu reino difiere del previsto.",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)

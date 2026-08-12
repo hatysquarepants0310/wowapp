@@ -58,7 +58,7 @@ fun CharacterHero(
         modifier
             .fillMaxWidth()
             .height(168.dp)
-            .clip(RoundedCornerShape(Radius.lg))
+            .clip(RoundedCornerShape(Radius.none))
             .background(
                 Brush.linearGradient(
                     listOf(

@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.quests
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,11 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,6 +24,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.azeroth.companion.ui.components.WowTextField
+import com.azeroth.companion.ui.components.WowTextButton
+import com.azeroth.companion.ui.components.WowProgress
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.data.QuestEntry
 import com.azeroth.companion.data.QuestTrackerRepository
 import com.azeroth.companion.data.QuestZone
@@ -75,9 +77,9 @@ fun QuestTrackerScreen(viewModel: QuestTrackerViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     when {
-        state.zoneLoading -> Center { CircularProgressIndicator() }
+        state.zoneLoading -> Center { WowLoading() }
         state.selectedZone != null -> ZoneDetail(state.selectedZone!!, viewModel::back)
-        state.loading -> Center { CircularProgressIndicator() }
+        state.loading -> Center { WowLoading() }
         else -> ZoneList(state, viewModel)
     }
 }
@@ -88,12 +90,11 @@ private fun ZoneList(state: QuestTrackerState, viewModel: QuestTrackerViewModel)
         state.query.isBlank() || it.name.contains(state.query, ignoreCase = true)
     }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        OutlinedTextField(
+        WowTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text("Buscar zona") },
+            placeholder = "Buscar zona",
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
         )
         Text("${state.zones.size} zonas · toca una para ver tus misiones",
             style = MaterialTheme.typography.bodySmall,
@@ -106,7 +107,7 @@ private fun ZoneList(state: QuestTrackerState, viewModel: QuestTrackerViewModel)
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             items(filtered, key = { it.id }) { zone ->
-                Card(Modifier.fillMaxWidth().clickable { viewModel.openZone(zone) }) {
+                Panel(Modifier.fillMaxWidth().clickable { viewModel.openZone(zone) }, padding = PaddingValues(0.dp)) {
                     Text(zone.name, Modifier.padding(14.dp),
                         style = MaterialTheme.typography.titleSmall)
                 }
@@ -118,14 +119,14 @@ private fun ZoneList(state: QuestTrackerState, viewModel: QuestTrackerViewModel)
 @Composable
 private fun ZoneDetail(zone: ZoneQuests, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        TextButton(onClick = onBack) { Text("← Zonas") }
+        WowTextButton("← Zonas", onClick = onBack)
         Text(zone.zoneName, style = MaterialTheme.typography.headlineSmall)
         if (zone.total > 0) {
             Text("${zone.completedCount} / ${zone.total} misiones completadas",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary)
-            LinearProgressIndicator(
-                progress = { zone.completedCount.toFloat() / zone.total },
+            WowProgress(
+                zone.completedCount.toFloat() / zone.total,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             )
         }

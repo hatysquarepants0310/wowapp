@@ -76,9 +76,9 @@ fun LootRow(
         Box(
             Modifier
                 .size(44.dp)
-                .clip(RoundedCornerShape(8.dp))
+                
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .border(1.dp, border.copy(alpha = 0.8f), RoundedCornerShape(8.dp)),
+                .border(1.dp, border.copy(alpha = 0.8f)),
             contentAlignment = Alignment.Center,
         ) {
             if (entry.iconUrl != null) {
@@ -86,7 +86,7 @@ fun LootRow(
                     model = entry.iconUrl,
                     contentDescription = entry.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)),
+                    modifier = Modifier.size(44.dp),
                 )
             } else {
                 Text(if (entry.isMount) "🐎" else "🎁")

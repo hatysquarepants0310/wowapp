@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.storylines
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,12 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +35,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.res.stringResource
+import com.azeroth.companion.ui.components.WowTextField
+import com.azeroth.companion.ui.components.WowTextButton
+import com.azeroth.companion.ui.components.WowProgress
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.R
 import com.azeroth.companion.data.CategoryKind
 import com.azeroth.companion.data.CategoryNode
@@ -160,7 +161,7 @@ fun StorylinesScreen(
     when {
         state.story != null -> QuestList(state, viewModel, onOpenQuest)
         state.season != null -> CategoryList(state, viewModel)
-        state.loading -> Center { CircularProgressIndicator() }
+        state.loading -> Center { WowLoading() }
         else -> SeasonList(state, viewModel)
     }
 }
@@ -189,12 +190,11 @@ private fun SeasonList(state: StorylinesState, viewModel: StorylinesViewModel) {
         state.query.isBlank() || it.name.contains(state.query, ignoreCase = true)
     }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        OutlinedTextField(
+        WowTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text(stringResource(R.string.storylines_search_season)) },
+            placeholder = stringResource(R.string.storylines_search_season),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
         )
         if (!state.hasAccount) {
             Text(stringResource(R.string.storylines_need_sync),
@@ -216,9 +216,8 @@ private fun SeasonList(state: StorylinesState, viewModel: StorylinesViewModel) {
 @Composable
 private fun SeasonCard(season: SeasonNode, onClick: () -> Unit) {
     val (accent, deep) = expansionColors(season.expansionId)
-    Card(
+    Box(
         Modifier.fillMaxWidth().clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
     ) {
         Box(
             Modifier
@@ -262,8 +261,8 @@ private fun SeasonCard(season: SeasonNode, onClick: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (season.total > 0) {
-                        LinearProgressIndicator(
-                            progress = { season.completed.toFloat() / season.total },
+                        WowProgress(
+                            season.completed.toFloat() / season.total,
                             color = accent,
                             modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                         )
@@ -280,15 +279,14 @@ private fun SeasonCard(season: SeasonNode, onClick: () -> Unit) {
 
 @Composable
 private fun CategoryList(state: StorylinesState, viewModel: StorylinesViewModel) {
-    if (state.categoriesLoading) { Center { CircularProgressIndicator() }; return }
+    if (state.categoriesLoading) { Center { WowLoading() }; return }
     val accent = expansionColors(state.season?.expansionId ?: 0).first
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        OutlinedTextField(
+        WowTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text(stringResource(R.string.storylines_search)) },
+            placeholder = stringResource(R.string.storylines_search),
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            singleLine = true,
         )
         if (state.categories.isEmpty()) {
             Text(stringResource(R.string.storylines_empty_season),
@@ -352,7 +350,7 @@ private fun CategoryHeader(node: CategoryNode, accent: Color) {
 
 @Composable
 private fun StoryRow(story: StorylineProgress, accent: Color, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable { onClick() }) {
+    Panel(Modifier.fillMaxWidth().clickable { onClick() }, padding = PaddingValues(0.dp)) {
         Row(
             Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -385,8 +383,8 @@ private fun StoryRow(story: StorylineProgress, accent: Color, onClick: () -> Uni
                         else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (story.completed > 0 && !story.done) {
-                    LinearProgressIndicator(
-                        progress = { story.completed.toFloat() / story.total },
+                    WowProgress(
+                        story.completed.toFloat() / story.total,
                         color = accent,
                         modifier = Modifier.fillMaxWidth().padding(top = 5.dp),
                     )
@@ -426,7 +424,7 @@ private fun QuestList(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (state.questsLoading) { Center { CircularProgressIndicator() }; return }
+        if (state.questsLoading) { Center { WowLoading() }; return }
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(5.dp),
             modifier = Modifier.padding(top = 10.dp),
@@ -451,12 +449,12 @@ private fun QuestCard(
     onClick: () -> Unit,
     onOpenDetail: () -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth().clickable { onClick() }) {
+    Panel(Modifier.fillMaxWidth().clickable { onClick() }, padding = PaddingValues(0.dp)) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(
-                    Modifier.size(28.dp).clip(RoundedCornerShape(6.dp))
+                    Modifier.size(28.dp)
                         .background(if (q.completed) accent.copy(alpha = 0.3f)
                         else MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center,
@@ -483,9 +481,10 @@ private fun QuestCard(
                 Column(Modifier.padding(start = 38.dp, top = 6.dp)) {
                     q.zone?.let { Detail("Zona", it) }
                     if (q.minLevel > 0) Detail("Nivel mínimo", q.minLevel.toString())
-                    androidx.compose.material3.TextButton(onClick = onOpenDetail) {
-                        Text(stringResource(R.string.storylines_open_detail))
-                    }
+                    WowTextButton(
+                        stringResource(R.string.storylines_open_detail),
+                        onClick = onOpenDetail,
+                    )
                     if (q.rewardItems.isNotEmpty()) {
                         Text(
                             if (q.rewardItems.size > 1) "Recompensa (eliges una)" else "Recompensa",
@@ -515,7 +514,7 @@ private fun QuestRewardRow(reward: com.azeroth.companion.data.QuestReward) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(
-            Modifier.size(32.dp).clip(RoundedCornerShape(6.dp))
+            Modifier.size(32.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
@@ -523,7 +522,7 @@ private fun QuestRewardRow(reward: com.azeroth.companion.data.QuestReward) {
                 coil.compose.AsyncImage(
                     model = reward.iconUrl,
                     contentDescription = reward.name,
-                    modifier = Modifier.size(32.dp).clip(RoundedCornerShape(6.dp)),
+                    modifier = Modifier.size(32.dp),
                 )
             } else {
                 Text("🎁", style = MaterialTheme.typography.labelMedium)

@@ -14,9 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +27,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azeroth.companion.ui.components.WowTextField
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.R
 import com.azeroth.companion.core.catalog.ItemQuality
 import com.azeroth.companion.core.catalog.formatGold
@@ -89,14 +89,11 @@ fun AuctionsScreen(viewModel: AuctionsViewModel = hiltViewModel()) {
         item { FreshnessPanel(state, onRefresh = viewModel::refresh) }
 
         item {
-            OutlinedTextField(
+            WowTextField(
                 value = state.query,
                 onValueChange = viewModel::search,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.auctions_search_hint)) },
-                singleLine = true,
-                shape = RoundedCornerShape(Radius.md),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                placeholder = stringResource(R.string.auctions_search_hint),
             )
         }
 
@@ -116,7 +113,7 @@ fun AuctionsScreen(viewModel: AuctionsViewModel = hiltViewModel()) {
         if (state.loading && state.rows.isEmpty()) {
             item {
                 Box(Modifier.fillMaxWidth().padding(Spacing.xxl), Alignment.Center) {
-                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                    WowLoading()
                 }
             }
         } else if (state.rows.isEmpty()) {
@@ -188,7 +185,7 @@ private fun FreshnessPanel(state: AuctionsUiState, onRefresh: () -> Unit) {
             }
             Spacer(Modifier.width(Spacing.md))
             if (state.refreshing) {
-                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
+                WowLoading()
             } else {
                 Pill(
                     stringResource(R.string.auctions_refresh),
@@ -214,7 +211,7 @@ fun SegmentedRow(options: List<String>, selected: Int, onSelect: (Int) -> Unit) 
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.md))
+            .clip(RoundedCornerShape(Radius.none))
             .background(MaterialTheme.colorScheme.surface)
             .padding(3.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -224,7 +221,7 @@ fun SegmentedRow(options: List<String>, selected: Int, onSelect: (Int) -> Unit) 
             Box(
                 Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(Radius.sm))
+                    .clip(RoundedCornerShape(Radius.none))
                     .background(
                         if (active) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
                     )

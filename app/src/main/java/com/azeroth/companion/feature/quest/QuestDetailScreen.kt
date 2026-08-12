@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.quest
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.Panel
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -19,8 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +38,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import coil.compose.AsyncImage
+import com.azeroth.companion.ui.components.WowButton
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.R
 import com.azeroth.companion.data.QuestFullDetail
 import com.azeroth.companion.data.StorylinesRepository
@@ -81,7 +83,7 @@ fun QuestDetailScreen(questId: Int, viewModel: QuestDetailViewModel = hiltViewMo
             Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-        ) { CircularProgressIndicator() }
+        ) { WowLoading() }
         return
     }
 
@@ -115,7 +117,7 @@ fun QuestDetailScreen(questId: Int, viewModel: QuestDetailViewModel = hiltViewMo
         }
 
         // Lo que el usuario más va a usar: copiar y pegar en el chat del juego.
-        Card(Modifier.fillMaxWidth()) {
+        Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
             Column(Modifier.padding(12.dp)) {
                 Text(stringResource(R.string.tomtom_title),
                     style = MaterialTheme.typography.titleSmall)
@@ -131,9 +133,11 @@ fun QuestDetailScreen(questId: Int, viewModel: QuestDetailViewModel = hiltViewMo
                         fontFamily = FontFamily.Monospace,
                         modifier = Modifier.padding(vertical = 6.dp),
                     )
-                    Button(onClick = { copy(context, command) }) {
-                        Text(stringResource(R.string.tomtom_copy))
-                    }
+                    WowButton(
+                        stringResource(R.string.tomtom_copy),
+                        onClick = { copy(context, command) },
+                        primary = true,
+                    )
                     Text(stringResource(R.string.tomtom_hint),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -160,7 +164,7 @@ fun QuestDetailScreen(questId: Int, viewModel: QuestDetailViewModel = hiltViewMo
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Box(
-                        Modifier.size(40.dp).clip(RoundedCornerShape(8.dp))
+                        Modifier.size(40.dp)
                             .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -168,7 +172,7 @@ fun QuestDetailScreen(questId: Int, viewModel: QuestDetailViewModel = hiltViewMo
                             AsyncImage(
                                 model = reward.iconUrl,
                                 contentDescription = reward.name,
-                                modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)),
+                                modifier = Modifier.size(40.dp),
                             )
                         } else {
                             Text("🎁")

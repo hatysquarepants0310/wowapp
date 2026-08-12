@@ -1,5 +1,8 @@
 package com.azeroth.companion.feature.content
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.PanelTone
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -14,13 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,6 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azeroth.companion.ui.components.WowChip
+import com.azeroth.companion.ui.components.WowTabs
+import com.azeroth.companion.ui.components.WowTextButton
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.data.InstanceSummary
 
 /**
@@ -63,11 +64,7 @@ fun ContentScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = tab) {
-            tabs.forEachIndexed { i, label ->
-                Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label) })
-            }
-        }
+        WowTabs(tabs, tab, onSelect = { tab = it })
 
         state.error?.let {
             Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
@@ -94,7 +91,7 @@ private fun AffixesTab(state: ContentState, viewModel: ContentViewModel) {
             Spacer(Modifier.height(4.dp))
         }
         items(state.affixes) { affix ->
-            Card(Modifier.fillMaxWidth()) {
+            Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
                 Column(Modifier.padding(12.dp)) {
                     Text(affix.name, style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.secondary)
@@ -155,17 +152,21 @@ private fun ExpansionSelector(state: ContentState, viewModel: ContentViewModel) 
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             current.forEach { exp ->
-                FilterChip(
+                WowChip(
+                    exp.name,
                     selected = state.selectedExpansionId == exp.id,
                     onClick = { viewModel.selectExpansion(exp.id) },
-                    label = { Text(exp.name) },
                 )
             }
         }
-        TextButton(onClick = { viewModel.togglePastExpansions() }) {
-            Text(if (state.showPastExpansions) "Ocultar expansiones anteriores"
-            else "Ver expansiones anteriores (${past.size})")
-        }
+        WowTextButton(
+            if (state.showPastExpansions) {
+                "Ocultar expansiones anteriores"
+            } else {
+                "Ver expansiones anteriores (${past.size})"
+            },
+            onClick = { viewModel.togglePastExpansions() },
+        )
         AnimatedVisibility(visible = state.showPastExpansions) {
             Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -173,11 +174,13 @@ private fun ExpansionSelector(state: ContentState, viewModel: ContentViewModel) 
             ) {
                 past.forEach { exp ->
                     if (state.selectedExpansionId == exp.id) {
-                        FilterChip(selected = true, onClick = {},
-                            label = { Text(exp.name) })
+                        WowChip(exp.name, selected = true, onClick = {})
                     } else {
-                        AssistChip(onClick = { viewModel.selectExpansion(exp.id) },
-                            label = { Text(exp.name) })
+                        WowChip(
+                            exp.name,
+                            selected = false,
+                            onClick = { viewModel.selectExpansion(exp.id) },
+                        )
                     }
                 }
             }
@@ -189,13 +192,10 @@ private fun ExpansionSelector(state: ContentState, viewModel: ContentViewModel) 
 private fun InstanceCard(instance: InstanceSummary, state: ContentState, viewModel: ContentViewModel) {
     val bosses = state.bossesByInstance[instance.id]
     val focused = state.focusInstanceId == instance.id
-    Card(
+    Panel(
         Modifier.fillMaxWidth().clickable { viewModel.loadBosses(instance.id) },
-        colors = if (focused) {
-            androidx.compose.material3.CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            )
-        } else androidx.compose.material3.CardDefaults.cardColors(),
+        tone = if (focused) PanelTone.Accent else PanelTone.Default,
+        padding = PaddingValues(0.dp),
     ) {
         Column(Modifier.padding(12.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -268,5 +268,5 @@ private fun Loading() {
         Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-    ) { CircularProgressIndicator() }
+    ) { WowLoading() }
 }
