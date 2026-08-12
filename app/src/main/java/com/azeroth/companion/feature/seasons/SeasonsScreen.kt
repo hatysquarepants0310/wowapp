@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.seasons
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.data.SeasonProgress
 import com.azeroth.companion.data.SeasonsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -56,7 +57,7 @@ fun SeasonsScreen(viewModel: SeasonsViewModel = hiltViewModel()) {
 
     if (state.loading) {
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center) { CircularProgressIndicator() }
+            verticalArrangement = Arrangement.Center) { WowLoading() }
         return
     }
     if (state.seasons.isEmpty()) {
@@ -78,7 +79,7 @@ fun SeasonsScreen(viewModel: SeasonsViewModel = hiltViewModel()) {
 
 @Composable
 private fun SeasonCard(season: SeasonProgress) {
-    Card(Modifier.fillMaxWidth()) {
+    Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
         Column(Modifier.padding(14.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Temporada ${season.seasonId}" + if (season.isCurrent) " · ACTUAL" else "",

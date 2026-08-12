@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.weekly
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -300,7 +301,7 @@ private fun WeeklyTaskRow(
 
 @Composable
 private fun Summary(a: WeeklyActivity) {
-    Card(Modifier.fillMaxWidth()) {
+    Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
         Row(
             Modifier.fillMaxWidth().padding(14.dp),
             horizontalArrangement = Arrangement.SpaceAround,

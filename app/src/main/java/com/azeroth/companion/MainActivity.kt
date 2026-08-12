@@ -34,12 +34,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +51,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.azeroth.companion.core.notifications.AlarmReceiver
+import com.azeroth.companion.ui.components.NavItem
+import com.azeroth.companion.ui.components.WowIconButton
+import com.azeroth.companion.ui.components.WowNavBar
+import com.azeroth.companion.ui.components.WowTopBar
 import com.azeroth.companion.feature.dashboard.DashboardScreen
 import com.azeroth.companion.feature.events.EventDetailScreen
 import com.azeroth.companion.feature.events.EventsScreen
@@ -191,61 +192,54 @@ private fun AppScaffold(startEventId: String?) {
     val isSubScreen = currentRoute != null && currentRoute !in rootRoutes
     val subTitleRes = subScreenTitles[currentRoute?.substringBefore('/')]
 
+    // El chrome ya no es de Material: `TopAppBar` y `NavigationBar` traen sus
+    // alturas, su tipografía y —la barra inferior— la píldora que crece detrás
+    // del icono activo, que es la seña visual de Android más reconocible que
+    // existe. `WowTopBar` y `WowNavBar` dibujan chapa biselada y marcan lo activo
+    // con un filo de acento, que es como lo marca el juego.
     Scaffold(
         topBar = {
             if (isSubScreen) {
-                androidx.compose.material3.TopAppBar(
-                    title = { Text(subTitleRes?.let { stringResource(it) } ?: "") },
-                    navigationIcon = {
-                        androidx.compose.material3.IconButton(
+                WowTopBar(
+                    title = subTitleRes?.let { stringResource(it) } ?: "",
+                    navigation = {
+                        WowIconButton(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
                             onClick = { navController.popBackStack() },
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
-                            )
-                        }
+                        )
                     },
                 )
             } else {
                 // Ajustes sale del menú y pasa al engranaje: es donde se busca
                 // en cualquier app, y así la barra inferior queda solo para
                 // navegar por contenido.
-                androidx.compose.material3.TopAppBar(
-                    title = {},
+                WowTopBar(
+                    title = stringResource(R.string.app_name),
                     actions = {
-                        androidx.compose.material3.IconButton(
+                        WowIconButton(
+                            Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.nav_settings_short),
                             onClick = { navController.navigate("settings") },
-                        ) {
-                            Icon(
-                                Icons.Filled.Settings,
-                                contentDescription = stringResource(R.string.nav_settings_short),
-                            )
-                        }
+                        )
                     },
-                    colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    ),
                 )
             }
         },
         bottomBar = {
-            NavigationBar {
-                destinations.forEach { dest ->
-                    NavigationBarItem(
-                        selected = currentRoute == dest.route,
-                        onClick = {
-                            navController.navigate(dest.route) {
-                                popUpTo("dashboard") { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(dest.icon, contentDescription = null) },
-                        label = { Text(stringResource(dest.labelRes)) },
-                    )
-                }
-            }
+            WowNavBar(
+                items = destinations.map {
+                    NavItem(it.route, stringResource(it.labelRes), it.icon)
+                },
+                selectedRoute = currentRoute,
+                onSelect = { route ->
+                    navController.navigate(route) {
+                        popUpTo("dashboard") { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+            )
         },
     ) { padding ->
         androidx.compose.runtime.LaunchedEffect(startEventId) {

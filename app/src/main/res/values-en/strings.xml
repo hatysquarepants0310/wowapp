@@ -234,4 +234,5 @@
     <string name="hub_content_subtitle">What exists in the game</string>
     <string name="hub_content_more">Explore</string>
     <string name="nav_settings_short">Settings</string>
+    <string name="action_back">Back</string>
 </resources>

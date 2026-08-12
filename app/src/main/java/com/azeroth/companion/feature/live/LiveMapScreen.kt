@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.R
 import com.azeroth.companion.data.LiveZone
 import com.azeroth.companion.data.MapPin
@@ -88,7 +88,7 @@ fun LiveMapScreen(
         if (state.loading) {
             item {
                 Box(Modifier.fillMaxWidth().padding(Spacing.xxl), Alignment.Center) {
-                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                    WowLoading()
                 }
             }
             return@Screen
@@ -262,7 +262,7 @@ private fun ZoneMap(
         Modifier
             .fillMaxWidth()
             .aspectRatio(ratio)
-            .clip(RoundedCornerShape(Radius.md))
+            .clip(RoundedCornerShape(Radius.none))
             .background(colors.surface),
     ) {
         if (art != null) {
@@ -345,7 +345,7 @@ private fun ZoneMap(
                 Modifier
                     .align(Alignment.BottomStart)
                     .padding(Spacing.md)
-                    .clip(RoundedCornerShape(Radius.sm))
+                    .clip(RoundedCornerShape(Radius.none))
                     .background(colors.surfaceContainerHigh)
                     .padding(horizontal = Spacing.md, vertical = Spacing.sm),
             ) {

@@ -1,32 +1,39 @@
 package com.azeroth.companion.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.unit.sp
 
 // ---------------------------------------------------------------------------
 // Dirección
 //
-// Dos intentos anteriores trataron de que la app PAREZCA World of Warcraft
-// imitando su interfaz: primero con morado y degradados, luego con oro,
-// pergamino y bordes metálicos. Los dos fallaron por lo mismo — la interfaz del
-// juego está pensada para un monitor de 27 pulgadas y un ratón; a 390px de
-// ancho, el filigrana dorado no se lee como épico, se lee como recargado y
-// viejo. Las propias apps móviles de Blizzard no hacen eso.
+// Tres intentos anteriores fallaron y conviene dejar escrito por qué, porque el
+// cuarto se apoya en ello. Los dos primeros trataron de que la app PAREZCA WoW
+// imitando su interfaz de escritorio —morado y degradados; luego oro, pergamino
+// y filigrana—, y a 390px de ancho eso no se lee como épico sino como recargado.
+// El tercero corrigió en exceso: chrome neutro, que se calla del todo. Quedó
+// correcto y anónimo.
 //
-// La dirección ahora es la contraria: **el chrome se calla y el arte del juego
-// pone la identidad.** La app está llena de World of Warcraft —el render de tu
-// personaje, los mapas reales de zona, los iconos de objeto, los colores de
-// clase y de calidad— así que la interfaz que los envuelve no necesita gritar.
-// Fondo neutro, tipografía clara, y el color de TU clase como único acento.
+// El fallo común a los tres estaba en un sitio que ninguno tocó: la app seguía
+// escribiendo en **Roboto**, con componentes de Material 3, esquinas de 8-12dp y
+// sombras difusas. Es decir, tenía puestas las huellas de fábrica de Android por
+// debajo de cualquier decisión de color. Se pueden repintar los colores tres
+// veces; mientras el esqueleto sea el de la plantilla, la app se reconoce como
+// plantilla. El detector `npm run check:ui` lo midió: 61 hallazgos.
+//
+// La dirección de esta versión, entonces, no es de color sino de **materia**:
+//
+//  - Un solo material, metal biselado, dibujado con filos de un píxel y sombra
+//    de desenfoque cero (`Metal.kt`). Nada flota.
+//  - Esquina dura. El rango 3-14dp es el del aspecto de plantilla.
+//  - Tipografía propia y empaquetada (`Type.kt`), con la lapidaria reservada a
+//    los títulos y monoespaciada tabular en toda cifra que se compare.
+//  - Movimiento lineal y corto, como un cooldown; nunca `ease-in-out`.
+//  - El color lo pone el juego: tu clase, las calidades de objeto, el arte.
+//    La interfaz que lo envuelve es gris frío y no compite.
 // ---------------------------------------------------------------------------
 
 // Grises fríos y neutros: dejan que el arte del juego, que es cálido y
@@ -88,49 +95,9 @@ private fun scheme(accent: Color) = darkColorScheme(
     onErrorContainer = Color(0xFFFECACA),
 )
 
-// ---------------------------------------------------------------------------
-// Tipografía
-//
-// Una familia, jerarquía por tamaño y peso. Las cifras van tabulares para que
-// una columna de ilvl, de oro o de nivel de llave no baile al cambiar un dígito.
-// ---------------------------------------------------------------------------
-private val lineHeightStyle = LineHeightStyle(
-    alignment = LineHeightStyle.Alignment.Center,
-    trim = LineHeightStyle.Trim.None,
-)
-
-private fun style(
-    size: Int,
-    height: Int,
-    weight: FontWeight,
-    tracking: Double = 0.0,
-    tabular: Boolean = false,
-) = TextStyle(
-    fontSize = size.sp,
-    lineHeight = height.sp,
-    fontWeight = weight,
-    letterSpacing = tracking.sp,
-    lineHeightStyle = lineHeightStyle,
-    fontFeatureSettings = if (tabular) "tnum" else null,
-)
-
-internal val AppTypography = Typography(
-    displayLarge = style(40, 44, FontWeight.Bold, -1.0, tabular = true),
-    displayMedium = style(32, 36, FontWeight.Bold, -0.8, tabular = true),
-    displaySmall = style(27, 32, FontWeight.Bold, -0.6, tabular = true),
-    headlineLarge = style(24, 30, FontWeight.Bold, -0.5),
-    headlineMedium = style(21, 27, FontWeight.SemiBold, -0.3, tabular = true),
-    headlineSmall = style(18, 24, FontWeight.SemiBold, -0.2, tabular = true),
-    titleLarge = style(17, 23, FontWeight.SemiBold, -0.1),
-    titleMedium = style(15, 21, FontWeight.SemiBold),
-    titleSmall = style(14, 20, FontWeight.Medium),
-    bodyLarge = style(16, 25, FontWeight.Normal),
-    bodyMedium = style(14, 21, FontWeight.Normal, 0.1),
-    bodySmall = style(13, 19, FontWeight.Normal, 0.1),
-    labelLarge = style(14, 18, FontWeight.SemiBold, 0.2),
-    labelMedium = style(12, 16, FontWeight.SemiBold, 0.5, tabular = true),
-    labelSmall = style(11, 15, FontWeight.Medium, 0.6, tabular = true),
-)
+// La tipografía vive en `Type.kt`. Aquí había una copia declarada sin
+// `fontFamily`, que es justamente lo que hacía que toda la app se pintara en
+// Roboto por mucho que el resto del tema cambiara.
 
 @Composable
 fun AzerothTheme(

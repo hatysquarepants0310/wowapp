@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,13 +27,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.azeroth.companion.ui.theme.Base
+import com.azeroth.companion.ui.theme.LocalAccent
+import com.azeroth.companion.ui.theme.Surface
+import com.azeroth.companion.ui.theme.SurfaceHigh
+import com.azeroth.companion.ui.theme.darken
+import com.azeroth.companion.ui.theme.inset
+import com.azeroth.companion.ui.theme.metal
 
 /**
  * Vocabulario visual de la app.
@@ -68,11 +73,30 @@ object Spacing {
     val gutter: Dp = 16.dp
 }
 
+/**
+ * Radios.
+ *
+ * Los valores de antes —8, 12, 16dp— son exactamente el rango que el detector
+ * marca como aspecto de plantilla, y con razón: es el radio que traen por
+ * defecto Material, shadcn, Bootstrap y cualquier librería de componentes. Una
+ * pantalla llena de rectángulos de esquina blanda a 12dp se reconoce como "app
+ * de móvil genérica" antes de que el ojo llegue a leer nada.
+ *
+ * En World of Warcraft no hay una sola esquina redondeada: los marcos son
+ * chapas rectangulares y el único elemento curvo del juego es el retrato, que es
+ * un círculo completo. Así que aquí solo hay dos radios de verdad —cero y
+ * círculo— y un `soft` de 2dp para matar el diente de sierra en piezas
+ * diminutas.
+ */
 object Radius {
-    val sm: Dp = 8.dp
-    val md: Dp = 12.dp
-    val lg: Dp = 16.dp
-    val pill: Dp = 999.dp
+    /** Esquina viva. Lo normal. */
+    val none: Dp = 0.dp
+
+    /** 2dp: solo para quitar el aliasing de piezas de menos de 24dp. */
+    val soft: Dp = 2.dp
+
+    /** Círculo. Reservado al retrato y a los puntos de estado. */
+    val round: Dp = 999.dp
 }
 
 /** Contenedor raíz de una pantalla con scroll perezoso y márgenes coherentes. */
@@ -127,8 +151,7 @@ fun SectionHeader(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(Radius.sm))
-                    .clickable(onClick = onAction)
+                            .clickable(onClick = onAction)
                     .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
             )
         }
@@ -136,8 +159,15 @@ fun SectionHeader(
 }
 
 /**
- * Superficie agrupadora. Solo para contenido que forma una unidad; si dentro
- * hay una sola frase, esa frase no necesita panel.
+ * Superficie agrupadora: una **chapa** de metal biselada. Solo para contenido
+ * que forma una unidad; si dentro hay una sola frase, esa frase no necesita
+ * panel.
+ *
+ * Antes era un rectángulo de color plano con esquina de 12dp, que es la tarjeta
+ * por defecto de cualquier librería. Ahora es la misma pieza física que el resto
+ * de la app: degradado corto, filo de luz arriba, filo de sombra abajo y
+ * asiento sólido —sin desenfoque— debajo. Es la diferencia entre un rectángulo
+ * dibujado y un objeto apoyado.
  */
 @Composable
 fun Panel(
@@ -147,18 +177,17 @@ fun Panel(
     padding: PaddingValues = PaddingValues(Spacing.md),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val background = when (tone) {
-        PanelTone.Default -> colors.surface
-        PanelTone.Raised -> colors.surfaceContainer
-        PanelTone.Accent -> colors.primaryContainer
-        PanelTone.Warning -> colors.errorContainer
+    val accent = LocalAccent.current
+    val base = when (tone) {
+        PanelTone.Default -> Surface
+        PanelTone.Raised -> SurfaceHigh
+        PanelTone.Accent -> accent.darken(0.42f)
+        PanelTone.Warning -> Color(0xFF3B1513)
     }
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.md))
-            .background(background)
+            .metal(base)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(padding),
         content = content,
@@ -267,7 +296,6 @@ fun ListRow(
     Row(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.sm))
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -305,7 +333,14 @@ fun ListRow(
     }
 }
 
-/** Etiqueta compacta. El color lo pone quien la usa, no hay uno por defecto. */
+/**
+ * Etiqueta compacta. El color lo pone quien la usa, no hay uno por defecto.
+ *
+ * Dejó de ser una píldora. La píldora de esquina completamente redonda es el
+ * "chip" de Material y no existe en ninguna parte del juego: allí una etiqueta
+ * es una placa rectangular con su filo. Sigue llamándose `Pill` para no tocar
+ * treinta llamadas por un nombre.
+ */
 @Composable
 fun Pill(
     text: String,
@@ -316,35 +351,41 @@ fun Pill(
     Text(
         text,
         style = MaterialTheme.typography.labelSmall,
-        color = if (filled) MaterialTheme.colorScheme.onPrimary else color,
+        color = if (filled) Base else color,
         modifier = modifier
-            .clip(RoundedCornerShape(Radius.pill))
-            .background(if (filled) color else color.copy(alpha = 0.14f))
+            .background(if (filled) color else color.copy(alpha = 0.13f))
+            .border(Spacing.hairline, color.copy(alpha = if (filled) 0f else 0.34f))
             .padding(horizontal = Spacing.sm, vertical = 3.dp),
     )
 }
 
-/** Barra de progreso plana, sin sombra ni relieve. */
+/**
+ * Barra de progreso: un **canal hundido** con una barra apoyada dentro, que es
+ * exactamente cómo se ve una barra de casteo o de experiencia en el juego.
+ *
+ * La versión anterior era una píldora de extremos redondos sobre fondo plano —
+ * la barra de progreso de Material tal cual. El canal hundido (`inset`) hace el
+ * trabajo que hacía el redondeo, que es separar el relleno del fondo, pero con
+ * el vocabulario correcto.
+ */
 @Composable
 fun ProgressTrack(
     fraction: Float,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.primary,
-    height: Dp = 6.dp,
+    height: Dp = 8.dp,
 ) {
     Box(
         modifier
             .fillMaxWidth()
             .height(height)
-            .clip(RoundedCornerShape(Radius.pill))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            .inset(Surface),
     ) {
         Box(
             Modifier
                 .fillMaxWidth(fraction.coerceIn(0f, 1f))
                 .height(height)
-                .clip(RoundedCornerShape(Radius.pill))
-                .background(color),
+                .metal(color.darken(0.22f), seated = false),
         )
     }
 }
@@ -418,27 +459,24 @@ fun EmptyState(
 }
 
 /**
- * Franja destacada de la parte superior de Inicio: lo único de la app que se
- * permite un degradado, porque es el ancla visual de la pantalla.
+ * Franja destacada de la parte superior de Inicio.
+ *
+ * Era un degradado diagonal de acento a superficie: el "hero con gradiente", que
+ * está en la lista de defectos del documento por delante de casi todo. Ahora es
+ * la misma chapa que el resto, distinguida por **una regla de acento de 2dp
+ * arriba** —el recurso con el que el juego marca el marco activo— y por su
+ * tamaño. Que algo sea importante se dice con jerarquía, no con degradado.
  */
 @Composable
 fun HeroPanel(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.lg))
-            .background(
-                Brush.linearGradient(
-                    listOf(colors.primaryContainer, colors.surfaceContainer),
-                ),
-            )
-            .padding(Spacing.xl),
-        content = content,
-    )
+    val accent = LocalAccent.current
+    Column(modifier.fillMaxWidth().metal(SurfaceHigh)) {
+        Box(Modifier.fillMaxWidth().height(2.dp).background(accent))
+        Column(Modifier.padding(Spacing.lg), content = content)
+    }
 }
 
 /** Punto de estado. Un color y tres píxeles dicen más que una palabra. */

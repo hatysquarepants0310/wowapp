@@ -1,0 +1,9 @@
+{
+  "name": "azeroth-companion-ui-checks",
+  "private": true,
+  "type": "module",
+  "description": "Solo comprobaciones de UI. La app se compila con Gradle; esto existe para que `npm run check:ui` funcione tal cual lo pide docs/UI-WARCRAFT-HERRAMIENTAS.md §11.",
+  "scripts": {
+    "check:ui": "node scripts/check-ui.mjs"
+  }
+}

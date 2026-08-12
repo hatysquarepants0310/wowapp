@@ -1,5 +1,8 @@
 package com.azeroth.companion.feature.roster
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.PanelTone
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -124,15 +126,10 @@ fun RosterScreen(viewModel: RosterViewModel = hiltViewModel()) {
 
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(state.rows, key = { it.id }) { row ->
-            Card(
+            Panel(
                 Modifier.fillMaxWidth().clickable { viewModel.setActive(row.id) },
-                colors = if (row.isActive) {
-                    androidx.compose.material3.CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    )
-                } else {
-                    androidx.compose.material3.CardDefaults.cardColors()
-                },
+                tone = if (row.isActive) PanelTone.Accent else PanelTone.Default,
+                padding = PaddingValues(0.dp),
             ) {
                 Row(
                     Modifier.padding(12.dp),

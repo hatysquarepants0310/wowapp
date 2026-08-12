@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +31,7 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.R
 import com.azeroth.companion.data.NewsBlock
 import com.azeroth.companion.data.NewsItem
@@ -108,7 +108,7 @@ fun NewsScreen(
 @Composable
 private fun Loading() {
     Box(Modifier.fillMaxWidth().padding(Spacing.xxl), Alignment.Center) {
-        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+        WowLoading()
     }
 }
 
@@ -117,7 +117,7 @@ private fun LeadStory(item: NewsItem, onOpen: (String) -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.md))
+            .clip(RoundedCornerShape(Radius.none))
             .clickable { onOpen(item.id) },
     ) {
         if (item.imageUrl != null) {
@@ -128,7 +128,7 @@ private fun LeadStory(item: NewsItem, onOpen: (String) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(Radius.md))
+                    .clip(RoundedCornerShape(Radius.none))
                     .background(MaterialTheme.colorScheme.surfaceContainer),
             )
             Spacer(Modifier.height(Spacing.md))
@@ -160,7 +160,7 @@ private fun StoryRow(item: NewsItem, onOpen: (String) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.sm))
+            .clip(RoundedCornerShape(Radius.none))
             .clickable { onOpen(item.id) }
             .padding(vertical = Spacing.md),
         verticalAlignment = Alignment.Top,
@@ -172,7 +172,7 @@ private fun StoryRow(item: NewsItem, onOpen: (String) -> Unit) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(width = 96.dp, height = 62.dp)
-                    .clip(RoundedCornerShape(Radius.sm))
+                    .clip(RoundedCornerShape(Radius.none))
                     .background(MaterialTheme.colorScheme.surfaceContainer),
             )
             Spacer(Modifier.width(Spacing.md))
@@ -271,7 +271,7 @@ private fun ArticleBlock(block: NewsBlock) {
             contentScale = ContentScale.FillWidth,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(Radius.md))
+                .clip(RoundedCornerShape(Radius.none))
                 .background(MaterialTheme.colorScheme.surfaceContainer),
         )
         is NewsBlock.Link -> Pill(

@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.character
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.components.Panel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,8 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azeroth.companion.ui.components.WowButton
+import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.data.EquippedItem
 
 /**
@@ -41,7 +43,7 @@ fun CharacterScreen(viewModel: CharacterViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     if (state.loading) {
-        Center { CircularProgressIndicator() }
+        Center { WowLoading() }
         return
     }
     if (state.roster.isEmpty()) {
@@ -59,7 +61,7 @@ fun CharacterScreen(viewModel: CharacterViewModel = hiltViewModel()) {
         item { CharacterPicker(viewModel) }
         item {
             state.selected?.let { c ->
-                Card(Modifier.fillMaxWidth()) {
+                Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
                     Column(Modifier.padding(16.dp)) {
                         Text(c.name, style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.primary)
@@ -80,7 +82,7 @@ fun CharacterScreen(viewModel: CharacterViewModel = hiltViewModel()) {
         }
 
         if (state.detailLoading) {
-            item { Center { CircularProgressIndicator() } }
+            item { Center { WowLoading() } }
         }
 
         state.detail?.equipment?.takeIf { it.isNotEmpty() }?.let { equipment ->
@@ -125,9 +127,10 @@ private fun CharacterPicker(viewModel: CharacterViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var expanded by remember { mutableStateOf(false) }
     Column {
-        OutlinedButton(onClick = { expanded = true }) {
-            Text(state.selected?.let { "${it.name} · ${it.realmName}" } ?: "Elegir personaje")
-        }
+        WowButton(
+            state.selected?.let { "${it.name} · ${it.realmName}" } ?: "Elegir personaje",
+            onClick = { expanded = true },
+        )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             state.roster.forEach { c ->
                 DropdownMenuItem(
@@ -151,7 +154,7 @@ private fun StatRow(label: String, value: String) {
 
 @Composable
 private fun EquipmentRow(item: EquippedItem) {
-    Card(Modifier.fillMaxWidth()) {
+    Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
         Row(Modifier.fillMaxWidth().padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically) {
@@ -160,8 +163,7 @@ private fun EquipmentRow(item: EquippedItem) {
                     model = url,
                     contentDescription = item.name,
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
+                        .size(44.dp),
                 )
             }
             Column(Modifier.weight(1f)) {
@@ -179,7 +181,7 @@ private fun EquipmentRow(item: EquippedItem) {
 
 @Composable
 private fun MountCell(mount: com.azeroth.companion.data.MountEntry, modifier: Modifier = Modifier) {
-    Card(modifier) {
+    Panel(modifier, padding = PaddingValues(0.dp)) {
         Column(Modifier.padding(6.dp)) {
             mount.imageUrl?.let { url ->
                 coil.compose.AsyncImage(
@@ -188,8 +190,7 @@ private fun MountCell(mount: com.azeroth.companion.data.MountEntry, modifier: Mo
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(74.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
+                        .height(74.dp),
                 )
             }
             Text(

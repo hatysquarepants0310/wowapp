@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +21,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.azeroth.companion.ui.components.WowSwitch
+import com.azeroth.companion.ui.components.WowChip
+import com.azeroth.companion.ui.components.WowButton
 import com.azeroth.companion.R
 import com.azeroth.companion.core.catalog.CatalogRepository
 import com.azeroth.companion.core.datastore.Settings
@@ -171,13 +172,13 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 val syncing by viewModel.syncing.collectAsStateWithLifecycle()
                 val syncMessage by viewModel.syncMessage.collectAsStateWithLifecycle()
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    androidx.compose.material3.Button(
+                    WowButton(
+                        if (syncing) "Sincronizando…" else "Sincronizar ahora",
                         onClick = viewModel::syncNow,
+                        primary = true,
                         enabled = !syncing,
-                    ) { Text(if (syncing) "Sincronizando…" else "Sincronizar ahora") }
-                    androidx.compose.material3.OutlinedButton(onClick = viewModel::logout) {
-                        Text("Cerrar sesión")
-                    }
+                    )
+                    WowButton("Cerrar sesión", onClick = viewModel::logout)
                 }
                 syncMessage?.let { (ok, msg) ->
                     Text(
@@ -202,10 +203,12 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 )
                 val syncing by viewModel.syncing.collectAsStateWithLifecycle()
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    androidx.compose.material3.Button(
+                    WowButton(
+                        if (syncing) "Sincronizando…" else "Sincronizar ahora",
                         onClick = viewModel::syncNow,
+                        primary = true,
                         enabled = !syncing,
-                    ) { Text(if (syncing) "Sincronizando…" else "Sincronizar ahora") }
+                    )
                 }
                 LoginButton(viewModel, scope, context)
             }
@@ -243,14 +246,14 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 "es" to "Español",
                 "en" to "English",
             ).forEach { (tag, label) ->
-                FilterChip(
+                WowChip(
+                    label,
                     selected = current == tag,
                     onClick = {
                         viewModel.setLanguage(context, tag)
                         // Recrear la actividad para que se apliquen los recursos.
                         (context as? android.app.Activity)?.recreate()
                     },
-                    label = { Text(label) },
                 )
             }
         }
@@ -260,10 +263,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         Text(stringResource(R.string.settings_region), style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Region.entries.forEach { region ->
-                FilterChip(
+                WowChip(
+                    region.name,
                     selected = settings.region == region,
                     onClick = { viewModel.setRegion(region) },
-                    label = { Text(region.name) },
                 )
             }
         }
@@ -274,7 +277,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Mostrar contenido legacy")
-            Switch(checked = settings.showLegacyContent, onCheckedChange = viewModel::setShowLegacy)
+            WowSwitch(
+                checked = settings.showLegacyContent,
+                onCheckedChange = viewModel::setShowLegacy,
+            )
         }
 
         if (!state.exactAlarms) {
@@ -305,9 +311,11 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 Text("¡Nueva versión v${s.version} disponible!",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary)
-                androidx.compose.material3.Button(onClick = {
-                    viewModel.downloadUpdate(s.apkUrl, s.version)
-                }) { Text("Descargar e instalar v${s.version}") }
+                WowButton(
+                    "Descargar e instalar v${s.version}",
+                    onClick = { viewModel.downloadUpdate(s.apkUrl, s.version) },
+                    primary = true,
+                )
             }
             is com.azeroth.companion.core.update.UpdateStatus.Downloading ->
                 Text("Descargando v${s.version}… ${s.percent}%",
@@ -316,9 +324,11 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 Text("Android necesita permiso para instalar la actualización.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error)
-                androidx.compose.material3.Button(onClick = viewModel::grantInstallPermission) {
-                    Text("Abrir ajustes de permiso")
-                }
+                WowButton(
+                    "Abrir ajustes de permiso",
+                    onClick = viewModel::grantInstallPermission,
+                    primary = true,
+                )
             }
             is com.azeroth.companion.core.update.UpdateStatus.ReadyToInstall ->
                 Text("Instalador abierto. Confirma la instalación.",
@@ -329,9 +339,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     color = MaterialTheme.colorScheme.error)
             null -> {}
         }
-        androidx.compose.material3.OutlinedButton(onClick = { viewModel.checkForUpdate() }) {
-            Text("Buscar actualización")
-        }
+        WowButton("Buscar actualización", onClick = { viewModel.checkForUpdate() })
 
         HorizontalDivider()
 
@@ -372,12 +380,14 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            androidx.compose.material3.OutlinedButton(onClick = {
-                exportLauncher.launch("azeroth-companion-backup.json")
-            }) { Text("Exportar a JSON") }
-            androidx.compose.material3.OutlinedButton(onClick = {
-                importLauncher.launch(arrayOf("application/json"))
-            }) { Text("Importar") }
+            WowButton(
+                "Exportar a JSON",
+                onClick = { exportLauncher.launch("azeroth-companion-backup.json") },
+            )
+            WowButton(
+                "Importar",
+                onClick = { importLauncher.launch(arrayOf("application/json")) },
+            )
         }
         Text(
             "Progreso, overrides, calibraciones y objetivos. Todo local, nada se sube a ningún servidor.",
@@ -402,12 +412,16 @@ private fun LoginButton(
     scope: kotlinx.coroutines.CoroutineScope,
     context: android.content.Context,
 ) {
-    androidx.compose.material3.Button(onClick = {
-        scope.launch {
-            viewModel.buildLoginUri()?.let { uri ->
-                androidx.browser.customtabs.CustomTabsIntent.Builder().build()
-                    .launchUrl(context, uri)
+    WowButton(
+        "Iniciar sesión con Battle.net",
+        primary = true,
+        onClick = {
+            scope.launch {
+                viewModel.buildLoginUri()?.let { uri ->
+                    androidx.browser.customtabs.CustomTabsIntent.Builder().build()
+                        .launchUrl(context, uri)
+                }
             }
-        }
-    }) { Text("Iniciar sesión con Battle.net") }
+        },
+    )
 }

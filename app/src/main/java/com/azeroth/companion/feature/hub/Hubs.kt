@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.azeroth.companion.ui.theme.metal
+import com.azeroth.companion.ui.theme.Surface
 import com.azeroth.companion.ui.components.Radius
 import com.azeroth.companion.ui.components.Spacing
 
@@ -63,19 +65,17 @@ fun LazyListScope.hubGrid(entries: List<HubEntry>, onNavigate: (String) -> Unit)
 @Composable
 private fun HubCard(entry: HubEntry, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val accent = MaterialTheme.colorScheme.primary
+    // Chapa de metal, igual que el resto: era un rectángulo de color plano con
+    // esquina blanda, o sea la tarjeta por defecto de cualquier librería.
     Column(
         modifier
-            .clip(RoundedCornerShape(Radius.md))
-            .background(MaterialTheme.colorScheme.surface)
+            .metal(Surface)
             .clickable(onClick = onClick)
             .padding(Spacing.md)
             .height(112.dp),
     ) {
         Box(
-            Modifier
-                .size(34.dp)
-                .clip(RoundedCornerShape(Radius.sm))
-                .background(accent.copy(alpha = 0.16f)),
+            Modifier.size(34.dp).background(accent.copy(alpha = 0.16f)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(entry.icon, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
@@ -111,7 +111,7 @@ fun HubFeature(
     Row(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.md))
+            .clip(RoundedCornerShape(Radius.none))
             .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
             .padding(Spacing.md),
@@ -120,7 +120,7 @@ fun HubFeature(
         Box(
             Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(Radius.sm))
+                .clip(RoundedCornerShape(Radius.none))
                 .background(color.copy(alpha = 0.16f)),
             contentAlignment = Alignment.Center,
         ) {

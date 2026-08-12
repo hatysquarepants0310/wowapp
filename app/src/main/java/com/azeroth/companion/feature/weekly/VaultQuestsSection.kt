@@ -115,7 +115,7 @@ private fun GroupHeader(group: VaultQuestGroup, expanded: Boolean, onClick: () -
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.sm))
+            .clip(RoundedCornerShape(Radius.none))
             .clickable(onClick = onClick)
             .padding(vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -145,7 +145,7 @@ private fun QuestRow(quest: VaultQuest, onOpenQuest: (Int) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Radius.sm))
+            .clip(RoundedCornerShape(Radius.none))
             .clickable { onOpenQuest(quest.questId) }
             .padding(vertical = Spacing.md, horizontal = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
