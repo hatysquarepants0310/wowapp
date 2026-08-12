@@ -26,6 +26,9 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -159,10 +162,26 @@ private val subScreenTitles = mapOf(
 @Composable
 private fun AppScaffold(startEventId: String?) {
     val navController: NavHostController = rememberNavController()
+    // Arquitectura de la app.
+    //
+    // Antes eran tres pestañas —Inicio, Personaje y Más— y "Más" era un cajón
+    // de sastre con doce entradas planas: todo lo que no cabía en las otras dos
+    // acababa ahí. Ahora cada pestaña tiene un tema claro y no hay cajón:
+    //
+    //   Hoy       lo que caduca: eventos, reset y misiones de la semana
+    //   Personaje lo tuyo: equipo, puntuación, roster, progresión
+    //   Mundo     lo de fuera: mapa en vivo, eventos, noticias
+    //   Contenido la enciclopedia: mazmorras, bandas, botín, historias
+    //   Mercado   la casa de subastas
+    //
+    // Ajustes sale de la lista y pasa al engranaje de la barra superior, que es
+    // donde se busca en cualquier app.
     val destinations = listOf(
-        Destination("dashboard", R.string.nav_dashboard, Icons.Filled.Home),
-        Destination("character", R.string.nav_character, Icons.Filled.Person),
-        Destination("more", R.string.nav_more, Icons.Filled.Menu),
+        Destination("dashboard", R.string.tab_today, Icons.Filled.Today),
+        Destination("characterHub", R.string.tab_character, Icons.Filled.Person),
+        Destination("worldHub", R.string.tab_world, Icons.Filled.Public),
+        Destination("contentHub", R.string.tab_content, Icons.AutoMirrored.Filled.MenuBook),
+        Destination("market", R.string.tab_market, Icons.Filled.Storefront),
     )
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -187,6 +206,26 @@ private fun AppScaffold(startEventId: String?) {
                             )
                         }
                     },
+                )
+            } else {
+                // Ajustes sale del menú y pasa al engranaje: es donde se busca
+                // en cualquier app, y así la barra inferior queda solo para
+                // navegar por contenido.
+                androidx.compose.material3.TopAppBar(
+                    title = {},
+                    actions = {
+                        androidx.compose.material3.IconButton(
+                            onClick = { navController.navigate("settings") },
+                        ) {
+                            Icon(
+                                Icons.Filled.Settings,
+                                contentDescription = stringResource(R.string.nav_settings_short),
+                            )
+                        }
+                    },
+                    colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    ),
                 )
             }
         },
@@ -287,6 +326,22 @@ private fun AppScaffold(startEventId: String?) {
             composable("seasonal") { SeasonalScreen() }
             composable("roster") { RosterScreen() }
             composable("settings") { SettingsScreen() }
+            composable("characterHub") {
+                com.azeroth.companion.feature.hub.CharacterHubScreen(
+                    onNavigate = { navController.navigate(it) },
+                )
+            }
+            composable("worldHub") {
+                com.azeroth.companion.feature.hub.WorldHubScreen(
+                    onNavigate = { navController.navigate(it) },
+                )
+            }
+            composable("contentHub") {
+                com.azeroth.companion.feature.hub.ContentHubScreen(
+                    onNavigate = { navController.navigate(it) },
+                )
+            }
+            composable("market") { com.azeroth.companion.feature.auctions.AuctionsScreen() }
             composable("score") { com.azeroth.companion.feature.score.ScoreScreen() }
             composable("auctions") { com.azeroth.companion.feature.auctions.AuctionsScreen() }
             composable("news") {

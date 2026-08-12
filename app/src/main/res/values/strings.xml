@@ -220,4 +220,18 @@
     <string name="score_unavailable">Sin datos de Raider.IO</string>
     <string name="more_score_desc">Tu puntuación M+, tus llaves y el progreso de banda</string>
     <string name="week_stale">Blizzard todavía no publica tu semana: refresca el perfil conectándote al juego y volviendo a sincronizar. Hasta entonces estas cifras no son concluyentes.</string>
+    <string name="tab_today">Hoy</string>
+    <string name="tab_character">Personaje</string>
+    <string name="tab_world">Mundo</string>
+    <string name="tab_content">Contenido</string>
+    <string name="tab_market">Mercado</string>
+    <string name="hub_world_subtitle">Lo que está pasando en Azeroth</string>
+    <string name="hub_world_more">También aquí</string>
+    <string name="hub_character_subtitle">Tu equipo, tu progreso y tus alts</string>
+    <string name="hub_character_more">Más sobre ti</string>
+    <string name="hub_character_detail">Equipo y colección</string>
+    <string name="hub_character_detail_desc">Nivel, objeto por objeto y monturas</string>
+    <string name="hub_content_subtitle">Lo que existe en el juego</string>
+    <string name="hub_content_more">Explorar</string>
+    <string name="nav_settings_short">Ajustes</string>
 </resources>

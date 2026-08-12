@@ -220,4 +220,18 @@
     <string name="score_unavailable">No Raider.IO data</string>
     <string name="more_score_desc">Your M+ score, your keys and raid progress</string>
     <string name="week_stale">Blizzard has not published your week yet: log into the game and sync again to refresh your profile. Until then these numbers are not conclusive.</string>
+    <string name="tab_today">Today</string>
+    <string name="tab_character">Character</string>
+    <string name="tab_world">World</string>
+    <string name="tab_content">Content</string>
+    <string name="tab_market">Market</string>
+    <string name="hub_world_subtitle">What is happening in Azeroth</string>
+    <string name="hub_world_more">Also here</string>
+    <string name="hub_character_subtitle">Your gear, your progress and your alts</string>
+    <string name="hub_character_more">More about you</string>
+    <string name="hub_character_detail">Gear and collection</string>
+    <string name="hub_character_detail_desc">Level, item by item and mounts</string>
+    <string name="hub_content_subtitle">What exists in the game</string>
+    <string name="hub_content_more">Explore</string>
+    <string name="nav_settings_short">Settings</string>
 </resources>
