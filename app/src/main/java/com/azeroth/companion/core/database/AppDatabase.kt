@@ -58,6 +58,10 @@ data class CharacterEntity(
     val isInactive: Boolean = false,
     val lastLogin: Instant?,
     val lastSyncedAt: Instant?,
+    /** Render de cuerpo entero que publica Blizzard, si lo tiene. */
+    val renderUrl: String? = null,
+    /** Recorte de cara, para listas. */
+    val avatarUrl: String? = null,
 )
 
 /** Objetivos de temporada marcados por el usuario (§8.2). */
@@ -311,7 +315,7 @@ interface SnapshotDao {
         RepeatableQuestEntity::class,
         AuctionPriceEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

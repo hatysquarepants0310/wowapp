@@ -11,8 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
@@ -69,6 +72,42 @@ class ZoneMapLoader @Inject constructor(
 
     /** ¿Hay mapa del juego para esta zona? */
     suspend fun hasMap(uiMapId: Int): Boolean = grids().containsKey(uiMapId)
+
+    /**
+     * Baja a disco las texturas de varias zonas de una vez, sin componer nada.
+     *
+     * Antes había que entrar zona por zona y pedir el mapa a mano, que es
+     * justo lo que nadie quiere hacer. Ahora, en cuanto se sabe qué zonas le
+     * interesan al jugador, se traen todas de fondo: cuando llegue a mirarlas
+     * ya están.
+     *
+     * Se descarga en paralelo pero con un tope, para no abrir cuarenta
+     * conexiones a la vez ni maltratar la fuente.
+     */
+    suspend fun prefetch(uiMapIds: Collection<Int>) {
+        if (!settingsRepository.settings.first().downloadMapArt) return
+        val grids = grids()
+        val pending = uiMapIds.distinct()
+            .mapNotNull { grids[it] }
+            .flatMap { it.t }
+            .distinct()
+            .filterNot { File(cacheDir, "$it.blp").let { f -> f.exists() && f.length() > 0 } }
+        if (pending.isEmpty()) return
+        withContext(Dispatchers.IO) {
+            val gate = Semaphore(MAX_PARALLEL)
+            coroutineScope {
+                pending.forEach { fileId ->
+                    launch {
+                        gate.withPermit {
+                            download(fileId)?.let { data ->
+                                runCatching { File(cacheDir, "$fileId.blp").writeBytes(data) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Devuelve el mapa de la zona, o null si no hay o si falla la descarga.
@@ -169,6 +208,8 @@ class ZoneMapLoader @Inject constructor(
 
     private companion object {
         const val TILE = 256
+        /** Descargas simultáneas. Doce casillas por zona; seis a la vez basta. */
+        const val MAX_PARALLEL = 6
         const val TILE_SOURCE = "https://wago.tools/api/casc"
         const val USER_AGENT =
             "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36"

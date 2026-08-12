@@ -115,6 +115,7 @@ class SyncRepository @Inject constructor(
             val achievements = runCatching { api.achievements(realm, name, namespace) }.getOrNull()
             val mounts = runCatching { api.mounts(realm, name, namespace) }.getOrNull()
             val stats = runCatching { api.statistics(realm, name, namespace) }.getOrNull()
+            val media = runCatching { api.characterMedia(realm, name, namespace) }.getOrNull()
 
             val now = Instant.now()
             val clock = eventsRepository.resetClock()
@@ -129,6 +130,10 @@ class SyncRepository @Inject constructor(
                     lastLogin = profile.last_login_timestamp?.let(Instant::ofEpochMilli),
                     lastSyncedAt = now,
                     isInactive = false,
+                    // Se conserva el render anterior si esta vez no vino: es
+                    // preferible una imagen de hace un rato a un hueco.
+                    renderUrl = media?.render ?: character.renderUrl,
+                    avatarUrl = media?.avatar ?: character.avatarUrl,
                 ),
             )
 

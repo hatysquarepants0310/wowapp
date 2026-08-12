@@ -102,7 +102,8 @@ class MainActivity : ComponentActivity() {
         // Al tocar una notificación de evento se abre directo su checklist (§5.4).
         val eventIdFromNotification = intent?.getStringExtra(AlarmReceiver.EXTRA_EVENT_ID)
         setContent {
-            AzerothTheme {
+            // El tema toma el color de la clase del personaje activo.
+            com.azeroth.companion.ui.theme.AzerothThemeForActiveCharacter {
                 AppScaffold(startEventId = eventIdFromNotification)
                 // Pop-up de actualización al abrir (instalar ahora / después).
                 com.azeroth.companion.feature.update.UpdateGate()

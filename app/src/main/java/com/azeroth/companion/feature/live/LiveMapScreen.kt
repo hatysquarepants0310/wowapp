@@ -147,10 +147,6 @@ fun LiveMapScreen(
                 }
             }
             item {
-                // Pedir el arte al entrar en la zona; llega solo cuando esté.
-                androidx.compose.runtime.LaunchedEffect(zone.uiMapId) {
-                    viewModel.loadMapArt(zone.uiMapId)
-                }
                 ZoneMap(
                     zone = zone,
                     art = state.maps[zone.uiMapId],
