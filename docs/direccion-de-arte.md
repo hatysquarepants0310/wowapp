@@ -75,6 +75,30 @@ su clase.
 *Si quito el elemento firma, ¿se nota?* Sí: sin el retrato y sin el color de
 clase, la app pierde de golpe lo único que la hace personal.
 
+## Arquitectura de la app
+
+El rediseño no era solo de colores: la estructura estaba mal. Había tres
+pestañas —Inicio, Personaje y **Más**— y esa tercera era un cajón de sastre con
+doce entradas planas. Todo lo que no cabía en las otras dos acababa ahí, así
+que para llegar a cualquier cosa había que leerse la lista entera. Un cajón
+llamado "Más" es la señal de que nadie decidió dónde van las cosas.
+
+Ahora hay cinco pestañas, cada una con un tema que se puede decir en una frase:
+
+| Pestaña | Qué contiene | Por qué existe |
+|---|---|---|
+| **Hoy** | Eventos, reset, misiones de la semana | Lo que caduca. Es la pantalla del día a día |
+| **Personaje** | Equipo, puntuación, roster, progresión | Todo lo tuyo, que antes estaba repartido |
+| **Mundo** | Mapa en vivo, eventos, noticias | Lo que pasa fuera de ti |
+| **Contenido** | Mazmorras, bandas, botín, historias | La enciclopedia: lo que existe |
+| **Mercado** | Casa de subastas | Una tarea distinta a todas las demás |
+
+Ajustes sale de la navegación y pasa al engranaje de la barra superior, que es
+donde se busca en cualquier app. La barra inferior queda solo para contenido.
+
+La regla que sigue: **si algo no encaja claramente en una de las cinco, el
+problema es la arquitectura, no la cosa.** No vuelve a haber un "Más".
+
 ## Lo que no está verificado
 
 El paso de mirar capturas reales a 390 / 768 / 1440 **sigue pendiente**: este

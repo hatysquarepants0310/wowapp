@@ -3,7 +3,8 @@ package com.azeroth.companion.core.map
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Rect
+import android.graphics.Paint
+import android.graphics.RectF
 import androidx.collection.LruCache
 import com.azeroth.companion.core.datastore.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -60,10 +61,10 @@ class ZoneMapLoader @Inject constructor(
     private val gridMutex = Mutex()
     private var grids: Map<Int, MapTileGrid>? = null
 
-    // Un mapa compuesto de zona ronda los 2,6 MB en memoria. Tres es suficiente
-    // para moverse entre zonas sin recomponer y sin inflar la app.
-    private val memory = object : LruCache<Int, Bitmap>(3) {
-        override fun sizeOf(key: Int, value: Bitmap) = 1
+    // La caché se mide en BYTES, no en número de mapas: contar piezas no dice
+    // nada cuando una zona puede pesar diez veces más que otra.
+    private val memory = object : LruCache<Int, Bitmap>(MEMORY_BUDGET_BYTES) {
+        override fun sizeOf(key: Int, value: Bitmap) = value.byteCount
     }
 
     private val cacheDir: File by lazy {
@@ -117,40 +118,66 @@ class ZoneMapLoader @Inject constructor(
         memory.get(uiMapId)?.let { return it }
         if (!settingsRepository.settings.first().downloadMapArt) return null
         val grid = grids()[uiMapId] ?: return null
-        return runCatching { compose(uiMapId, grid) }.getOrNull()?.also {
+        return runCatching { compose(grid) }.getOrNull()?.also {
             memory.put(uiMapId, it)
         }
     }
 
-    private suspend fun compose(uiMapId: Int, grid: MapTileGrid): Bitmap? = coroutineScope {
+    /**
+     * Compone las casillas ya a TAMAÑO DE PANTALLA.
+     *
+     * Bug que esto arregla: solo cargaba el primer mapa. Los mapas de alta
+     * resolución son cuadrículas de 15x10 casillas, o sea 3840x2560 píxeles;
+     * en ARGB_8888 eso son 39 MB por mapa, más otros 39 de la copia recortada.
+     * El primero entraba, el segundo agotaba la memoria, y como `compose` va
+     * envuelta en `runCatching` —que atrapa también OutOfMemoryError— el fallo
+     * se tragaba en silencio y el resto de zonas salían vacías.
+     *
+     * Ahora se escala al vuelo mientras se dibuja: nunca existe el bitmap
+     * gigante. Y en RGB_565, que basta porque un mapa de zona no tiene
+     * transparencia y ocupa la mitad. Un mapa pasa de 39 MB a menos de 3.
+     */
+    private suspend fun compose(grid: MapTileGrid): Bitmap? = coroutineScope {
+        val fullWidth = grid.c * TILE
+        val fullHeight = grid.r * TILE
+        // Se trabaja sobre el tamaño REAL del mapa, no sobre la cuadrícula: el
+        // sobrante de redondeo no debe ocupar ni memoria ni desplazar los puntos.
+        val realWidth = grid.w.coerceIn(1, fullWidth)
+        val realHeight = grid.h.coerceIn(1, fullHeight)
+        val scale = minOf(
+            1f,
+            MAX_SIDE.toFloat() / maxOf(realWidth, realHeight).toFloat(),
+        )
+        val outWidth = (realWidth * scale).toInt().coerceAtLeast(1)
+        val outHeight = (realHeight * scale).toInt().coerceAtLeast(1)
+
         val tiles = grid.t.mapIndexed { index, fileId ->
             async(Dispatchers.IO) { index to tile(fileId) }
         }.map { it.await() }
 
         // Si falta más de una casilla el mapa saldría con agujeros: mejor nada.
-        if (tiles.count { it.second == null } > 1) return@coroutineScope null
+        if (tiles.count { it.second == null } > 1) {
+            tiles.forEach { it.second?.recycle() }
+            return@coroutineScope null
+        }
 
-        val full = Bitmap.createBitmap(grid.c * TILE, grid.r * TILE, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(full)
+        val out = Bitmap.createBitmap(outWidth, outHeight, Bitmap.Config.RGB_565)
+        val canvas = Canvas(out)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
         tiles.forEach { (index, bitmap) ->
             if (bitmap == null) return@forEach
             val row = index / grid.c
             val col = index % grid.c
-            canvas.drawBitmap(bitmap, (col * TILE).toFloat(), (row * TILE).toFloat(), null)
+            val dst = RectF(
+                col * TILE * scale,
+                row * TILE * scale,
+                (col + 1) * TILE * scale,
+                (row + 1) * TILE * scale,
+            )
+            canvas.drawBitmap(bitmap, null, dst, paint)
             bitmap.recycle()
         }
-
-        // Recorte al tamaño real del mapa: la cuadrícula sobra por abajo y por
-        // la derecha, y ese sobrante desplazaría cada punto de misión.
-        val width = grid.w.coerceIn(1, full.width)
-        val height = grid.h.coerceIn(1, full.height)
-        if (width == full.width && height == full.height) return@coroutineScope full
-        val cropped = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        Canvas(cropped).drawBitmap(
-            full, Rect(0, 0, width, height), Rect(0, 0, width, height), null,
-        )
-        full.recycle()
-        cropped
+        out
     }
 
     private fun tile(fileId: Int): Bitmap? {
@@ -210,6 +237,16 @@ class ZoneMapLoader @Inject constructor(
         const val TILE = 256
         /** Descargas simultáneas. Doce casillas por zona; seis a la vez basta. */
         const val MAX_PARALLEL = 6
+
+        /**
+         * Lado máximo del mapa compuesto. Ningún móvil enseña más de 1080px de
+         * ancho, así que 1440 deja margen para hacer zoom sin gastar memoria en
+         * píxeles que nadie va a ver.
+         */
+        const val MAX_SIDE = 1440
+
+        /** Presupuesto de la caché en memoria: unos seis mapas. */
+        const val MEMORY_BUDGET_BYTES = 18 * 1024 * 1024
         const val TILE_SOURCE = "https://wago.tools/api/casc"
         const val USER_AGENT =
             "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36"
