@@ -45,6 +45,18 @@ interface BlizzardApi {
         @Query("locale") locale: String = "es_MX",
     ): ActiveQuestsDto
 
+    /**
+     * Render del personaje. `main-raw` es el cuerpo entero con fondo
+     * transparente y `avatar` el recorte de cara: es lo que permite que la app
+     * enseñe TU personaje en lugar de un icono genérico.
+     */
+    @GET("/profile/wow/character/{realm}/{name}/character-media")
+    suspend fun characterMedia(
+        @Path("realm") realmSlug: String,
+        @Path("name") name: String,
+        @Query("namespace") namespace: String,
+    ): CharacterMediaDto
+
     @GET("/profile/wow/character/{realm}/{name}/reputations")
     suspend fun reputations(
         @Path("realm") realmSlug: String,
@@ -410,8 +422,6 @@ data class JournalLootDto(val item: KeyedNameDto? = null)
 @Serializable
 data class MediaDto(val assets: List<MediaAssetDto> = emptyList())
 
-@Serializable
-data class MediaAssetDto(val key: String = "", val value: String = "")
 
 @Serializable
 data class QuestAreaIndexDto(val areas: List<KeyedNameDto> = emptyList())
@@ -524,3 +534,18 @@ data class QuestRefDto(val id: Int = 0, val name: String? = null)
 /** Índice de periodos de mítica+: solo interesa cuál es el vigente ahora. */
 @Serializable
 data class MythicPeriodIndexDto(val current_period: PeriodRefDto? = null)
+
+
+/** Renders del personaje que publica Blizzard. */
+@Serializable
+data class CharacterMediaDto(val assets: List<MediaAssetDto> = emptyList()) {
+    /** Cuerpo entero, transparente. El que preside la pantalla de Inicio. */
+    val render: String? get() = assets.firstOrNull { it.key == "main-raw" }?.value
+        ?: assets.firstOrNull { it.key == "main" }?.value
+
+    /** Recorte de cara, para listas y el roster. */
+    val avatar: String? get() = assets.firstOrNull { it.key == "avatar" }?.value
+}
+
+@Serializable
+data class MediaAssetDto(val key: String = "", val value: String = "")

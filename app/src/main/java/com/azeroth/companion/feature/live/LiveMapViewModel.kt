@@ -1,11 +1,11 @@
 package com.azeroth.companion.feature.live
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.azeroth.companion.core.map.ZoneMapLoader
 import com.azeroth.companion.data.LiveEvent
 import com.azeroth.companion.data.LiveMapRepository
-import android.graphics.Bitmap
-import com.azeroth.companion.core.map.ZoneMapLoader
 import com.azeroth.companion.data.LiveZone
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +21,10 @@ data class LiveMapUiState(
     val characterName: String? = null,
     val loading: Boolean = true,
     val error: String? = null,
-    /** Mapa del juego ya compuesto, por uiMapId. Vacío = todavía sin fondo. */
+    /** Mapa del juego ya compuesto, por uiMapId. */
     val maps: Map<Int, Bitmap> = emptyMap(),
+    /** Quedan zonas por traer; la pantalla lo indica sin bloquear nada. */
+    val loadingMaps: Boolean = false,
 )
 
 @HiltViewModel
@@ -33,19 +35,6 @@ class LiveMapViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(LiveMapUiState())
     val state: StateFlow<LiveMapUiState> = _state.asStateFlow()
-
-    /**
-     * El arte del mapa se trae aparte y en segundo plano: la lista de misiones
-     * tiene que verse ya, sin esperar a 12 texturas.
-     */
-    fun loadMapArt(uiMapId: Int) {
-        if (_state.value.maps.containsKey(uiMapId)) return
-        viewModelScope.launch {
-            val bitmap = mapLoader.load(uiMapId) ?: return@launch
-            _state.update { it.copy(maps = it.maps + (uiMapId to bitmap)) }
-        }
-    }
-
 
     init {
         refresh()
@@ -59,7 +48,7 @@ class LiveMapViewModel @Inject constructor(
                 if (snapshot == null) {
                     it.copy(loading = false, error = "No se pudo leer el estado del mundo.")
                 } else {
-                    LiveMapUiState(
+                    it.copy(
                         zones = snapshot.zones,
                         events = snapshot.events,
                         characterName = snapshot.characterName,
@@ -68,6 +57,37 @@ class LiveMapViewModel @Inject constructor(
                     )
                 }
             }
+            snapshot?.zones?.map { it.uiMapId }?.let(::loadAllMaps)
+        }
+    }
+
+    /**
+     * Trae el arte de TODAS las zonas del jugador en cuanto se sabe cuáles son.
+     *
+     * Antes había que entrar en cada zona y pulsar actualizar, una por una, que
+     * es justo lo que nadie quiere hacer. Ahora se descargan solas nada más
+     * cargar la pantalla: la primera se compone ya, para que haya algo que
+     * mirar, y el resto va llegando de fondo.
+     */
+    private fun loadAllMaps(uiMapIds: List<Int>) {
+        if (uiMapIds.isEmpty()) return
+        _state.update { it.copy(loadingMaps = true) }
+        viewModelScope.launch {
+            uiMapIds.firstOrNull()?.let { first ->
+                mapLoader.load(first)?.let { bitmap ->
+                    _state.update { it.copy(maps = it.maps + (first to bitmap)) }
+                }
+            }
+            val rest = uiMapIds.drop(1)
+            // A disco en paralelo primero: componer va mucho más rápido cuando
+            // las texturas ya están, y así ninguna zona espera a la red sola.
+            mapLoader.prefetch(rest)
+            rest.forEach { id ->
+                mapLoader.load(id)?.let { bitmap ->
+                    _state.update { it.copy(maps = it.maps + (id to bitmap)) }
+                }
+            }
+            _state.update { it.copy(loadingMaps = false) }
         }
     }
 }

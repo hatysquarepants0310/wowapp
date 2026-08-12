@@ -4,6 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -11,74 +13,86 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 
 // ---------------------------------------------------------------------------
-// Paleta
+// Dirección
 //
-// La referencia no es "fantasía": es la interfaz del propio juego, que es
-// oscura, metálica y con trim dorado. Ver docs/direccion-de-arte.md.
+// Dos intentos anteriores trataron de que la app PAREZCA World of Warcraft
+// imitando su interfaz: primero con morado y degradados, luego con oro,
+// pergamino y bordes metálicos. Los dos fallaron por lo mismo — la interfaz del
+// juego está pensada para un monitor de 27 pulgadas y un ratón; a 390px de
+// ancho, el filigrana dorado no se lee como épico, se lee como recargado y
+// viejo. Las propias apps móviles de Blizzard no hacen eso.
 //
-// El diseño anterior era el default número uno de los que hay que evitar:
-// negro cálido + acento morado + tarjetas redondeadas con sombra. Aquí el
-// fondo es negro AZULADO (el del tooltip del juego), el acento es azul runa y
-// la profundidad la da un borde, no una sombra. El morado se retira además
-// porque competía con el #A335EE de calidad épica, que es intocable.
+// La dirección ahora es la contraria: **el chrome se calla y el arte del juego
+// pone la identidad.** La app está llena de World of Warcraft —el render de tu
+// personaje, los mapas reales de zona, los iconos de objeto, los colores de
+// clase y de calidad— así que la interfaz que los envuelve no necesita gritar.
+// Fondo neutro, tipografía clara, y el color de TU clase como único acento.
 // ---------------------------------------------------------------------------
-internal val Tinta = Color(0xFF0A0B0F)          // fondo
-internal val Piedra = Color(0xFF14161D)         // panel
-internal val PiedraAlta = Color(0xFF1D212B)     // panel sobre panel, filas alternas
-internal val Bisel = Color(0xFF3A3428)          // borde metálico apagado
-internal val OroTabardo = Color(0xFFC8A44D)     // trim vivo y títulos de sección
-internal val Pergamino = Color(0xFFE8DCC0)      // texto principal, hueso cálido
-internal val PergaminoMedio = Color(0xFF9A917E) // texto secundario
-internal val PergaminoTenue = Color(0xFF6B6555) // etiquetas y metadatos
-internal val Runa = Color(0xFF6E9FD4)           // único acento frío: lo interactivo
 
-// Alias que el resto del código ya usa por nombre.
-internal val Gold = OroTabardo
-internal val Arcane = Runa
+// Grises fríos y neutros: dejan que el arte del juego, que es cálido y
+// saturado, sea lo único con color en la pantalla.
+internal val Base = Color(0xFF0E0F13)        // fondo
+internal val Surface = Color(0xFF171920)     // panel
+internal val SurfaceHigh = Color(0xFF20232C) // panel elevado, fila resaltada
+internal val Line = Color(0xFF2A2E38)        // separadores
 
-internal val Positive = Color(0xFF5FCB7C)
-internal val Warning = Color(0xFFE2A33C)
-internal val Danger = Color(0xFFE5645B)
-internal val TextLow = PergaminoTenue
+internal val TextHigh = Color(0xFFECEDF0)
+internal val TextMid = Color(0xFFA3A8B4)
+internal val TextLow = Color(0xFF6C7280)
 
-private val Scheme = darkColorScheme(
-    primary = Runa,
-    onPrimary = Color(0xFF07131F),
-    primaryContainer = Color(0xFF16283A),
-    onPrimaryContainer = Color(0xFFC9DEF3),
-    inversePrimary = Color(0xFF44708F),
-    secondary = OroTabardo,
+internal val Positive = Color(0xFF4ADE80)
+internal val Warning = Color(0xFFFBBF24)
+internal val Danger = Color(0xFFF87171)
+
+// El dorado se conserva SOLO para recompensas y dinero, que es donde el juego
+// lo usa. Ya no es color de marca.
+internal val Gold = Color(0xFFE3B341)
+
+// Nombres que el resto del código todavía usa.
+internal val Arcane = ClassColors.Unknown
+
+/**
+ * Color de la clase del personaje activo. Es el acento de toda la interfaz:
+ * botones, enlaces, barras de progreso y el borde del retrato.
+ */
+val LocalAccent = staticCompositionLocalOf { ClassColors.Unknown }
+
+private fun scheme(accent: Color) = darkColorScheme(
+    primary = accent,
+    onPrimary = Color(0xFF0B0D11),
+    primaryContainer = accent.copy(alpha = 0.16f),
+    onPrimaryContainer = accent,
+    inversePrimary = accent.copy(alpha = 0.6f),
+    secondary = Gold,
     onSecondary = Color(0xFF1B1405),
-    secondaryContainer = Color(0xFF2C2412),
-    onSecondaryContainer = Color(0xFFF0DCA8),
-    tertiary = Color(0xFF8FD3E8),
-    background = Tinta,
-    onBackground = Pergamino,
-    surface = Piedra,
-    onSurface = Pergamino,
-    surfaceVariant = PiedraAlta,
-    onSurfaceVariant = PergaminoMedio,
-    surfaceContainerLowest = Tinta,
-    surfaceContainerLow = Piedra,
-    surfaceContainer = Piedra,
-    surfaceContainerHigh = PiedraAlta,
-    surfaceContainerHighest = Color(0xFF262B38),
-    outline = Bisel,
-    outlineVariant = Color(0xFF23212A),
+    secondaryContainer = Color(0xFF2A2110),
+    onSecondaryContainer = Gold,
+    tertiary = accent,
+    background = Base,
+    onBackground = TextHigh,
+    surface = Surface,
+    onSurface = TextHigh,
+    surfaceVariant = SurfaceHigh,
+    onSurfaceVariant = TextMid,
+    surfaceContainerLowest = Base,
+    surfaceContainerLow = Surface,
+    surfaceContainer = Surface,
+    surfaceContainerHigh = SurfaceHigh,
+    surfaceContainerHighest = Color(0xFF272B36),
+    outline = Line,
+    outlineVariant = Color(0xFF1F222A),
     scrim = Color(0xCC000000),
     error = Danger,
     onError = Color(0xFF2A0906),
-    errorContainer = Color(0xFF3E1512),
-    onErrorContainer = Color(0xFFF8C4C0),
+    errorContainer = Color(0xFF3B1513),
+    onErrorContainer = Color(0xFFFECACA),
 )
 
 // ---------------------------------------------------------------------------
 // Tipografía
 //
-// Una sola familia, jerarquía por peso y tamaño en vez de por color de fondo.
-// Los títulos van apretados (letterSpacing negativo) porque a tamaño grande el
-// tracking por defecto de Material se ve suelto; las etiquetas van abiertas y
-// en versalita para que se lean como etiquetas y no compitan con el contenido.
+// Una familia, jerarquía por tamaño y peso. Las cifras van tabulares para que
+// una columna de ilvl, de oro o de nivel de llave no baile al cambiar un dígito.
 // ---------------------------------------------------------------------------
 private val lineHeightStyle = LineHeightStyle(
     alignment = LineHeightStyle.Alignment.Center,
@@ -90,8 +104,6 @@ private fun style(
     height: Int,
     weight: FontWeight,
     tracking: Double = 0.0,
-    // Cifras de ancho fijo. Sin esto, una columna de ilvl, de oro o de nivel de
-    // llave se descuadra al cambiar un dígito y la tabla entera baila.
     tabular: Boolean = false,
 ) = TextStyle(
     fontSize = size.sp,
@@ -103,33 +115,34 @@ private fun style(
 )
 
 internal val AppTypography = Typography(
-    displayLarge = style(44, 48, FontWeight.Bold, -1.0, tabular = true),
-    displayMedium = style(36, 40, FontWeight.Bold, -0.8, tabular = true),
-    displaySmall = style(30, 36, FontWeight.Bold, -0.6, tabular = true),
-    headlineLarge = style(26, 32, FontWeight.SemiBold, -0.4),
-    headlineMedium = style(22, 28, FontWeight.SemiBold, -0.3, tabular = true),
-    headlineSmall = style(19, 25, FontWeight.SemiBold, -0.2, tabular = true),
+    displayLarge = style(40, 44, FontWeight.Bold, -1.0, tabular = true),
+    displayMedium = style(32, 36, FontWeight.Bold, -0.8, tabular = true),
+    displaySmall = style(27, 32, FontWeight.Bold, -0.6, tabular = true),
+    headlineLarge = style(24, 30, FontWeight.Bold, -0.5),
+    headlineMedium = style(21, 27, FontWeight.SemiBold, -0.3, tabular = true),
+    headlineSmall = style(18, 24, FontWeight.SemiBold, -0.2, tabular = true),
     titleLarge = style(17, 23, FontWeight.SemiBold, -0.1),
     titleMedium = style(15, 21, FontWeight.SemiBold),
     titleSmall = style(14, 20, FontWeight.Medium),
-    bodyLarge = style(16, 24, FontWeight.Normal),
+    bodyLarge = style(16, 25, FontWeight.Normal),
     bodyMedium = style(14, 21, FontWeight.Normal, 0.1),
     bodySmall = style(13, 19, FontWeight.Normal, 0.1),
     labelLarge = style(14, 18, FontWeight.SemiBold, 0.2),
-    labelMedium = style(12, 16, FontWeight.SemiBold, 0.6, tabular = true),
-    labelSmall = style(11, 14, FontWeight.Medium, 0.8, tabular = true),
+    labelMedium = style(12, 16, FontWeight.SemiBold, 0.5, tabular = true),
+    labelSmall = style(11, 15, FontWeight.Medium, 0.6, tabular = true),
 )
 
 @Composable
 fun AzerothTheme(
-    // Siempre oscuro: la app tiene identidad propia y no sigue el claro/oscuro
-    // del sistema.
-    darkTheme: Boolean = true,
+    /** Clase del personaje activo; de ella sale el acento de toda la app. */
+    accent: Color = ClassColors.Unknown,
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = Scheme,
-        typography = AppTypography,
-        content = content,
-    )
+    CompositionLocalProvider(LocalAccent provides accent) {
+        MaterialTheme(
+            colorScheme = scheme(accent),
+            typography = AppTypography,
+            content = content,
+        )
+    }
 }

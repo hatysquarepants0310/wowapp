@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -43,6 +45,7 @@ data class RosterRow(
     val ilvl: Int,
     val isActive: Boolean,
     val week: WeekSummary,
+    val avatarUrl: String?,
     /** Intentos de montura del Stormarion restantes esta semana (límite por personaje). */
     val mountAttemptsLeft: Int,
 )
@@ -84,6 +87,7 @@ class RosterViewModel @Inject constructor(
                         ilvl = c.equippedItemLevel,
                         isActive = c.id == settings.activeCharacterId,
                         week = week,
+                        avatarUrl = c.avatarUrl,
                         mountAttemptsLeft = (2 - (stormarion?.completions ?: 0)).coerceAtLeast(0),
                     )
                 }
@@ -130,9 +134,26 @@ fun RosterScreen(viewModel: RosterViewModel = hiltViewModel()) {
                     androidx.compose.material3.CardDefaults.cardColors()
                 },
             ) {
-                Column(Modifier.padding(12.dp)) {
+                Row(
+                    Modifier.padding(12.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.Top,
+                ) {
+                    // La cara del personaje: un roster de texto plano no dice
+                    // nada, y Blizzard publica el avatar de cada uno.
+                    com.azeroth.companion.ui.components.CharacterAvatar(
+                        avatarUrl = row.avatarUrl,
+                        className = row.playableClass,
+                        size = 44.dp,
+                    )
+                    Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("${row.name} · ${row.realmName}", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "${row.name} · ${row.realmName}",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = com.azeroth.companion.ui.theme.ClassColors
+                                .forClassName(row.playableClass),
+                        )
                         if (row.isActive) {
                             Text("ACTIVO", style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary)
@@ -157,6 +178,7 @@ fun RosterScreen(viewModel: RosterViewModel = hiltViewModel()) {
                         color = if (row.mountAttemptsLeft > 0) MaterialTheme.colorScheme.secondary
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
                 }
             }
         }

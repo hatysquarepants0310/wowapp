@@ -31,6 +31,8 @@ data class DashboardState(
     val activeCharacterRealm: String? = null,
     val activeCharacterIlvl: Int = 0,
     val activeCharacterClass: String? = null,
+    val activeCharacterSpec: String? = null,
+    val activeCharacterRender: String? = null,
     val lastSyncedAt: Instant? = null,
     /**
      * Lo que la API confirma de esta semana, con fecha propia de Blizzard: no
@@ -94,6 +96,8 @@ class DashboardViewModel @Inject constructor(
                     activeCharacterRealm = active?.realmName,
                     activeCharacterIlvl = active?.equippedItemLevel ?: 0,
                     activeCharacterClass = active?.playableClass,
+                    activeCharacterSpec = active?.activeSpec,
+                    activeCharacterRender = active?.renderUrl,
                     lastSyncedAt = active?.lastSyncedAt,
                     // Cada jefe cuenta una vez aunque se mate en varias
                     // dificultades: es como lo cuenta el juego.

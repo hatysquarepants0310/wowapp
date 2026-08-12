@@ -31,6 +31,7 @@ import com.azeroth.companion.ui.components.ConfidenceBadge
 import com.azeroth.companion.ui.components.ProgressTrack
 import com.azeroth.companion.ui.components.CountdownText
 import com.azeroth.companion.ui.components.Divider
+import com.azeroth.companion.ui.components.CharacterHero
 import com.azeroth.companion.ui.components.DataRow
 import com.azeroth.companion.ui.components.LootRow
 import com.azeroth.companion.ui.components.Panel
@@ -79,11 +80,28 @@ fun DashboardScreen(
             }
         }
 
-        // ---- Franja de estado ---------------------------------------------
+        // ---- Tu personaje preside -----------------------------------------
         //
-        // Sustituye al panel con degradado, que era exactamente el default de
-        // plantilla de dashboard. Aquí va denso: qué pasa, dónde y cuánto falta,
-        // con la cuenta atrás alineada a la derecha.
+        // Blizzard publica un render de cuerpo entero de cada personaje. Es lo
+        // que hace que esto no sea una plantilla: en la pantalla está TU gnomo
+        // con su equipo puesto, y el acento de toda la app sale del color de su
+        // clase. Por eso el resto de la interfaz puede estar callada.
+        state.activeCharacterName?.let { name ->
+            item {
+                CharacterHero(
+                    name = name,
+                    realm = state.activeCharacterRealm,
+                    className = state.activeCharacterClass,
+                    spec = state.activeCharacterSpec,
+                    itemLevel = state.activeCharacterIlvl,
+                    renderUrl = state.activeCharacterRender,
+                    onClick = onOpenRoster,
+                    trailing = { SyncFreshness(state.lastSyncedAt) },
+                )
+            }
+        }
+
+        // ---- Lo que caduca: el próximo evento y el reset -------------------
         item {
             Panel(padding = PaddingValues(Spacing.md)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -91,7 +109,7 @@ fun DashboardScreen(
                         Text(
                             stringResource(R.string.next_event).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Gold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         if (state.nextEventStartsAt != null) {
                             Text(
@@ -120,63 +138,34 @@ fun DashboardScreen(
                                 style = MaterialTheme.typography.headlineSmall,
                             )
                             Spacer(Modifier.height(Spacing.xs))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-                            ) {
-                                ConfidenceBadge(state.nextEventConfidence)
-                                Pill(
-                                    stringResource(R.string.prepare),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    filled = true,
-                                    modifier = Modifier.clickable {
-                                        state.nextEventId?.let(onOpenChecklist)
-                                    },
-                                )
-                            }
+                            Pill(
+                                stringResource(R.string.prepare),
+                                color = MaterialTheme.colorScheme.primary,
+                                filled = true,
+                                modifier = Modifier.clickable {
+                                    state.nextEventId?.let(onOpenChecklist)
+                                },
+                            )
                         }
+                    }
+                }
+                Spacer(Modifier.height(Spacing.sm))
+                Divider()
+                Spacer(Modifier.height(Spacing.sm))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.weekly_reset),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    state.weeklyResetAt?.let {
+                        CountdownText(it, style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
         }
 
-        // ---- Reset semanal + personaje, en una sola fila de datos --------
-        item {
-            Panel(padding = PaddingValues(Spacing.lg)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.weekly_reset).uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        state.weeklyResetAt?.let {
-                            CountdownText(it, style = MaterialTheme.typography.headlineSmall)
-                        }
-                    }
-                    state.activeCharacterName?.let { name ->
-                        Column(
-                            Modifier
-                                .clip(RoundedCornerShape(Radius.sm))
-                                .clickable(onClick = onOpenRoster)
-                                .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
-                            horizontalAlignment = Alignment.End,
-                        ) {
-                            Text(name, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                buildString {
-                                    state.activeCharacterClass?.let { append(it).append(" · ") }
-                                    append("ilvl ").append(state.activeCharacterIlvl)
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            SyncFreshness(state.lastSyncedAt)
-                        }
-                    }
-                }
-            }
-        }
 
         // ---- Tu semana ---------------------------------------------------
         //

@@ -1,7 +1,6 @@
 package com.azeroth.companion.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,36 +21,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.azeroth.companion.ui.theme.Bisel
-import com.azeroth.companion.ui.theme.OroTabardo
-import com.azeroth.companion.ui.theme.Pergamino
-import com.azeroth.companion.ui.theme.PergaminoMedio
+import com.azeroth.companion.ui.theme.Gold
+import com.azeroth.companion.ui.theme.Line
 import com.azeroth.companion.ui.theme.Positive
-import com.azeroth.companion.ui.theme.Tinta
+import com.azeroth.companion.ui.theme.Surface
+import com.azeroth.companion.ui.theme.TextHigh
+import com.azeroth.companion.ui.theme.TextMid
 
 /**
- * El elemento firma de la app: el tooltip de World of Warcraft.
+ * Tarjeta de objeto.
  *
- * Es el objeto más reconocible del juego, más que cualquier botón, y aquí es
- * la unidad de contenido en todas partes: botín, objetos de la casa de
- * subastas, detalle de misión, recompensas de temporada.
+ * Antes era una réplica del tooltip del juego, con borde dorado y todo. Se
+ * quita la filigrana: en un móvil de 390px ese trim no se lee como épico, se
+ * lee como recargado. Lo que SÍ se conserva es lo único que de verdad importa
+ * de un tooltip —el nombre en el color de la calidad, las estadísticas
+ * alineadas, los efectos en verde y el precio en oro/plata/cobre—, porque eso
+ * es vocabulario que el jugador lee sin leer.
  *
- * Se replica de verdad, no "parecido":
- *  - fondo casi negro azulado, no el gris de una tarjeta cualquiera,
- *  - borde fino de 1px en oro apagado, sin sombra difusa,
- *  - el título va en el COLOR DE LA CALIDAD del objeto,
- *  - las líneas de estadística se alinean etiqueta-izquierda / valor-derecha,
- *  - lo verde es efecto de uso, tal y como lo pinta el juego,
- *  - el precio, si lo hay, cierra abajo en oro/plata/cobre.
- *
- * Si se quita este componente, la app deja de parecer de WoW: esa es la prueba
- * de que es el elemento firma y no un adorno.
+ * La identidad de la app no la pone el marco: la ponen el arte del juego, el
+ * render de tu personaje y el color de tu clase.
  */
 @Composable
 fun Tooltip(
     title: String,
     modifier: Modifier = Modifier,
-    titleColor: Color = Pergamino,
+    titleColor: Color = TextHigh,
     subtitle: String? = null,
     onClick: (() -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null,
@@ -61,8 +55,7 @@ fun Tooltip(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radius.sm))
-            .background(Tinta)
-            .border(1.dp, Bisel, RoundedCornerShape(Radius.sm))
+            .background(Surface)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(horizontal = Spacing.md, vertical = Spacing.sm),
     ) {
@@ -86,7 +79,7 @@ fun Tooltip(
                     Text(
                         subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = PergaminoMedio,
+                        color = TextMid,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2,
                     )
@@ -106,13 +99,13 @@ fun TooltipStat(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    valueColor: Color = Pergamino,
+    valueColor: Color = TextHigh,
 ) {
     Row(
         modifier.fillMaxWidth().padding(top = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = PergaminoMedio)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = TextMid)
         Text(value, style = MaterialTheme.typography.bodySmall, color = valueColor)
     }
 }
@@ -136,7 +129,7 @@ fun TooltipPrice(copper: Long, modifier: Modifier = Modifier) {
     val rest = copper % 100
     Row(modifier.padding(top = Spacing.xs)) {
         if (gold > 0) {
-            Coin("%,d".format(gold), OroTabardo)
+            Coin("%,d".format(gold), Gold)
             Spacer(Modifier.width(Spacing.xs))
         }
         if (gold > 0 || silver > 0) {
@@ -150,10 +143,10 @@ fun TooltipPrice(copper: Long, modifier: Modifier = Modifier) {
 @Composable
 private fun Coin(amount: String, color: Color) {
     Row(verticalAlignment = Alignment.Bottom) {
-        Text(amount, style = MaterialTheme.typography.bodySmall, color = Pergamino)
+        Text(amount, style = MaterialTheme.typography.bodySmall, color = TextHigh)
         Text(
             when (color) {
-                OroTabardo -> "o"
+                Gold -> "o"
                 Color(0xFFC7C7C7) -> "p"
                 else -> "c"
             },
@@ -171,6 +164,6 @@ fun TooltipDivider(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .height(1.dp)
             .padding(vertical = 0.dp)
-            .background(Bisel),
+            .background(Line),
     )
 }

@@ -61,21 +61,17 @@ object Spacing {
     val xxl: Dp = 32.dp
 
     /**
-     * Margen lateral único de toda la app.
-     *
-     * Baja de 20dp a 14dp a propósito: los jugadores de WoW vienen de ElvUI y
-     * Details! y leen interfaces densas. Tres datos rodeados de aire no se leen
-     * como elegantes, se leen como una app que no sabe lo que estás haciendo.
+     * Margen lateral único de toda la app. 16dp: ni el aire de plantilla ni el
+     * agobio del panel de addon. La densidad se consigue con filas de datos,
+     * no estrangulando el margen.
      */
-    val gutter: Dp = 14.dp
+    val gutter: Dp = 16.dp
 }
 
 object Radius {
-    // Radios bajos y borde en vez de sombra: es el trim metálico del juego, no
-    // la tarjeta redondeada con sombra difusa de una plantilla de dashboard.
-    val sm: Dp = 4.dp
-    val md: Dp = 6.dp
-    val lg: Dp = 8.dp
+    val sm: Dp = 8.dp
+    val md: Dp = 12.dp
+    val lg: Dp = 16.dp
     val pill: Dp = 999.dp
 }
 
@@ -115,25 +111,15 @@ fun SectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = Spacing.md, bottom = Spacing.xs),
+            .padding(top = Spacing.lg, bottom = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Text(
-                title.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = com.azeroth.companion.ui.theme.OroTabardo,
-            )
-            // Filete: es como el juego separa secciones, y evita que la etiqueta
-            // flote sola en medio de la nada.
-            Spacer(Modifier.width(Spacing.sm))
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(1.dp)
-                    .background(MaterialTheme.colorScheme.outline),
-            )
-        }
+        Text(
+            title.uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
         if (action != null && onAction != null) {
             Spacer(Modifier.width(Spacing.sm))
             Text(
@@ -173,8 +159,6 @@ fun Panel(
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radius.md))
             .background(background)
-            // Profundidad por borde, nunca por sombra difusa.
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(Radius.md))
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(padding),
         content = content,
