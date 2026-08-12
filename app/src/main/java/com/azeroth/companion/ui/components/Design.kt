@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +35,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.azeroth.companion.ui.theme.Base
+import com.azeroth.companion.ui.theme.BigNumberStyle
+import com.azeroth.companion.ui.theme.NumberStyle
 import com.azeroth.companion.ui.theme.LocalAccent
 import com.azeroth.companion.ui.theme.Surface
 import com.azeroth.companion.ui.theme.SurfaceHigh
@@ -71,6 +74,26 @@ object Spacing {
      * no estrangulando el margen.
      */
     val gutter: Dp = 16.dp
+
+    /**
+     * Ancho máximo de una columna de contenido.
+     *
+     * Esto salió de mirar las capturas. A 1440dp la interfaz no desbordaba —la
+     * comprobación de desbordamiento pasaba— pero una fila de datos ponía
+     * "Mazmorras míticas" en el extremo izquierdo y su "8" a casi dos mil
+     * píxeles a la derecha. Técnicamente correcto e ilegible: el ojo no une la
+     * etiqueta con su cifra, y una tabla que no se puede recorrer con la mirada
+     * ha dejado de ser una tabla.
+     *
+     * Además, una única columna estirada a lo ancho de la pantalla es en sí
+     * misma una señal de app genérica: es lo que pasa cuando se hace un diseño
+     * de móvil y no se vuelve a mirar en grande.
+     *
+     * 560dp es donde una fila de etiqueta y cifra sigue leyéndose de un vistazo.
+     * El juego hace lo mismo: sus marcos son de tamaño fijo y centrados, no se
+     * estiran con la resolución.
+     */
+    val maxContent: Dp = 560.dp
 }
 
 /**
@@ -99,7 +122,12 @@ object Radius {
     val round: Dp = 999.dp
 }
 
-/** Contenedor raíz de una pantalla con scroll perezoso y márgenes coherentes. */
+/**
+ * Contenedor raíz de una pantalla con scroll perezoso y márgenes coherentes.
+ *
+ * La columna se limita a [Spacing.maxContent] y se centra. Ver el porqué en la
+ * nota de ese token: en pantalla ancha, estirar salía peor que ceñir.
+ */
 @Composable
 fun Screen(
     modifier: Modifier = Modifier,
@@ -111,14 +139,31 @@ fun Screen(
     ),
     content: LazyListScope.() -> Unit,
 ) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        content = content,
-    )
+    Box(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize().widthIn(max = Spacing.maxContent),
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+            content = content,
+        )
+    }
+}
+
+/**
+ * La misma restricción de ancho para pantallas que no usan [Screen] porque
+ * llevan su propio scroll o su propio andamiaje.
+ */
+@Composable
+fun ContentColumn(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        Column(modifier.widthIn(max = Spacing.maxContent), content = content)
+    }
 }
 
 /**
@@ -228,7 +273,7 @@ fun Metric(
         Spacer(Modifier.height(Spacing.xs))
         Text(
             value,
-            style = MaterialTheme.typography.headlineMedium,
+            style = BigNumberStyle,
             color = accent ?: MaterialTheme.colorScheme.onSurface,
         )
         if (hint != null) {
@@ -275,9 +320,14 @@ fun DataRow(
             Spacer(Modifier.width(Spacing.sm))
         }
         Text(
+            // La cifra en monoespaciada tabular. Estaba heredando la glífica del
+            // cuerpo, que es proporcional: en una columna de ilvl o de oro, al
+            // cambiar un dígito la cifra se desplazaba y comparar dos filas
+            // —lo único que se hace en una tabla— dejaba de funcionar.
             value,
-            style = MaterialTheme.typography.titleMedium,
+            style = NumberStyle,
             color = valueColor ?: MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
         )
     }
 }
@@ -494,7 +544,7 @@ fun ValueWithUnit(
     color: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Row(modifier, verticalAlignment = Alignment.Bottom) {
-        Text(value, style = MaterialTheme.typography.headlineMedium, color = color)
+        Text(value, style = BigNumberStyle, color = color)
         Spacer(Modifier.width(3.dp))
         Text(
             unit,

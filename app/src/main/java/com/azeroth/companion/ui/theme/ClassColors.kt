@@ -32,6 +32,14 @@ object ClassColors {
     /** Cuando todavía no se sabe la clase: un azul neutro, no un gris muerto. */
     val Unknown = Color(0xFF7FA8D9)
 
+    /** Las trece, para poder recorrerlas en las pruebas de contraste. */
+    val all: List<Pair<String, Color>> = listOf(
+        "DeathKnight" to DeathKnight, "DemonHunter" to DemonHunter, "Druid" to Druid,
+        "Evoker" to Evoker, "Hunter" to Hunter, "Mage" to Mage, "Monk" to Monk,
+        "Paladin" to Paladin, "Priest" to Priest, "Rogue" to Rogue, "Shaman" to Shaman,
+        "Warlock" to Warlock, "Warrior" to Warrior, "Unknown" to Unknown,
+    )
+
     /**
      * La API devuelve el nombre de clase ya traducido al idioma del personaje,
      * así que se reconocen los dos idiomas que la app soporta. Sin acentos y en
@@ -99,4 +107,82 @@ object QualityColors {
     val Legendary = Color(0xFFFF8000)
     val Artifact = Color(0xFFE6CC80)
     val Heirloom = Color(0xFF00CCFF)
+
+    /** Los ocho, para recorrerlos en las pruebas de contraste. */
+    val all: List<Pair<String, Color>> = listOf(
+        "Poor" to Poor, "Common" to Common, "Uncommon" to Uncommon, "Rare" to Rare,
+        "Epic" to Epic, "Legendary" to Legendary, "Artifact" to Artifact,
+        "Heirloom" to Heirloom,
+    )
+}
+
+/**
+ * # Colores oficiales y legibilidad: cómo conviven
+ *
+ * La prueba de contraste midió lo que se veía en las capturas: el rojo de
+ * Caballero de la Muerte (#C41E3A) queda en **2,69:1** sobre el panel elevado, y
+ * el azul de Chamán en 3,26. Como texto pequeño eso no se lee.
+ *
+ * La regla no negociable dice que los colores de clase y de calidad **no se
+ * aproximan nunca**. Y es correcta: el jugador lee "morado = épico" más rápido
+ * que la palabra "épico", y falsear el tono rompe justo la información que hace
+ * útil el color. Así que no se tocan.
+ *
+ * La salida no es cambiar el color, es distinguir **qué papel cumple**:
+ *
+ *  - **Marca de identidad** —el marco del tooltip, el punto de clase, el borde
+ *    del icono, el relleno de una barra, el icono de la pestaña activa—: color
+ *    oficial EXACTO, siempre, sin excepción. Son elementos gráficos, y el
+ *    umbral que les aplica es 3:1.
+ *  - **Texto pequeño teñido** —la etiqueta de una pestaña, el rótulo de un
+ *    botón—: ahí no hay identidad que comunicar, solo se está usando el acento
+ *    como color de énfasis. Para eso se usa [readableOn], que aclara lo justo
+ *    hasta llegar a 4,5:1.
+ *
+ * Nunca se aclara un color que esté haciendo de marca de identidad, y siempre
+ * hay una marca de identidad con el tono exacto al lado del texto aclarado, así
+ * que el tono real sigue estando presente en pantalla.
+ *
+ * El nombre del objeto dentro del tooltip es la excepción deliberada: ahí va el
+ * color exacto aunque Raro se quede en 4,21 y Épico en 4,15. Es lo que hace el
+ * juego, píxel por píxel, sobre el mismo fondo casi negro, y ese elemento existe
+ * precisamente para ser idéntico al del juego. Además lleva el marco del mismo
+ * color rodeándolo, que es la marca de identidad.
+ */
+private fun canal(c: Float): Double {
+    val s = c.toDouble()
+    return if (s <= 0.03928) s / 12.92 else Math.pow((s + 0.055) / 1.055, 2.4)
+}
+
+private fun luminancia(color: Color): Double =
+    0.2126 * canal(color.red) + 0.7152 * canal(color.green) + 0.0722 * canal(color.blue)
+
+/** Contraste WCAG 2.1 entre dos colores opacos. */
+fun contrastRatio(a: Color, b: Color): Double {
+    val la = luminancia(a)
+    val lb = luminancia(b)
+    return (maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)
+}
+
+/**
+ * Devuelve el color aclarado lo justo para alcanzar [target] sobre [background].
+ * Si ya lo cumple, lo devuelve intacto — que es el caso de la mayoría de clases.
+ *
+ * Se mezcla hacia el blanco en pasos pequeños en vez de saltar a un tono
+ * inventado: así el matiz se conserva y un rojo sigue siendo rojo.
+ */
+fun Color.readableOn(background: Color, target: Double = 4.5): Color {
+    if (contrastRatio(this, background) >= target) return this
+    var mix = 0f
+    var out = this
+    while (mix < 1f && contrastRatio(out, background) < target) {
+        mix += 0.02f
+        out = Color(
+            red = red + (1f - red) * mix,
+            green = green + (1f - green) * mix,
+            blue = blue + (1f - blue) * mix,
+            alpha = alpha,
+        )
+    }
+    return out
 }

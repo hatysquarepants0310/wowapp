@@ -73,6 +73,9 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
+        // Robolectric necesita los recursos compilados para poder inflar la
+        // interfaz de verdad; sin esto las capturas salen sin fuentes ni colores.
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -116,4 +119,13 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+
+    // Renderizado real de Compose en la JVM. Es lo que sustituye a las capturas
+    // de Playwright que pide el documento: aquí no hay navegador ni emulador,
+    // así que Robolectric dibuja con Skia nativo y se vuelca a PNG para poder
+    // MIRAR la interfaz en vez de suponer cómo queda.
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

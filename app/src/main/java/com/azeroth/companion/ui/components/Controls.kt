@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
@@ -37,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -55,6 +58,7 @@ import com.azeroth.companion.ui.theme.TextMid
 import com.azeroth.companion.ui.theme.darken
 import com.azeroth.companion.ui.theme.inset
 import com.azeroth.companion.ui.theme.metal
+import com.azeroth.companion.ui.theme.readableOn
 
 /**
  * Controles propios, construidos desde primitivas sin apariencia.
@@ -103,6 +107,9 @@ fun WowButton(
     enabled: Boolean = true,
 ) {
     val accent = LocalAccent.current
+    // El rótulo es texto pequeño teñido, no una marca de identidad: se aclara lo
+    // justo para leerse. La chapa de debajo conserva el tono exacto.
+    val accentText = accent.readableOn(SurfaceHigh)
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     var focused by remember { mutableStateOf(false) }
@@ -137,7 +144,7 @@ fun WowButton(
             style = MaterialTheme.typography.labelLarge,
             color = when {
                 !enabled -> TextMid
-                primary -> accent
+                primary -> accentText
                 else -> TextHigh
             },
             maxLines = 1,
@@ -157,6 +164,7 @@ fun WowTextButton(
     modifier: Modifier = Modifier,
     color: Color = LocalAccent.current,
 ) {
+    val texto = color.readableOn(Base)
     var focused by remember { mutableStateOf(false) }
     Box(
         modifier
@@ -174,7 +182,7 @@ fun WowTextButton(
         Text(
             text.uppercase(),
             style = MaterialTheme.typography.labelLarge,
-            color = color,
+            color = texto,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -208,7 +216,22 @@ fun WowIconButton(
     }
 }
 
-/** Interruptor: una corredera de metal en su hueco hundido. */
+/**
+ * Casilla de verificación.
+ *
+ * Se llamaba `WowSwitch` y dibujaba una corredera; la captura a 768 dejó claro
+ * que no funcionaba. Se leía como un cuadrado rojo dentro de una caja roja: la
+ * corredera llenaba el canal entero, así que no había canal, y encendida iba
+ * teñida del mismo acento que el fondo, así que tampoco destacaba. Un control
+ * cuyo estado hay que adivinar está roto, por bonito que sea el bisel.
+ *
+ * Pero el fallo de fondo era la metáfora. **El interruptor deslizante es de
+ * iOS y de Material; en World of Warcraft no existe.** Todas las opciones del
+ * juego son casillas: un hueco cuadrado hundido y, al marcarlo, una palomita.
+ * Así que esto es una casilla — más legible y, encima, la forma correcta.
+ *
+ * Conserva el nombre y la firma para no tocar los sitios que ya la usan.
+ */
 @Composable
 fun WowSwitch(
     checked: Boolean,
@@ -217,15 +240,11 @@ fun WowSwitch(
     enabled: Boolean = true,
 ) {
     val accent = LocalAccent.current
-    val offset by animateFloatAsState(
-        targetValue = if (checked) 1f else 0f,
-        animationSpec = tween(PRESS_MS, easing = LinearEasing),
-        label = "switch",
-    )
+    val marca = accent.readableOn(Surface)
     var focused by remember { mutableStateOf(false) }
     Box(
         modifier
-            .size(width = 56.dp, height = TouchTarget)
+            .size(TouchTarget)
             .focusRing(focused, accent)
             .onFocusChanged { focused = it.isFocused }
             .clickable(
@@ -235,16 +254,27 @@ fun WowSwitch(
             ) { onCheckedChange(!checked) },
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            Modifier.size(width = 44.dp, height = 22.dp).inset(Surface),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Box(
-                Modifier
-                    .offset(x = (offset * 22).dp)
-                    .size(22.dp)
-                    .metal(if (checked) accent.darken(0.25f) else SurfaceHigh),
-            )
+        Box(Modifier.size(24.dp).inset(Surface), contentAlignment = Alignment.Center) {
+            if (checked) {
+                Canvas(Modifier.size(24.dp)) {
+                    val g = size.width * 0.22f
+                    val grosor = size.width * 0.14f
+                    // Dos trazos rectos, sin curva: la palomita del juego es
+                    // angulosa, no la marca redondeada de Material.
+                    drawLine(
+                        color = marca,
+                        start = Offset(g, size.height * 0.52f),
+                        end = Offset(size.width * 0.44f, size.height - g),
+                        strokeWidth = grosor,
+                    )
+                    drawLine(
+                        color = marca,
+                        start = Offset(size.width * 0.44f, size.height - g),
+                        end = Offset(size.width - g, g),
+                        strokeWidth = grosor,
+                    )
+                }
+            }
         }
     }
 }
@@ -380,7 +410,7 @@ fun WowTabs(
                 Text(
                     label.uppercase(),
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (active) accent else TextMid,
+                    color = if (active) accent.readableOn(SurfaceHigh) else TextMid,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -434,7 +464,7 @@ fun WowChip(
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
-            color = if (selected) color else TextMid,
+            color = if (selected) color.readableOn(SurfaceHigh) else TextMid,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -497,10 +527,14 @@ fun WowTopBar(
     navigation: (@Composable () -> Unit)? = null,
     actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {},
 ) {
+    // La chapa ocupa todo el ancho, pero su contenido se ciñe al mismo tope que
+    // la columna. Con el título pegado al borde izquierdo de una pantalla de
+    // 1440 y el contenido centrado, la barra parecía de otra aplicación.
+    Box(modifier.fillMaxWidth().metal(Surface), contentAlignment = Alignment.TopCenter) {
     Row(
-        modifier
+        Modifier
+            .widthIn(max = Spacing.maxContent)
             .fillMaxWidth()
-            .metal(Surface)
             .padding(horizontal = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -529,6 +563,7 @@ fun WowTopBar(
         }
         actions()
     }
+    }
 }
 
 /**
@@ -544,7 +579,8 @@ fun WowNavBar(
     modifier: Modifier = Modifier,
 ) {
     val accent = LocalAccent.current
-    Row(modifier.fillMaxWidth().metal(Surface)) {
+    Box(modifier.fillMaxWidth().metal(Surface), contentAlignment = Alignment.TopCenter) {
+    Row(Modifier.widthIn(max = Spacing.maxContent).fillMaxWidth()) {
         items.forEach { item ->
             val active = item.route == selectedRoute
             var focused by remember { mutableStateOf(false) }
@@ -584,13 +620,14 @@ fun WowNavBar(
                     Text(
                         item.label,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (active) accent else TextMid,
+                        color = if (active) accent.readableOn(Surface) else TextMid,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
         }
+    }
     }
 }
 

@@ -38,10 +38,20 @@ import androidx.compose.ui.graphics.Color
 
 // Grises fríos y neutros: dejan que el arte del juego, que es cálido y
 // saturado, sea lo único con color en la pantalla.
-internal val Base = Color(0xFF0E0F13)        // fondo
-internal val Surface = Color(0xFF171920)     // panel
-internal val SurfaceHigh = Color(0xFF20232C) // panel elevado, fila resaltada
-internal val Line = Color(0xFF2A2E38)        // separadores
+//
+// La rampa se rebajó tras medir el contraste. Con el panel elevado en #20232C,
+// el rojo oficial de Caballero de la Muerte se quedaba en **2,69:1** y el morado
+// de Cazador de Demonios en 2,86 — por debajo incluso del 3:1 que se exige a un
+// elemento gráfico. Como los colores de clase no se tocan, lo que baja es el
+// fondo. Con la rampa actual la peor clase llega a 3,04 sobre el panel elevado y
+// a 3,37 sobre el fondo.
+//
+// De paso queda más fiel: los marcos del juego son mucho más oscuros de lo que
+// era esta rampa, que tiraba a gris de aplicación.
+internal val Base = Color(0xFF0A0B0E)        // fondo
+internal val Surface = Color(0xFF101218)     // panel
+internal val SurfaceHigh = Color(0xFF16181E) // panel elevado, fila resaltada
+internal val Line = Color(0xFF262A33)        // separadores
 
 internal val TextHigh = Color(0xFFECEDF0)
 internal val TextMid = Color(0xFFA3A8B4)
@@ -85,9 +95,9 @@ private fun scheme(accent: Color) = darkColorScheme(
     surfaceContainerLow = Surface,
     surfaceContainer = Surface,
     surfaceContainerHigh = SurfaceHigh,
-    surfaceContainerHighest = Color(0xFF272B36),
+    surfaceContainerHighest = Color(0xFF1C1F27),
     outline = Line,
-    outlineVariant = Color(0xFF1F222A),
+    outlineVariant = Color(0xFF1A1D24),
     scrim = Color(0xCC000000),
     error = Danger,
     onError = Color(0xFF2A0906),
