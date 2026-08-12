@@ -59,6 +59,7 @@ import com.azeroth.companion.ui.theme.darken
 import com.azeroth.companion.ui.theme.inset
 import com.azeroth.companion.ui.theme.metal
 import com.azeroth.companion.ui.theme.readableOn
+import com.azeroth.companion.ui.theme.reducedMotion
 
 /**
  * Controles propios, construidos desde primitivas sin apariencia.
@@ -82,6 +83,13 @@ import com.azeroth.companion.ui.theme.readableOn
 
 /** Duración del hundido al pulsar. Corta y lineal: en WoW nada hace ease. */
 private const val PRESS_MS = 70
+
+/**
+ * La duración de verdad, ya considerando si el usuario pidió movimiento
+ * reducido. A cero el cambio sigue ocurriendo; lo que se quita es el recorrido.
+ */
+@Composable
+private fun pressMs(): Int = if (reducedMotion()) 0 else PRESS_MS
 
 /** Alto táctil mínimo. Por debajo de esto el dedo falla. */
 val TouchTarget: Dp = 44.dp
@@ -116,7 +124,7 @@ fun WowButton(
     // El botón se HUNDE al pulsarlo, no cambia de sombra: es una pieza física.
     val sink by animateFloatAsState(
         targetValue = if (pressed) 1f else 0f,
-        animationSpec = tween(PRESS_MS, easing = LinearEasing),
+        animationSpec = tween(pressMs(), easing = LinearEasing),
         label = "sink",
     )
     val base = if (primary) accent.darken(0.38f) else SurfaceHigh
@@ -351,6 +359,17 @@ fun WowProgress(
 @Composable
 fun WowLoading(modifier: Modifier = Modifier) {
     val accent = LocalAccent.current
+    if (reducedMotion()) {
+        // Sin parpadeo: para quien pidió movimiento reducido, un indicador que
+        // late en bucle es justo lo que quería evitar. Se queda encendido el
+        // primero, que sigue diciendo "esto está trabajando".
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+            repeat(4) { i ->
+                Box(Modifier.size(6.dp).background(if (i == 0) accent else Line))
+            }
+        }
+        return
+    }
     val transition = rememberInfiniteTransition(label = "load")
     // Se anima un flotante y se trunca a casilla. Con `animateValue` sobre Int
     // el convertidor interpola y redondea, y el salto se vuelve irregular; así
