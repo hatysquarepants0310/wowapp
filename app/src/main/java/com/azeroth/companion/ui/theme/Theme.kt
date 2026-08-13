@@ -36,22 +36,24 @@ import androidx.compose.ui.graphics.Color
 //    La interfaz que lo envuelve es gris frío y no compite.
 // ---------------------------------------------------------------------------
 
-// Grises fríos y neutros: dejan que el arte del juego, que es cálido y
-// saturado, sea lo único con color en la pantalla.
+// La rampa del fondo: azul de noche, no gris.
 //
-// La rampa se rebajó tras medir el contraste. Con el panel elevado en #20232C,
-// el rojo oficial de Caballero de la Muerte se quedaba en **2,69:1** y el morado
-// de Cazador de Demonios en 2,86 — por debajo incluso del 3:1 que se exige a un
-// elemento gráfico. Como los colores de clase no se tocan, lo que baja es el
-// fondo. Con la rampa actual la peor clase llega a 3,04 sobre el panel elevado y
-// a 3,37 sobre el fondo.
+// Primero se rebajó por contraste —con el panel elevado en #20232C el rojo
+// oficial de Caballero de la Muerte se quedaba en 2,69:1, por debajo del 3:1
+// que se exige a un elemento gráfico—. Eso resolvió la legibilidad, pero dejó
+// una rampa de gris prácticamente neutro, y en el móvil se veía apagada: negro
+// plano con un solo color encima. Daniel lo dijo directamente.
 //
-// De paso queda más fiel: los marcos del juego son mucho más oscuros de lo que
-// era esta rampa, que tiraba a gris de aplicación.
-internal val Base = Color(0xFF0A0B0E)        // fondo
-internal val Surface = Color(0xFF101218)     // panel
-internal val SurfaceHigh = Color(0xFF16181E) // panel elevado, fila resaltada
-internal val Line = Color(0xFF262A33)        // separadores
+// El arreglo NO es aclararla, que rompería el contraste otra vez. Es darle
+// **croma a la misma luminancia**: el mismo brillo, pero desplazado hacia el
+// azul índigo. Un gris neutro se lee como "fondo de aplicación"; el mismo valor
+// con algo de azul se lee como noche, que es donde pasa medio World of Warcraft.
+// Sale gratis en contraste —la peor clase sigue en 3,04 sobre el panel elevado y
+// 3,40 sobre el fondo, igual que antes— y cambia por completo la sensación.
+internal val Base = Color(0xFF070911)        // fondo
+internal val Surface = Color(0xFF0D111E)     // panel
+internal val SurfaceHigh = Color(0xFF131728) // panel elevado, fila resaltada
+internal val Line = Color(0xFF232941)        // separadores
 
 internal val TextHigh = Color(0xFFECEDF0)
 internal val TextMid = Color(0xFFA3A8B4)
@@ -61,9 +63,10 @@ internal val Positive = Color(0xFF4ADE80)
 internal val Warning = Color(0xFFFBBF24)
 internal val Danger = Color(0xFFF87171)
 
-// El dorado se conserva SOLO para recompensas y dinero, que es donde el juego
-// lo usa. Ya no es color de marca.
-internal val Gold = Color(0xFFE3B341)
+// El dorado, para recompensas y dinero, que es donde el juego lo usa. Se subió
+// la saturación: el anterior tiraba a mostaza sobre el fondo azulado nuevo, y el
+// oro de WoW es más cálido y más vivo.
+internal val Gold = Color(0xFFF5C542)
 
 // Nombres que el resto del código todavía usa.
 internal val Arcane = ClassColors.Unknown
@@ -76,7 +79,7 @@ val LocalAccent = staticCompositionLocalOf { ClassColors.Unknown }
 
 private fun scheme(accent: Color) = darkColorScheme(
     primary = accent,
-    onPrimary = Color(0xFF0B0D11),
+    onPrimary = Color(0xFF070911),
     primaryContainer = accent.copy(alpha = 0.16f),
     onPrimaryContainer = accent,
     inversePrimary = accent.copy(alpha = 0.6f),
@@ -95,9 +98,9 @@ private fun scheme(accent: Color) = darkColorScheme(
     surfaceContainerLow = Surface,
     surfaceContainer = Surface,
     surfaceContainerHigh = SurfaceHigh,
-    surfaceContainerHighest = Color(0xFF1C1F27),
+    surfaceContainerHighest = Color(0xFF1A2036),
     outline = Line,
-    outlineVariant = Color(0xFF1A1D24),
+    outlineVariant = Color(0xFF171C2E),
     scrim = Color(0xCC000000),
     error = Danger,
     onError = Color(0xFF2A0906),
