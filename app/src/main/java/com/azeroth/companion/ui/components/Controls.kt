@@ -22,7 +22,9 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -546,10 +548,18 @@ fun WowTopBar(
     navigation: (@Composable () -> Unit)? = null,
     actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {},
 ) {
+    // `statusBarsPadding` NO es opcional. Con targetSdk 35, Android 15 obliga al
+    // modo de borde a borde: la app dibuja por debajo de la barra de estado y
+    // apartarse es cosa suya. El `TopAppBar` de Material que había antes lo hacía
+    // solo; al escribir la barra a mano se perdió, y el título quedó pintado
+    // encima del reloj y de la batería en TODAS las pantallas.
+    //
     // La chapa ocupa todo el ancho, pero su contenido se ciñe al mismo tope que
-    // la columna. Con el título pegado al borde izquierdo de una pantalla de
-    // 1440 y el contenido centrado, la barra parecía de otra aplicación.
-    Box(modifier.fillMaxWidth().metal(Surface), contentAlignment = Alignment.TopCenter) {
+    // la columna, para que no se despegue de la columna centrada.
+    Box(
+        modifier.fillMaxWidth().metal(Surface).statusBarsPadding(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
     Row(
         Modifier
             .widthIn(max = Spacing.maxContent)
@@ -598,7 +608,12 @@ fun WowNavBar(
     modifier: Modifier = Modifier,
 ) {
     val accent = LocalAccent.current
-    Box(modifier.fillMaxWidth().metal(Surface), contentAlignment = Alignment.TopCenter) {
+    // Igual abajo: sin esto la fila de navegación queda debajo de la barra de
+    // gestos del sistema y la última pestaña no se puede pulsar.
+    Box(
+        modifier.fillMaxWidth().metal(Surface).navigationBarsPadding(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
     Row(Modifier.widthIn(max = Spacing.maxContent).fillMaxWidth()) {
         items.forEach { item ->
             val active = item.route == selectedRoute

@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,7 +29,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.azeroth.companion.ui.theme.Base
+import com.azeroth.companion.ui.theme.BigNumberStyle
 import com.azeroth.companion.ui.theme.LocalAccent
+import com.azeroth.companion.ui.theme.TextHigh
+import com.azeroth.companion.ui.theme.TextMid
+import com.azeroth.companion.ui.theme.readableOn
+
+/** Alto del banner. Ocupa casi un tercio de la pantalla, y debe hacerlo. */
+private val HERO_HEIGHT = 300.dp
 
 /**
  * El retrato del personaje, que preside la app.
@@ -57,93 +67,124 @@ fun CharacterHero(
     Box(
         modifier
             .fillMaxWidth()
-            .height(168.dp)
-            .clip(RoundedCornerShape(Radius.none))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        accent.copy(alpha = 0.22f),
-                        MaterialTheme.colorScheme.surface,
-                    ),
-                ),
-            )
+            .height(HERO_HEIGHT)
+            .background(Base)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it },
     ) {
+        // Halo del color de la clase detrás del personaje. Es lo que hace que el
+        // render se despegue del fondo negro en vez de flotar recortado, y de
+        // paso tiñe la pantalla entera del color de TU clase sin pintar nada.
+        Box(
+            Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
+                .fillMaxWidth(0.75f)
+                .background(
+                    Brush.radialGradient(
+                        listOf(accent.copy(alpha = 0.30f), Color.Transparent),
+                    ),
+                ),
+        )
+
         if (renderUrl != null) {
-            // El render va a la derecha y recortado por arriba: así se ve la
-            // cara y el torso, que es lo que identifica al personaje, en vez de
-            // los pies.
+            // ENTERO y grande, apoyado en el borde inferior.
+            //
+            // Antes iba recortado dentro de una caja de 168dp a la derecha, y en
+            // un móvil real se veía del tamaño de un sello. Es el mejor recurso
+            // que tiene la app —Blizzard publica un render de cuerpo entero de
+            // TU personaje con su equipo puesto, con fondo transparente— y
+            // estaba desperdiciado. `Fit` en vez de `Crop` para no cortarle la
+            // cabeza ni los pies.
             AsyncImage(
                 model = renderUrl,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.TopCenter,
+                contentScale = ContentScale.Fit,
+                alignment = Alignment.BottomCenter,
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .fillMaxSize()
-                    .padding(start = 120.dp),
-            )
-            // Velo por la izquierda para que el texto se lea siempre, aunque el
-            // personaje lleve una armadura clarísima.
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            0f to MaterialTheme.colorScheme.surface,
-                            0.55f to MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),
-                            1f to Color.Transparent,
-                        ),
-                    ),
+                    .align(Alignment.BottomEnd)
+                    .fillMaxHeight(0.96f)
+                    .fillMaxWidth(0.60f),
             )
         }
 
+        // Velo por la izquierda: el nombre tiene que leerse aunque el personaje
+        // lleve una armadura clarísima justo detrás.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        0f to Base,
+                        0.42f to Base.copy(alpha = 0.82f),
+                        0.72f to Color.Transparent,
+                    ),
+                ),
+        )
+        // Y un fundido a negro abajo, para que la primera tarjeta de la pantalla
+        // salga de la imagen en vez de chocar contra ella.
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(72.dp)
+                .background(
+                    Brush.verticalGradient(listOf(Color.Transparent, Base)),
+                ),
+        )
+
         Column(
             Modifier
-                .align(Alignment.CenterStart)
+                .align(Alignment.BottomStart)
                 .padding(Spacing.lg)
-                .fillMaxWidth(0.62f),
+                .fillMaxWidth(0.66f),
         ) {
-            Text(
-                name,
-                style = MaterialTheme.typography.headlineLarge,
-                color = accent,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val line = listOfNotNull(className, spec).joinToString(" · ")
-            if (line.isNotBlank()) {
+            if (realm != null) {
                 Text(
-                    line,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    realm.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = accent.readableOn(Base),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (realm != null) {
+            Text(
+                name,
+                style = MaterialTheme.typography.displaySmall,
+                color = TextHigh,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val line = listOfNotNull(spec, className).joinToString(" ")
+            if (line.isNotBlank()) {
                 Text(
-                    realm,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    line,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMid,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
             if (itemLevel > 0) {
-                Spacer(Modifier.height(Spacing.sm))
-                Row(verticalAlignment = Alignment.Bottom) {
+                Spacer(Modifier.height(Spacing.md))
+                // El ilvl en una placa, no suelto: es la cifra que el jugador
+                // mira primero y con la que se compara con los demás.
+                Row(
+                    Modifier
+                        .background(accent.copy(alpha = 0.16f))
+                        .border(Spacing.hairline, accent.copy(alpha = 0.55f))
+                        .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
                         itemLevel.toString(),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = BigNumberStyle,
+                        color = TextHigh,
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        "ilvl",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp),
+                        "ILVL",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = accent.readableOn(Base),
                     )
                 }
             }
