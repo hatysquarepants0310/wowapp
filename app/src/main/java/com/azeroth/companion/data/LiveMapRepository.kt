@@ -150,6 +150,17 @@ class LiveMapRepository @Inject constructor(
                 )
             }
             .sortedWith(compareByDescending<LiveEvent> { it.active }.thenBy { it.startsAt })
+            // Una fila por evento, no una por ocurrencia.
+            //
+            // `upcoming` devuelve TODAS las repeticiones de la ventana de 27
+            // horas, y un asalto que reaparece cada pocas horas salía seis veces
+            // seguidas con el mismo nombre y el mismo "en curso". La lista se
+            // leía como un error, y de hecho lo era: nadie quiere ver seis veces
+            // el mismo evento, quiere saber cuál es el siguiente.
+            //
+            // Va después de ordenar, así que la que sobrevive es la que importa:
+            // la que está en curso si la hay, y si no la más próxima.
+            .distinctBy { it.id }
             .take(12)
     }
 
