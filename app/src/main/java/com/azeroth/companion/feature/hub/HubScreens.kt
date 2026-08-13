@@ -12,6 +12,16 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.Modifier
+import com.azeroth.companion.ui.components.Spacing
+import com.azeroth.companion.ui.components.WowChip
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.azeroth.companion.R
@@ -66,41 +76,42 @@ fun WorldHubScreen(onNavigate: (String) -> Unit) {
  */
 @Composable
 fun CharacterHubScreen(onNavigate: (String) -> Unit) {
+    // Esta pestaña ERA un menú de cuatro tarjetas que llevaban a otros menús.
+    //
+    // Eso es exactamente el defecto que la app tenía que evitar: si al abrir
+    // "Personaje" lo que ves es un índice, la app no te está enseñando nada
+    // sobre tu personaje, te está haciendo navegar para llegar a lo que ya
+    // querías ver. Es ser una enciclopedia peor que la enciclopedia.
+    //
+    // Ahora la pestaña ES la pantalla del personaje —tu equipo pieza a pieza,
+    // con los iconos y los colores de calidad— y los enlaces a las secciones
+    // hermanas van en una fila compacta al final, que es donde estorban menos.
+    Box(Modifier.fillMaxSize()) {
+        com.azeroth.companion.feature.character.CharacterScreen(
+            footer = {
+                SectionHeader(stringResource(R.string.hub_character_more))
+                CharacterLinks(onNavigate)
+            },
+        )
+    }
+}
+
+/** Los accesos hermanos, en una sola fila de placas en vez de cuatro tarjetas. */
+@Composable
+private fun CharacterLinks(onNavigate: (String) -> Unit) {
     val entries = listOf(
-                HubEntry(
-                    "score", stringResource(R.string.title_score),
-                    stringResource(R.string.more_score_desc), Icons.Filled.TrendingUp,
-                ),
-                HubEntry(
-                    "roster", stringResource(R.string.nav_roster),
-                    stringResource(R.string.more_roster_desc), Icons.Filled.Groups,
-                ),
-                HubEntry(
-                    "progression", stringResource(R.string.nav_progression),
-                    stringResource(R.string.more_progression_desc), Icons.Filled.TrendingUp,
-                ),
-                HubEntry(
-                    "seasons", stringResource(R.string.title_seasons_mplus),
-                    stringResource(R.string.more_seasons_desc), Icons.Filled.EmojiEvents,
-                ),
-            )
-    Screen {
-        item {
-            ScreenTitle(
-                stringResource(R.string.tab_character),
-                subtitle = stringResource(R.string.hub_character_subtitle),
-            )
+        "score" to stringResource(R.string.title_score),
+        "roster" to stringResource(R.string.nav_roster),
+        "progression" to stringResource(R.string.nav_progression),
+        "seasons" to stringResource(R.string.title_seasons_mplus),
+    )
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        entries.forEach { (route, label) ->
+            WowChip(label, selected = false, onClick = { onNavigate(route) })
         }
-        item {
-            HubFeature(
-                title = stringResource(R.string.hub_character_detail),
-                subtitle = stringResource(R.string.hub_character_detail_desc),
-                icon = Icons.Filled.EmojiEvents,
-                onClick = { onNavigate("character") },
-            )
-        }
-        item { SectionHeader(stringResource(R.string.hub_character_more)) }
-        hubGrid(entries, onNavigate)
     }
 }
 

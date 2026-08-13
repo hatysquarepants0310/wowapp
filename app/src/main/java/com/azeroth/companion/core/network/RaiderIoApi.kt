@@ -27,4 +27,11 @@ data class AffixesDto(
 data class AffixDto(
     val name: String = "",
     val description: String = "",
+    /**
+     * Nombre del icono del juego, p. ej. `spell_shadow_shadowfiend`. Raider.IO
+     * lo devuelve y hasta ahora se estaba tirando: por eso los afijos salían
+     * como párrafos de texto sin una sola imagen, que es lo que hacía que la
+     * pantalla se leyera como una wiki y no como algo de World of Warcraft.
+     */
+    val icon: String = "",
 )

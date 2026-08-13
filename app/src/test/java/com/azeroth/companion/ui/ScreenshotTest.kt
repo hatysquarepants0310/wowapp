@@ -42,6 +42,8 @@ import com.azeroth.companion.ui.components.Pill
 import com.azeroth.companion.ui.components.ProgressTrack
 import com.azeroth.companion.ui.components.SectionHeader
 import com.azeroth.companion.ui.components.Spacing
+import com.azeroth.companion.ui.components.StatRowOf
+import com.azeroth.companion.ui.components.StatTile
 import com.azeroth.companion.ui.components.Tooltip
 import com.azeroth.companion.ui.components.TooltipDivider
 import com.azeroth.companion.ui.components.TooltipItemLevel
@@ -189,6 +191,12 @@ private fun Muestrario(nombreHostil: String) {
             }
 
             SectionHeader("Esta semana")
+            // Las cifras en fila, tal y como quedan ahora en Hoy.
+            StatRowOf {
+                StatTile("Jefes de banda", "6", modifier = Modifier.weight(1f))
+                StatTile("Llaves M+", "8", modifier = Modifier.weight(1f), hint = "mejor +14")
+                StatTile("Bóveda", "3/19", modifier = Modifier.weight(1f), valueColor = com.azeroth.companion.ui.theme.Gold)
+            }
             Panel {
                 DataRow("Mazmorras míticas", "8")
                 Divider()

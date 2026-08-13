@@ -35,6 +35,8 @@ import com.azeroth.companion.ui.components.Divider
 import com.azeroth.companion.ui.components.CharacterHero
 import com.azeroth.companion.ui.components.DataRow
 import com.azeroth.companion.ui.components.LootRow
+import com.azeroth.companion.ui.components.StatTile
+import com.azeroth.companion.ui.components.StatRowOf
 import com.azeroth.companion.ui.components.Panel
 import com.azeroth.companion.ui.components.PanelTone
 import com.azeroth.companion.ui.components.Pill
@@ -202,21 +204,29 @@ fun DashboardScreen(
         }
         gutterItem {
             Panel(padding = PaddingValues(Spacing.lg)) {
-                DataRow(
-                    stringResource(R.string.week_raid_bosses),
-                    state.raidBossesThisWeek.toString(),
-                )
-                DataRow(
-                    stringResource(R.string.week_mplus),
-                    state.mythicRunsThisWeek.toString(),
-                    hint = state.bestKeyThisWeek.takeIf { it > 0 }
-                        ?.let { stringResource(R.string.week_best_key, it) },
-                )
-                DataRow(
-                    stringResource(R.string.week_vault_quests),
-                    "${state.vaultQuestsDone}/${state.vaultQuestsTotal}",
-                    valueColor = Gold,
-                )
+                // Las tres cifras de la semana, grandes y en fila: son lo que se
+                // viene a mirar y antes iban como renglones finos indistinguibles
+                // del resto del texto de la pantalla.
+                StatRowOf {
+                    StatTile(
+                        stringResource(R.string.week_raid_bosses),
+                        state.raidBossesThisWeek.toString(),
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatTile(
+                        stringResource(R.string.week_mplus),
+                        state.mythicRunsThisWeek.toString(),
+                        modifier = Modifier.weight(1f),
+                        hint = state.bestKeyThisWeek.takeIf { it > 0 }
+                            ?.let { stringResource(R.string.week_best_key, it) },
+                    )
+                    StatTile(
+                        stringResource(R.string.week_vault_quests),
+                        "${state.vaultQuestsDone}/${state.vaultQuestsTotal}",
+                        modifier = Modifier.weight(1f),
+                        valueColor = Gold,
+                    )
+                }
                 if (state.vaultQuestsTotal > 0) {
                     Spacer(Modifier.height(Spacing.lg))
                     ProgressTrack(

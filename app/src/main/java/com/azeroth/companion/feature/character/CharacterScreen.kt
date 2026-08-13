@@ -1,6 +1,8 @@
 package com.azeroth.companion.feature.character
 
 import androidx.compose.foundation.layout.PaddingValues
+import com.azeroth.companion.ui.theme.QualityColors
+import com.azeroth.companion.ui.components.GameIcon
 import com.azeroth.companion.ui.components.Panel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,7 +41,14 @@ import com.azeroth.companion.data.EquippedItem
  * slot y colección de monturas. Como una armería en el bolsillo.
  */
 @Composable
-fun CharacterScreen(viewModel: CharacterViewModel = hiltViewModel()) {
+fun CharacterScreen(
+    viewModel: CharacterViewModel = hiltViewModel(),
+    /**
+     * Contenido opcional al final. Lo usa la pestaña Personaje para colgar sus
+     * enlaces hermanos sin necesidad de envolver esta pantalla en un menú.
+     */
+    footer: (@Composable () -> Unit)? = null,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     if (state.loading) {
@@ -118,6 +127,9 @@ fun CharacterScreen(viewModel: CharacterViewModel = hiltViewModel()) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        if (footer != null) {
+            item { footer() }
+        }
         item { Spacer(Modifier.height(12.dp)) }
     }
 }
@@ -158,26 +170,51 @@ private fun EquipmentRow(item: EquippedItem) {
         Row(Modifier.fillMaxWidth().padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            item.iconUrl?.let { url ->
-                coil.compose.AsyncImage(
-                    model = url,
-                    contentDescription = item.name,
-                    modifier = Modifier
-                        .size(44.dp),
-                )
-            }
+            // El color de calidad ya venía en el modelo y no se usaba para
+            // nada. Es la información que un jugador lee primero de una pieza:
+            // el marco morado dice "épico" antes que la palabra. Ahora tiñe el
+            // borde del icono y el nombre, como en el juego.
+            val quality = qualityColor(item.quality)
+            GameIcon(item.iconUrl, size = 44.dp, border = quality, contentDescription = item.name)
             Column(Modifier.weight(1f)) {
                 Text(item.slot, style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(item.name, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    item.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = quality,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
             }
             if (item.itemLevel > 0) {
-                Text("ilvl ${item.itemLevel}", style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.secondary)
+                Text(
+                    item.itemLevel.toString(),
+                    style = com.azeroth.companion.ui.theme.NumberStyle,
+                    color = com.azeroth.companion.ui.theme.Gold,
+                )
             }
         }
     }
 }
+
+/**
+ * Los nombres de calidad que devuelve Blizzard, a su color oficial exacto.
+ * Llegan en inglés en mayúsculas (`EPIC`, `LEGENDARY`…) independientemente del
+ * idioma del personaje, porque es el campo `type` y no el traducido.
+ */
+private fun qualityColor(quality: String): androidx.compose.ui.graphics.Color =
+    when (quality.uppercase()) {
+        "POOR" -> QualityColors.Poor
+        "COMMON" -> QualityColors.Common
+        "UNCOMMON" -> QualityColors.Uncommon
+        "RARE" -> QualityColors.Rare
+        "EPIC" -> QualityColors.Epic
+        "LEGENDARY" -> QualityColors.Legendary
+        "ARTIFACT" -> QualityColors.Artifact
+        "HEIRLOOM" -> QualityColors.Heirloom
+        else -> QualityColors.Common
+    }
 
 @Composable
 private fun MountCell(mount: com.azeroth.companion.data.MountEntry, modifier: Modifier = Modifier) {

@@ -1,5 +1,7 @@
 package com.azeroth.companion.feature.content
 
+import androidx.compose.foundation.layout.width
+import com.azeroth.companion.ui.components.GameIcon
 import androidx.compose.foundation.layout.PaddingValues
 import com.azeroth.companion.ui.components.PanelTone
 import com.azeroth.companion.ui.components.Panel
@@ -91,11 +93,18 @@ private fun AffixesTab(state: ContentState, viewModel: ContentViewModel) {
             Spacer(Modifier.height(4.dp))
         }
         items(state.affixes) { affix ->
+            // Con el icono delante, la fila se reconoce sin leerla: el jugador
+            // ya sabe qué es Tiránica por su icono. Sin él eran cuatro párrafos
+            // idénticos de texto.
             Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
-                Column(Modifier.padding(12.dp)) {
-                    Text(affix.name, style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.secondary)
-                    Text(affix.description, style = MaterialTheme.typography.bodySmall)
+                Row(Modifier.padding(12.dp)) {
+                    GameIcon(affix.iconUrl, size = 44.dp, contentDescription = affix.name)
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(affix.name, style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.secondary)
+                        Text(affix.description, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }
