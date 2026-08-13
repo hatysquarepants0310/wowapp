@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -553,4 +555,71 @@ fun ValueWithUnit(
             modifier = Modifier.padding(bottom = 3.dp),
         )
     }
+}
+
+/**
+ * Una cifra grande con su etiqueta, para poner varias en fila.
+ *
+ * Las mismas cifras estaban antes como filas finas de etiqueta-y-valor. Eso
+ * está bien para una tabla larga, pero para las tres cifras que definen tu
+ * semana desperdicia la oportunidad: son lo primero que quieres ver al abrir la
+ * app y merecen el tamaño. En fila y del mismo ancho se comparan de un vistazo.
+ */
+@Composable
+fun StatTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    hint: String? = null,
+    valueColor: Color? = null,
+) {
+    Column(
+        modifier
+            .fillMaxHeight()
+            .metal(SurfaceHigh)
+            .padding(vertical = Spacing.md, horizontal = Spacing.sm),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            value,
+            style = BigNumberStyle,
+            color = valueColor ?: MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
+        Spacer(Modifier.height(Spacing.xs))
+        Text(
+            label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        if (hint != null) {
+            Text(
+                hint,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** Una fila de [StatTile] repartidas a partes iguales. */
+@Composable
+fun StatRowOf(
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit,
+) {
+    // `IntrinsicSize.Min` iguala el alto de todas las casillas al de la más
+    // alta. Sin esto, la que lleva línea de apoyo ("mejor +14") crece y las de
+    // al lado se quedan cortas, y una fila de placas con los bordes inferiores
+    // desalineados se ve descuidada.
+    Row(
+        modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        content = content,
+    )
 }

@@ -22,7 +22,24 @@ data class ExpansionContent(
     val dungeons: List<InstanceSummary>,
     val raids: List<InstanceSummary>,
 )
-data class Affix(val name: String, val description: String)
+data class Affix(
+    val name: String,
+    val description: String,
+    /** URL del icono en la CDN oficial de Blizzard. Null si no vino nombre. */
+    val iconUrl: String? = null,
+)
+
+/**
+ * Icono del juego desde la CDN **oficial** de Blizzard.
+ *
+ * Se usa `render.worldofwarcraft.com` y no la CDN de Wowhead a propósito: este
+ * proyecto no hace scraping de Wowhead (§0.2), y además esa es la fuente que
+ * Blizzard publica para este uso. El tamaño 56 es el que sirve para una casilla
+ * de 48dp sin verse borroso en pantallas de densidad alta.
+ */
+fun gameIconUrl(icon: String?): String? =
+    icon?.takeIf { it.isNotBlank() }
+        ?.let { "https://render.worldofwarcraft.com/us/icons/56/$it.jpg" }
 
 /**
  * Contenido de juego desde fuentes OFICIALES (§0.2, sin scraping de Wowhead):
@@ -110,5 +127,5 @@ class ContentRepository @Inject constructor(
     suspend fun bossLoot(encounterId: Int, isRaid: Boolean = true): List<LootEntry> =
         seasonLootRepository.bossLoot(encounterId, isRaid)
 
-    private fun AffixDto.toAffix() = Affix(name, description)
+    private fun AffixDto.toAffix() = Affix(name, description, gameIconUrl(icon))
 }
