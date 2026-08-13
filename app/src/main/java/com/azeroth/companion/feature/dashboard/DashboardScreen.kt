@@ -1,5 +1,6 @@
 package com.azeroth.companion.feature.dashboard
 
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +58,17 @@ import java.time.Instant
  * abajo. Antes todo estaba en tarjetas del mismo tamaño y no había forma de
  * saber qué mirar primero.
  */
+/**
+ * Un bloque con el margen lateral de la app.
+ *
+ * Existe para que el banner del personaje pueda NO tenerlo. Un banner que llega
+ * al borde se lee como una imagen; con 16dp de negro alrededor se lee como una
+ * tarjeta con una foto dentro, que es justo lo contrario de lo que se busca.
+ */
+private fun LazyListScope.gutterItem(content: @Composable () -> Unit) = item {
+    Box(Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter)) { content() }
+}
+
 @Composable
 fun DashboardScreen(
     onOpenChecklist: (String) -> Unit,
@@ -67,7 +79,13 @@ fun DashboardScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Screen {
+    // Sin margen lateral en el contenedor: lo aplica cada bloque con
+    // `gutterItem`. Es lo que permite que el banner del personaje llegue hasta
+    // el borde de la pantalla en vez de quedarse con 16dp de negro a los lados,
+    // que es lo que separa un banner de una tarjeta más.
+    Screen(
+        contentPadding = PaddingValues(top = 0.dp, bottom = Spacing.xxl),
+    ) {
         if (state.authBroken) {
             item {
                 Panel(tone = PanelTone.Warning) {
@@ -102,7 +120,7 @@ fun DashboardScreen(
         }
 
         // ---- Lo que caduca: el próximo evento y el reset -------------------
-        item {
+        gutterItem {
             Panel(padding = PaddingValues(Spacing.md)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -175,14 +193,14 @@ fun DashboardScreen(
         // guardadas y acertaba de casualidad. Ahora se enseña solo lo que la
         // API afirma con fecha propia, y para saber qué falta por hacer está la
         // lista de misiones de la semana.
-        item {
+        gutterItem {
             SectionHeader(
                 stringResource(R.string.your_week),
                 action = stringResource(R.string.your_week_open),
                 onAction = onOpenWeekly,
             )
         }
-        item {
+        gutterItem {
             Panel(padding = PaddingValues(Spacing.lg)) {
                 DataRow(
                     stringResource(R.string.week_raid_bosses),
