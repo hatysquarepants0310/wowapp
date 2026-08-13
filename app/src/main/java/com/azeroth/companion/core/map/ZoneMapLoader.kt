@@ -151,31 +151,56 @@ class ZoneMapLoader @Inject constructor(
         val outWidth = (realWidth * scale).toInt().coerceAtLeast(1)
         val outHeight = (realHeight * scale).toInt().coerceAtLeast(1)
 
-        val tiles = grid.t.mapIndexed { index, fileId ->
-            async(Dispatchers.IO) { index to tile(fileId) }
-        }.map { it.await() }
-
-        // Si falta más de una casilla el mapa saldría con agujeros: mejor nada.
-        if (tiles.count { it.second == null } > 1) {
-            tiles.forEach { it.second?.recycle() }
-            return@coroutineScope null
-        }
-
         val out = Bitmap.createBitmap(outWidth, outHeight, Bitmap.Config.RGB_565)
         val canvas = Canvas(out)
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
-        tiles.forEach { (index, bitmap) ->
-            if (bitmap == null) return@forEach
-            val row = index / grid.c
-            val col = index % grid.c
-            val dst = RectF(
-                col * TILE * scale,
-                row * TILE * scale,
-                (col + 1) * TILE * scale,
-                (row + 1) * TILE * scale,
-            )
-            canvas.drawBitmap(bitmap, null, dst, paint)
-            bitmap.recycle()
+        var missing = 0
+
+        // POR TANDAS, no todas de golpe.
+        //
+        // Aquí estaba el bug de "solo carga el primer mapa", que ya creí haber
+        // arreglado una vez y no era. Entonces se arregló el bitmap de SALIDA
+        // —escalarlo y pasarlo a RGB_565— pero esta parte seguía haciendo un
+        // `async` por casilla y esperándolas todas juntas en una lista. Una
+        // cuadrícula de 15x10 son 150 casillas de 256x256 descomprimidas y
+        // vivas a la vez: unos 39 MB, exactamente el tamaño que se había
+        // quitado del otro lado. El primer mapa entraba raspando y el segundo
+        // se quedaba sin memoria.
+        //
+        // Y como `compose` va envuelta en `runCatching`, que atrapa también
+        // OutOfMemoryError, el fallo se tragaba en silencio y la zona salía
+        // vacía sin un solo mensaje. Por eso costó tanto verlo.
+        //
+        // Ahora se decodifica una tanda, se dibuja, se recicla y se pasa a la
+        // siguiente: en memoria nunca hay más de MAX_PARALLEL casillas, unos
+        // 2 MB en vez de 39, independientemente del tamaño del mapa.
+        grid.t.withIndex().chunked(MAX_PARALLEL).forEach { chunk ->
+            val decoded = chunk.map { (index, fileId) ->
+                async(Dispatchers.IO) { index to tile(fileId) }
+            }.map { it.await() }
+
+            decoded.forEach { (index, bitmap) ->
+                if (bitmap == null) {
+                    missing++
+                    return@forEach
+                }
+                val row = index / grid.c
+                val col = index % grid.c
+                val dst = RectF(
+                    col * TILE * scale,
+                    row * TILE * scale,
+                    (col + 1) * TILE * scale,
+                    (row + 1) * TILE * scale,
+                )
+                canvas.drawBitmap(bitmap, null, dst, paint)
+                bitmap.recycle()
+            }
+        }
+
+        // Si falta más de una casilla el mapa saldría con agujeros: mejor nada.
+        if (missing > 1) {
+            out.recycle()
+            return@coroutineScope null
         }
         out
     }

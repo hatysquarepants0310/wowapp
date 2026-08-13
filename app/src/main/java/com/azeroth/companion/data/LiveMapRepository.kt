@@ -144,7 +144,13 @@ class LiveMapRepository @Inject constructor(
                 LiveEvent(
                     id = definition.id,
                     name = definition.localizedName(spanish),
-                    zone = definition.zone,
+                    // La zona, legible. Antes se pintaba el identificador tal
+                    // cual y en pantalla salía "voidstorm" y "eversong" en
+                    // minúsculas debajo de cada evento: un dato interno filtrado
+                    // a la interfaz. Se prefiere la ubicación traducida del
+                    // catálogo, y si no la hay se arregla el propio slug.
+                    zone = definition.localizedLocation(spanish)
+                        ?: definition.zone.prettifySlug(),
                     startsAt = occurrence.startsAt,
                     active = occurrence.startsAt <= now && now < occurrence.endsAt,
                 )
@@ -168,4 +174,19 @@ class LiveMapRepository @Inject constructor(
         spanish: Boolean,
     ): String = (if (spanish) name["es_MX"] else name["en_US"])
         ?: name["en_US"] ?: name.values.firstOrNull() ?: id
+
+    private fun com.azeroth.companion.core.model.WorldEventDefinition.localizedLocation(
+        spanish: Boolean,
+    ): String? = ((if (spanish) location["es_MX"] else location["en_US"])
+        ?: location["en_US"] ?: location.values.firstOrNull())
+        ?.takeIf { it.isNotBlank() }
+
+    /**
+     * `void_storm` y `voidstorm` -> "Voidstorm". No traduce —para eso está el
+     * catálogo— pero al menos deja de parecer una variable escapada del código.
+     */
+    private fun String.prettifySlug(): String =
+        split('_', '-', ' ')
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { it.replaceFirstChar(Char::uppercase) }
 }
