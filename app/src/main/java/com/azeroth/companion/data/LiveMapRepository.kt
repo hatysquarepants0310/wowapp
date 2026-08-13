@@ -139,6 +139,15 @@ class LiveMapRepository @Inject constructor(
         // el evento que está EN CURSO: solo mirar hacia delante lo escondería
         // justo cuando más importa.
         return eventsRepository.upcoming(now.minusSeconds(3 * 3600), hours = 24)
+            // Fuera lo que ya TERMINÓ.
+            //
+            // La ventana empieza tres horas antes de ahora para no perderse el
+            // evento en curso, pero eso también arrastra los que ya acabaron. Y
+            // como su hora de inicio queda en el pasado, la cuenta atrás salía
+            // negativa y la pantalla los rotulaba "en curso": ocho eventos
+            // terminados afirmando estar activos a la vez. Un dato en pantalla
+            // que es falso es peor que no tener el dato.
+            .filter { it.endsAt.isAfter(now) }
             .mapNotNull { occurrence ->
                 val definition = definitions[occurrence.definitionId] ?: return@mapNotNull null
                 LiveEvent(

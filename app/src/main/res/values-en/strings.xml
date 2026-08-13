@@ -235,4 +235,8 @@
     <string name="hub_content_more">Explore</string>
     <string name="nav_settings_short">Settings</string>
     <string name="action_back">Back</string>
+    <string name="vault_quests_pending">%1$d to go</string>
+    <string name="vault_quests_all_done">All done</string>
+    <string name="vault_quests_stale">⚠ This data predates the reset. Open the app online to refresh it: some marked as done are available again.</string>
+    <string name="vault_quests_hidden_forever">Hid %1$d one-time quests you already completed: they will not come back.</string>
 </resources>

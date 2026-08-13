@@ -39,6 +39,7 @@ import com.azeroth.companion.ui.components.SectionHeader
 import com.azeroth.companion.ui.components.Spacing
 import com.azeroth.companion.ui.theme.Gold
 import com.azeroth.companion.ui.theme.Positive
+import com.azeroth.companion.ui.theme.Warning
 
 /**
  * Las misiones de la semana, una por una.
@@ -72,9 +73,28 @@ fun LazyListScope.vaultQuestsSection(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Spacer(Modifier.height(Spacing.xs))
+                        // La frase, no la fracción.
+                        //
+                        // "3 / 19" obliga a restar para saber lo único que
+                        // importa. Lo que se viene a preguntar es "¿cuánto me
+                        // falta?", así que se responde con eso y la fracción
+                        // queda debajo, en pequeño, para quien la quiera.
+                        Text(
+                            if (snapshot.vaultPending == 0) {
+                                stringResource(R.string.vault_quests_all_done)
+                            } else {
+                                stringResource(
+                                    R.string.vault_quests_pending,
+                                    snapshot.vaultPending,
+                                )
+                            },
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = if (snapshot.vaultPending == 0) Positive else Gold,
+                        )
                         Text(
                             "${snapshot.vaultDone} / ${snapshot.vaultTotal}",
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = com.azeroth.companion.ui.theme.NumberStyle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -84,11 +104,35 @@ fun LazyListScope.vaultQuestsSection(
                     color = Gold,
                 )
                 Spacer(Modifier.height(Spacing.md))
+                if (snapshot.staleForThisWeek) {
+                    // Sin este aviso la lista miente con toda la confianza del
+                    // mundo: enseñaría como hechas cosas de la semana pasada
+                    // que ya han vuelto a estar disponibles.
+                    Text(
+                        stringResource(R.string.vault_quests_stale),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Warning,
+                    )
+                    Spacer(Modifier.height(Spacing.sm))
+                }
                 Text(
                     stringResource(R.string.vault_quests_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (snapshot.hiddenForever > 0) {
+                    // Se ocultaron cosas: hay que decirlo. Ocultar en silencio
+                    // hace que el usuario dude de si la app las conoce.
+                    Spacer(Modifier.height(Spacing.xs))
+                    Text(
+                        stringResource(
+                            R.string.vault_quests_hidden_forever,
+                            snapshot.hiddenForever,
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

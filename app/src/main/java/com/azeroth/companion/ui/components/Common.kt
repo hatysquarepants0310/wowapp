@@ -37,12 +37,20 @@ fun ConfidenceBadge(confidence: Confidence, modifier: Modifier = Modifier) {
     Pill(label, modifier, color = color)
 }
 
-/** Cuenta regresiva que se refresca cada segundo (§9.1). */
+/**
+ * Cuenta regresiva que se refresca cada segundo (§9.1).
+ *
+ * Ojo con [whenPast]: antes daba por hecho que un objetivo ya pasado significaba
+ * "en curso", y eso era una suposición del componente de dibujo sobre algo que
+ * solo sabe quien le pasa la fecha. En la lista de eventos hacía que los que ya
+ * habían TERMINADO se rotularan como activos. Ahora lo decide quien llama.
+ */
 @Composable
 fun CountdownText(
     target: Instant,
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.displaySmall,
+    whenPast: String = "en curso",
 ) {
     var now by remember { mutableStateOf(Instant.now()) }
     LaunchedEffect(target) {
@@ -52,7 +60,7 @@ fun CountdownText(
         }
     }
     val remaining = Duration.between(now, target)
-    val text = if (remaining.isNegative) "en curso" else formatDuration(remaining)
+    val text = if (remaining.isNegative) whenPast else formatDuration(remaining)
     Text(text = text, style = style, modifier = modifier)
 }
 
