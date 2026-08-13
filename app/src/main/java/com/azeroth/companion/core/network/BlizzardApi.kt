@@ -190,6 +190,20 @@ interface BlizzardApi {
         @Query("locale") locale: String = "es_MX",
     ): ItemDto
 
+    /**
+     * Arte de una mazmorra o banda.
+     *
+     * Devuelve el `tile` del Compendio de Aventuras: la ilustración a color que
+     * el juego enseña detrás de cada instancia. Es arte oficial de Blizzard, de
+     * su propia CDN, y es exactamente lo que hace que una pantalla se vea de
+     * World of Warcraft en vez de una lista. Estaba sin usar.
+     */
+    @GET("/data/wow/media/journal-instance/{id}")
+    suspend fun journalInstanceMedia(
+        @Path("id") id: Int,
+        @Query("namespace") namespace: String,
+    ): MediaDto
+
     @GET("/data/wow/media/item/{id}")
     suspend fun itemMedia(
         @Path("id") id: Int,

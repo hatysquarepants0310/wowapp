@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.azeroth.companion.ui.theme.Base
+import com.azeroth.companion.ui.theme.Gold
 import com.azeroth.companion.ui.theme.BigNumberStyle
 import com.azeroth.companion.ui.theme.NumberStyle
 import com.azeroth.companion.ui.theme.LocalAccent
@@ -185,10 +186,13 @@ fun SectionHeader(
             .padding(top = Spacing.lg, bottom = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // La cabecera de sección en oro. Es el recurso con el que el juego
+        // separa bloques, y hace más por que esto parezca WoW que cualquier
+        // ajuste de gris.
         Text(
             title.uppercase(),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Gold,
             modifier = Modifier.weight(1f),
         )
         if (action != null && onAction != null) {

@@ -22,6 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -206,12 +208,50 @@ private fun InstanceCard(instance: InstanceSummary, state: ContentState, viewMod
         tone = if (focused) PanelTone.Accent else PanelTone.Default,
         padding = PaddingValues(0.dp),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(instance.name, style = MaterialTheme.typography.titleSmall)
+        // La cabecera de la tarjeta lleva el ARTE de la mazmorra a sangre.
+        //
+        // Esto es lo que faltaba. Una lista de nombres de mazmorra es una lista;
+        // la misma lista con la ilustración de cada una detrás es World of
+        // Warcraft. El arte es oficial, del Compendio de Aventuras, servido por
+        // la CDN de Blizzard.
+        Box(Modifier.fillMaxWidth().height(96.dp)) {
+            if (instance.artUrl != null) {
+                coil.compose.AsyncImage(
+                    model = instance.artUrl,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            // Velo de abajo hacia arriba: el nombre se apoya en la parte oscura
+            // y se lee siempre, sea cual sea la ilustración que haya detrás.
+            Box(
+                Modifier.fillMaxSize().background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        0f to androidx.compose.ui.graphics.Color.Transparent,
+                        0.45f to com.azeroth.companion.ui.theme.Base.copy(alpha = 0.55f),
+                        1f to com.azeroth.companion.ui.theme.Base.copy(alpha = 0.95f),
+                    ),
+                ),
+            )
+            Row(
+                Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    instance.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = com.azeroth.companion.ui.theme.TextHigh,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
                 Text(if (bosses == null) "▸" else "▾",
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+        Column(Modifier.padding(12.dp)) {
             AnimatedVisibility(visible = bosses != null) {
                 Column(Modifier.padding(top = 6.dp)) {
                     if (bosses.isNullOrEmpty()) {

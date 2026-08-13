@@ -11,10 +11,21 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
-data class InstanceSummary(val id: Int, val name: String)
+data class InstanceSummary(
+    val id: Int,
+    val name: String,
+    /**
+     * Arte oficial de la instancia (el `tile` del Compendio de Aventuras).
+     * Null si Blizzard no publica arte para esa instancia, que pasa con algunas
+     * antiguas: en ese caso la tarjeta cae a color liso, nunca a un hueco.
+     */
+    val artUrl: String? = null,
+)
 data class Boss(val id: Int, val name: String)
 data class ExpansionRef(val id: Int, val name: String, val isCurrent: Boolean)
 data class ExpansionContent(
@@ -66,6 +77,7 @@ class ContentRepository @Inject constructor(
     private val bossCache = mutableMapOf<Int, List<Boss>>()
     private val expansionCache = mutableMapOf<Int, ExpansionContent>()
     private var expansionsRefCache: List<ExpansionRef>? = null
+    private val artCache = mutableMapOf<Int, String>()
 
     /** ID de expansión actual definido por el catálogo (Midnight por defecto). */
     suspend fun currentExpansionId(): Int = catalogRepository.load().journalExpansionId
@@ -76,6 +88,23 @@ class ContentRepository @Inject constructor(
             val dto = raiderIo.affixes(region)
             dto.title to dto.affix_details.map { it.toAffix() }
         }.getOrNull()
+    }
+
+    /**
+     * El arte de una instancia, cacheado. `tile` es la ilustración ancha del
+     * Compendio; si no viene, se usa cualquier otro asset antes que rendirse.
+     */
+    private suspend fun instanceArt(instanceId: Int): String? {
+        artCache[instanceId]?.let { return it.ifBlank { null } }
+        val region = settingsRepository.settings.first().region
+        val api = apiFactory.forRegion(region)
+        val url = runCatching {
+            val media = api.journalInstanceMedia(instanceId, region.namespaceStatic)
+            media.assets.firstOrNull { it.key == "tile" }?.value
+                ?: media.assets.firstOrNull()?.value
+        }.getOrNull()
+        artCache[instanceId] = url.orEmpty()
+        return url
     }
 
     /** Todas las expansiones del juego; la actual marcada, el resto son "anteriores". */
@@ -100,11 +129,22 @@ class ContentRepository @Inject constructor(
         val api = apiFactory.forRegion(region)
         return runCatching {
             val exp = api.journalExpansion(expansionId, region.namespaceStatic)
-            ExpansionContent(
-                name = exp.name,
-                dungeons = exp.dungeons.map { InstanceSummary(it.id, it.name ?: "") },
-                raids = exp.raids.map { InstanceSummary(it.id, it.name ?: "") },
-            ).also { expansionCache[expansionId] = it }
+            // El arte de cada instancia va en su propia petición, así que se
+            // piden todas a la vez. Si una falla, esa tarjeta se queda sin arte
+            // y las demás no se enteran: el arte es un adorno, no un requisito.
+            coroutineScope {
+                val dungeons = exp.dungeons.map { ref ->
+                    async { InstanceSummary(ref.id, ref.name ?: "", instanceArt(ref.id)) }
+                }
+                val raids = exp.raids.map { ref ->
+                    async { InstanceSummary(ref.id, ref.name ?: "", instanceArt(ref.id)) }
+                }
+                ExpansionContent(
+                    name = exp.name,
+                    dungeons = dungeons.map { it.await() },
+                    raids = raids.map { it.await() },
+                ).also { expansionCache[expansionId] = it }
+            }
         }.getOrNull()
     }
 
