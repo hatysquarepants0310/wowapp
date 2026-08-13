@@ -235,4 +235,8 @@
     <string name="hub_content_more">Explorar</string>
     <string name="nav_settings_short">Ajustes</string>
     <string name="action_back">Atrás</string>
+    <string name="vault_quests_pending">Te faltan %1$d</string>
+    <string name="vault_quests_all_done">Todo hecho</string>
+    <string name="vault_quests_stale">⚠ Estos datos son de antes del reset. Abre la app con conexión para actualizarlos: algunas marcadas como hechas ya han vuelto a estar disponibles.</string>
+    <string name="vault_quests_hidden_forever">Se ocultaron %1$d misiones de una sola vez que ya completaste: no vuelven a aparecer.</string>
 </resources>
