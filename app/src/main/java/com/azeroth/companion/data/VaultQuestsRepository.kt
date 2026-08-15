@@ -116,50 +116,46 @@ class VaultQuestsRepository @Inject constructor(
         val lastReset = runCatching {
             eventsRepository.resetClock().lastWeeklyReset(Instant.now())
         }.getOrNull()
+        val before = lastReset?.let { snapshotDao.lastBefore(character.id, it) }?.let { snap ->
+            runCatching {
+                json.decodeFromString(ListSerializer(Int.serializer()), snap.completedQuestIdsJson).toSet()
+            }.getOrNull()
+        }
 
         var hiddenForever = 0
 
         val groups = catalog.weeklyTasks.mapNotNull { task ->
             val ids = questIdsOf(task.detectionRule)
-            if (ids.isEmpty() || ids.size > MAX_QUESTS_PER_GROUP) return@mapNotNull null
+            if (ids.isEmpty()) return@mapNotNull null
+            if (task.resetPeriod == ResetPeriod.ONE_TIME && ids.all { it in completed }) {
+                hiddenForever += ids.size
+                return@mapNotNull null
+            }
 
-            // Qué significa "completada" depende de si la tarea se repite.
-            //
-            // La API devuelve las misiones que el personaje ha completado
-            // ALGUNA VEZ. Para una misión semanal eso equivale a "hecha esta
-            // semana", porque al pasar el reset Blizzard la quita de esa lista
-            // y vuelve a estar disponible. Para una misión de UNA SOLA VEZ
-            // significa "hecha para siempre".
-            //
-            // Antes se trataban igual, y por eso la lista mezclaba lo que
-            // puedes hacer ahora con cosas que hiciste hace meses y no van a
-            // volver. Eso no es una lista de tareas, es un historial.
-            val repeats = task.resetPeriod != ResetPeriod.ONE_TIME
+            val title = task.localizedTitle(spanish)
+            val repeatable = isRepeatable(task.detectionRule)
+            val thisWeekIds = if (repeatable) {
+                ids.filter { it in completed }.toSet()
+            } else {
+                if (before == null) emptySet() else (completed - before).intersect(ids.toSet())
+            }
 
-            val quests = ids.mapNotNull { id ->
-                // Sin nombre no hay fila: un "#93416" no le dice nada a nadie.
-                val name = storylinesRepository.questName(id) ?: return@mapNotNull null
-                val hecha = id in completed
-                // Una misión de una sola vez ya hecha no vuelve: fuera de la
-                // lista. Se cuentan para poder decir cuántas se ocultaron, que
-                // es distinto de esconderlas sin avisar.
-                if (hecha && !repeats) {
-                    hiddenForever++
-                    return@mapNotNull null
+            val quests = when {
+                thisWeekIds.isNotEmpty() -> thisWeekIds.mapNotNull { id ->
+                    namedQuest(id, done = true)
                 }
-                VaultQuest(
-                    questId = id,
-                    name = name,
-                    zone = storylinesRepository.questZoneName(id),
-                    done = hecha,
+                repeatable || before != null -> listOf(
+                    VaultQuest(ids.first(), title, null, done = false),
+                )
+                else -> listOf(
+                    VaultQuest(ids.first(), title, null, done = false),
                 )
             }
             if (quests.isEmpty()) return@mapNotNull null
             VaultQuestGroup(
                 taskId = task.id,
-                title = task.localizedTitle(spanish),
+                title = title,
                 feedsVault = task.id in feeders,
-                // Lo pendiente primero: es lo que el jugador viene a buscar.
                 quests = quests.sortedWith(compareBy({ it.done }, { it.name })),
             )
         }
@@ -184,6 +180,18 @@ class VaultQuestsRepository @Inject constructor(
     private fun TrackedTask.localizedTitle(spanish: Boolean): String =
         (if (spanish) title["es_MX"] else title["en_US"])
             ?: title["en_US"] ?: title.values.firstOrNull() ?: id
+
+    private suspend fun namedQuest(id: Int, done: Boolean): VaultQuest? {
+        val name = storylinesRepository.questName(id) ?: return null
+        return VaultQuest(id, name, storylinesRepository.questZoneName(id), done)
+    }
+
+    private fun isRepeatable(rule: DetectionRule): Boolean = when (rule) {
+        is DetectionRule.QuestCompleted -> rule.repeatable
+        is DetectionRule.AnyOf -> rule.rules.any { isRepeatable(it) }
+        is DetectionRule.AllOf -> rule.rules.any { isRepeatable(it) }
+        else -> true
+    }
 
     private fun questIdsOf(rule: DetectionRule): List<Int> = when (rule) {
         is DetectionRule.QuestCompleted -> rule.questIds

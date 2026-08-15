@@ -150,6 +150,7 @@ fun LiveMapScreen(
                 ZoneMap(
                     zone = zone,
                     art = state.maps[zone.uiMapId],
+                    loadingArt = state.loadingMaps && state.maps[zone.uiMapId] == null,
                     focused = focusedPin,
                     onPinTap = { focusedPin = it },
                 )
@@ -239,6 +240,7 @@ private fun ZoneChips(zones: List<LiveZone>, selected: Int, onSelect: (Int) -> U
 private fun ZoneMap(
     zone: LiveZone,
     art: android.graphics.Bitmap?,
+    loadingArt: Boolean,
     focused: MapPin?,
     onPinTap: (MapPin) -> Unit,
 ) {
@@ -271,6 +273,13 @@ private fun ZoneMap(
                 contentDescription = null,
                 contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
                 modifier = Modifier.fillMaxSize(),
+            )
+        } else if (loadingArt) {
+            Text(
+                stringResource(R.string.live_map_loading),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Center),
             )
         }
         Canvas(

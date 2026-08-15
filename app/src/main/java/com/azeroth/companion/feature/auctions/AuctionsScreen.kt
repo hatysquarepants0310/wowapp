@@ -97,17 +97,27 @@ fun AuctionsScreen(viewModel: AuctionsViewModel = hiltViewModel()) {
             )
         }
 
-        item {
-            SegmentedRow(
-                options = listOf(
-                    stringResource(R.string.auctions_tab_expensive),
-                    stringResource(R.string.auctions_tab_traded),
-                ),
-                selected = if (state.tab == AuctionTab.TRADED) 1 else 0,
-                onSelect = {
-                    viewModel.selectTab(if (it == 0) AuctionTab.EXPENSIVE else AuctionTab.TRADED)
-                },
-            )
+        if (state.tab != AuctionTab.SEARCH) {
+            item {
+                SegmentedRow(
+                    options = listOf(
+                        stringResource(R.string.auctions_tab_expensive),
+                        stringResource(R.string.auctions_tab_traded),
+                    ),
+                    selected = if (state.tab == AuctionTab.TRADED) 1 else 0,
+                    onSelect = {
+                        viewModel.selectTab(if (it == 0) AuctionTab.EXPENSIVE else AuctionTab.TRADED)
+                    },
+                )
+            }
+        } else {
+            item {
+                Text(
+                    stringResource(R.string.auctions_search_count, state.rows.size),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         if (state.loading && state.rows.isEmpty()) {

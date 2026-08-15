@@ -2,6 +2,7 @@ package com.azeroth.companion.core.map
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
@@ -92,7 +93,7 @@ class ZoneMapLoader @Inject constructor(
             .mapNotNull { grids[it] }
             .flatMap { it.t }
             .distinct()
-            .filterNot { File(cacheDir, "$it.blp").let { f -> f.exists() && f.length() > 0 } }
+            .filterNot { File(cacheDir, "$it.blp").let { f -> f.exists() && f.length() > 64 && isBlp(f) } }
         if (pending.isEmpty()) return
         withContext(Dispatchers.IO) {
             val gate = Semaphore(MAX_PARALLEL)
@@ -100,7 +101,7 @@ class ZoneMapLoader @Inject constructor(
                 pending.forEach { fileId ->
                     launch {
                         gate.withPermit {
-                            download(fileId)?.let { data ->
+                            downloadBlp(fileId)?.let { data ->
                                 runCatching { File(cacheDir, "$fileId.blp").writeBytes(data) }
                             }
                         }
@@ -117,10 +118,11 @@ class ZoneMapLoader @Inject constructor(
     suspend fun load(uiMapId: Int): Bitmap? {
         memory.get(uiMapId)?.let { return it }
         if (!settingsRepository.settings.first().downloadMapArt) return null
-        val grid = grids()[uiMapId] ?: return null
-        return runCatching { compose(grid) }.getOrNull()?.also {
-            memory.put(uiMapId, it)
-        }
+        val grid = grids()[uiMapId]
+        val composed = grid?.let { runCatching { compose(it) }.getOrNull() }
+        val bitmap = composed ?: jpegFallback(uiMapId) ?: return null
+        memory.put(uiMapId, bitmap)
+        return bitmap
     }
 
     /**
@@ -207,22 +209,39 @@ class ZoneMapLoader @Inject constructor(
 
     private fun tile(fileId: Int): Bitmap? {
         val cached = File(cacheDir, "$fileId.blp")
-        val bytes = if (cached.exists() && cached.length() > 0) {
+        if (cached.exists() && !isBlp(cached)) cached.delete()
+        val bytes = if (cached.exists() && cached.length() > 64) {
             runCatching { cached.readBytes() }.getOrNull()
         } else {
-            download(fileId)?.also { data ->
-                runCatching { cached.writeBytes(data) }
+            downloadBlp(fileId)?.also { data ->
+                if (isBlp(data)) runCatching { cached.writeBytes(data) }
             }
         } ?: return null
         return BlpDecoder.decode(bytes)
     }
 
-    private fun download(fileId: Int): ByteArray? {
+    private fun jpegFallback(uiMapId: Int): Bitmap? {
+        val cached = File(cacheDir, "$uiMapId.jpg")
+        val bytes = if (cached.exists() && cached.length() > 1_000) {
+            runCatching { cached.readBytes() }.getOrNull()
+        } else {
+            downloadUrl("$JPEG_SOURCE/$uiMapId.jpg")?.also { data ->
+                if (data.size > 1_000 && data[0] == 0xFF.toByte()) {
+                    runCatching { cached.writeBytes(data) }
+                }
+            }
+        } ?: return null
+        return runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }.getOrNull()
+    }
+
+    private fun downloadBlp(fileId: Int): ByteArray? =
+        downloadUrl("$TILE_SOURCE/$fileId?download")?.takeIf(::isBlp)
+
+    private fun downloadUrl(url: String): ByteArray? {
         val request = Request.Builder()
-            .url("$TILE_SOURCE/$fileId?download")
-            // Sin User-Agent de navegador la fuente responde con una página de
-            // bloqueo en vez del archivo.
+            .url(url)
             .header("User-Agent", USER_AGENT)
+            .header("Accept", "*/*")
             .build()
         return runCatching {
             client.newCall(request).execute().use { response ->
@@ -230,6 +249,19 @@ class ZoneMapLoader @Inject constructor(
             }
         }.getOrNull()
     }
+
+    private fun isBlp(file: File): Boolean = runCatching {
+        val head = ByteArray(4)
+        file.inputStream().use { it.read(head) }
+        isBlp(head)
+    }.getOrDefault(false)
+
+    private fun isBlp(data: ByteArray): Boolean =
+        data.size >= 4 &&
+            data[0] == 'B'.code.toByte() &&
+            data[1] == 'L'.code.toByte() &&
+            data[2] == 'P'.code.toByte() &&
+            data[3] == '2'.code.toByte()
 
     private suspend fun grids(): Map<Int, MapTileGrid> {
         grids?.let { return it }
@@ -273,6 +305,7 @@ class ZoneMapLoader @Inject constructor(
         /** Presupuesto de la caché en memoria: unos seis mapas. */
         const val MEMORY_BUDGET_BYTES = 18 * 1024 * 1024
         const val TILE_SOURCE = "https://wago.tools/api/casc"
+        const val JPEG_SOURCE = "https://wow.zamimg.com/images/wow/maps/enus/original"
         const val USER_AGENT =
             "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36"
     }

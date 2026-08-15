@@ -184,6 +184,10 @@ visible al sincronizar** (éxito o motivo del error); y **actualizador robusto**
 descarga, verificación de integridad del APK y ruta guiada si Android pide permiso para instalar
 (la causa del "error de paquete").
 
+**v5.1.0** — Paleta fría (ya no marrón). Mapas de zona con arte real y
+respaldo si wago falla. La casa de subastas busca en el mercado entero.
+Semanales: solo lo de **esta** semana de reset.
+
 **v5.0.0** — UI: se acabaron las chapas cuadradas. Paneles con radio amplio en
 toda la app; barras de chrome siguen a borde.
 

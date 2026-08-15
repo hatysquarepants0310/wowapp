@@ -38,6 +38,7 @@ class AuctionsViewModel @Inject constructor(
     val state: StateFlow<AuctionsUiState> = _state.asStateFlow()
 
     private var searchJob: Job? = null
+    private var reloadJob: Job? = null
 
     init {
         reload()
@@ -56,9 +57,13 @@ class AuctionsViewModel @Inject constructor(
     }
 
     fun search(query: String) {
-        _state.update { it.copy(query = query, tab = AuctionTab.SEARCH) }
-        // Un rebote corto: buscar en cada pulsación recorrería 25.000 nombres
-        // por letra y se notaría al escribir.
+        val trimmed = query
+        if (trimmed.isBlank()) {
+            _state.update { it.copy(query = "", tab = AuctionTab.EXPENSIVE) }
+            reload()
+            return
+        }
+        _state.update { it.copy(query = trimmed, tab = AuctionTab.SEARCH) }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(220)
@@ -81,7 +86,8 @@ class AuctionsViewModel @Inject constructor(
     }
 
     private fun reload() {
-        viewModelScope.launch {
+        reloadJob?.cancel()
+        reloadJob = viewModelScope.launch {
             _state.update { it.copy(loading = true) }
             val current = _state.value
             val rows = runCatching {

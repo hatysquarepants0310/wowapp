@@ -55,8 +55,13 @@ class DetectionEngine {
                 val now = current?.completedQuestIds.orEmpty()
                 val before = current?.questsBeforeReset
                 when {
-                    // Con una lectura anterior al reset la respuesta es exacta,
-                    // valga la misión para una semana o para siempre.
+                    rule.repeatable -> {
+                        val done = now.count { it in rule.questIds }
+                        DetectionResult(
+                            (done * rule.countsAs).coerceAtLeast(0),
+                            if (before != null) Confidence.CONFIRMED else Confidence.ESTIMATED,
+                        )
+                    }
                     before != null -> {
                         val done = (now - before).count { it in rule.questIds }
                         DetectionResult(
@@ -64,11 +69,6 @@ class DetectionEngine {
                             if (done > 0) Confidence.CONFIRMED else Confidence.ESTIMATED,
                         )
                     }
-                    // Sin esa lectura, solo las repetibles admiten conclusión:
-                    // si está marcada es que se hizo tras el último reset.
-                    rule.repeatable -> estimated(now.count { it in rule.questIds } * rule.countsAs)
-                    // Series rotatorias sin línea base: no se puede saber si esa
-                    // semana concreta se hizo hace un mes o ayer.
                     else -> DetectionResult(0, Confidence.PREDICTED)
                 }
             }

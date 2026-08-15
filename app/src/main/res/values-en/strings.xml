@@ -156,6 +156,7 @@
     <string name="auctions_scope_commodities">Commodities (region)</string>
     <string name="auctions_scope_realm">Your realm</string>
     <string name="auctions_search_hint">Search an item</string>
+    <string name="auctions_search_count">%1$d results on the market</string>
     <string name="auctions_tab_expensive">Priciest</string>
     <string name="auctions_tab_traded">Most traded</string>
     <string name="auctions_empty">No prices yet</string>
@@ -190,7 +191,8 @@
     <string name="live_quests_here">Quests in this zone</string>
     <string name="live_no_quests">No active quests to place</string>
     <string name="live_no_quests_detail">Pick up quests in game and they show up here with their exact position.</string>
-    <string name="live_map_note">Positions come from the client tables, the same ones TomTom uses. The backdrop is drawn here: the map art belongs to Blizzard and is not shipped with the app.</string>
+    <string name="live_map_note">Positions come from the client tables, the same ones TomTom uses.</string>
+    <string name="live_map_loading">Loading zone map…</string>
     <string name="more_auctions_desc">Market prices for your region and realm</string>
     <string name="more_news_desc">Official news without leaving the app</string>
     <string name="more_live_desc">Events and active quests on the map</string>

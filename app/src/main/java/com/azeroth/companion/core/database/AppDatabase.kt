@@ -182,6 +182,9 @@ interface AuctionPriceDao {
     @Query("SELECT * FROM auction_price WHERE scope = :scope AND itemId IN (:itemIds)")
     suspend fun forItems(scope: Int, itemIds: List<Int>): List<AuctionPriceEntity>
 
+    @Query("SELECT itemId FROM auction_price WHERE scope = :scope")
+    suspend fun itemIds(scope: Int): List<Int>
+
     /**
      * Lo más caro que de verdad está en venta.
      *

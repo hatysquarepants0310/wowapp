@@ -69,12 +69,11 @@ class RotatingQuestDetectionTest {
         assertEquals(0, result.completions)
     }
 
-    /** Con línea base disponible, la repetible también gana exactitud. */
     @Test
-    fun `repetible con línea base ignora lo anterior al reset`() {
+    fun `repetible con línea base usa presencia actual`() {
         val rule = DetectionRule.QuestCompleted(listOf(100, 101), repeatable = true)
         val result = engine.evaluate(rule, null, view(setOf(100, 101), before = setOf(100)))
-        assertEquals(1, result.completions)
+        assertEquals(2, result.completions)
         assertEquals(Confidence.CONFIRMED, result.confidence)
     }
 }

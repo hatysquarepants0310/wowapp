@@ -101,9 +101,23 @@ class AuctionRepository @Inject constructor(
     }
 
     suspend fun search(scope: AuctionScope, query: String): List<AuctionListing> {
-        val ids = itemCatalog.search(query)
+        val needle = query.trim()
+        if (needle.length < 2) return emptyList()
+        val key = scopeKey(scope)
+        val catalogIds = itemCatalog.search(needle)
+        val listed = dao.itemIds(key).toSet()
+        val fromCatalog = catalogIds.filter { it in listed }
+        val ids = if (fromCatalog.isNotEmpty()) {
+            fromCatalog
+        } else {
+            listed.filter { id ->
+                itemCatalog.name(id)?.contains(needle, ignoreCase = true) == true
+            }.take(200)
+        }
         if (ids.isEmpty()) return emptyList()
-        return decorate(dao.forItems(scopeKey(scope), ids))
+        return ids.chunked(400)
+            .flatMap { dao.forItems(key, it) }
+            .let { decorate(it) }
             .sortedBy { it.minUnitPrice }
     }
 

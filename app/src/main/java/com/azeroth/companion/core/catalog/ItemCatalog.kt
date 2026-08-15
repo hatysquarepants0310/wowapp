@@ -63,22 +63,23 @@ class ItemCatalog @Inject constructor(
     }
 
     /** Objetos cuyo nombre contiene [query], para el buscador de la casa. */
-    suspend fun search(query: String, limit: Int = 60): List<Int> {
+    suspend fun search(query: String, limit: Int = 200): List<Int> {
         ensureLoaded()
         val needle = query.trim().lowercase()
         if (needle.length < 2) return emptyList()
-        val source = names ?: return emptyList()
-        val exact = ArrayList<Int>()
-        val partial = ArrayList<Int>()
-        for ((id, name) in source) {
+        val combined = LinkedHashMap<Int, String>()
+        fallbackNames?.forEach { (id, name) -> combined[id] = name }
+        names?.forEach { (id, name) -> combined[id] = name }
+        val starts = ArrayList<Int>()
+        val contains = ArrayList<Int>()
+        for ((id, name) in combined) {
             val lower = name.lowercase()
             when {
-                lower.startsWith(needle) -> exact += id
-                lower.contains(needle) -> partial += id
+                lower.startsWith(needle) -> starts += id
+                lower.contains(needle) -> contains += id
             }
-            if (exact.size >= limit) break
         }
-        return (exact + partial).take(limit)
+        return (starts + contains).distinct().take(limit)
     }
 
     private fun readNames(asset: String): Map<Int, String> = runCatching {
