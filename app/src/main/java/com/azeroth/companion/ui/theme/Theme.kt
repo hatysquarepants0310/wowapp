@@ -64,10 +64,10 @@ import androidx.compose.ui.graphics.Color
 //
 // Medido: la peor clase queda en 3,04 sobre el panel elevado, igual que las
 // rampas anteriores, y el oro llega a 10,9:1. No se pierde nada de contraste.
-internal val Base = Color(0xFF08090C)
-internal val Surface = Color(0xFF12151C)
-internal val SurfaceHigh = Color(0xFF1A1F28)
-internal val Line = Color(0xFF2C3340)
+internal val Base = Color(0xFF07080B)
+internal val Surface = Color(0xFF0E1116)
+internal val SurfaceHigh = Color(0xFF151920)
+internal val Line = Color(0xFF2A3140)
 
 internal val TextHigh = Color(0xFFECEDF0)
 internal val TextMid = Color(0xFFA3A8B4)
@@ -112,9 +112,9 @@ private fun scheme(accent: Color) = darkColorScheme(
     surfaceContainerLow = Surface,
     surfaceContainer = Surface,
     surfaceContainerHigh = SurfaceHigh,
-    surfaceContainerHighest = Color(0xFF222833),
+    surfaceContainerHighest = Color(0xFF1C222C),
     outline = Line,
-    outlineVariant = Color(0xFF1E2430),
+    outlineVariant = Color(0xFF1A1F28),
     scrim = Color(0xCC000000),
     error = Danger,
     onError = Color(0xFF2A0906),

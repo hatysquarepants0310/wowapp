@@ -57,8 +57,9 @@ class DetectionEngine {
                 when {
                     rule.repeatable -> {
                         val done = now.count { it in rule.questIds }
-                        DetectionResult(
-                            (done * rule.countsAs).coerceAtLeast(0),
+                        if (done <= 0) DetectionResult(0, Confidence.PREDICTED)
+                        else DetectionResult(
+                            done * rule.countsAs,
                             if (before != null) Confidence.CONFIRMED else Confidence.ESTIMATED,
                         )
                     }
