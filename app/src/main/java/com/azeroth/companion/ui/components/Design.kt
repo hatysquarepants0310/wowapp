@@ -115,13 +115,9 @@ object Spacing {
  * diminutas.
  */
 object Radius {
-    /** Esquina viva. Lo normal. */
     val none: Dp = 0.dp
-
-    /** 2dp: solo para quitar el aliasing de piezas de menos de 24dp. */
-    val soft: Dp = 2.dp
-
-    /** Círculo. Reservado al retrato y a los puntos de estado. */
+    val soft: Dp = 10.dp
+    val panel: Dp = 20.dp
     val round: Dp = 999.dp
 }
 
@@ -408,9 +404,14 @@ fun Pill(
         text,
         style = MaterialTheme.typography.labelSmall,
         color = if (filled) Base else color,
-        modifier = modifier
+        modifier =         modifier
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(Radius.soft))
             .background(if (filled) color else color.copy(alpha = 0.13f))
-            .border(Spacing.hairline, color.copy(alpha = if (filled) 0f else 0.34f))
+            .border(
+                Spacing.hairline,
+                color.copy(alpha = if (filled) 0f else 0.34f),
+                androidx.compose.foundation.shape.RoundedCornerShape(Radius.soft),
+            )
             .padding(horizontal = Spacing.sm, vertical = 3.dp),
     )
 }

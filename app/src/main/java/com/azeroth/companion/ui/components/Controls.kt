@@ -557,7 +557,7 @@ fun WowTopBar(
     // La chapa ocupa todo el ancho, pero su contenido se ciñe al mismo tope que
     // la columna, para que no se despegue de la columna centrada.
     Box(
-        modifier.fillMaxWidth().metal(Surface).statusBarsPadding(),
+        modifier.fillMaxWidth().metal(Surface, corner = 0.dp).statusBarsPadding(),
         contentAlignment = Alignment.TopCenter,
     ) {
     Row(
@@ -611,7 +611,7 @@ fun WowNavBar(
     // Igual abajo: sin esto la fila de navegación queda debajo de la barra de
     // gestos del sistema y la última pestaña no se puede pulsar.
     Box(
-        modifier.fillMaxWidth().metal(Surface).navigationBarsPadding(),
+        modifier.fillMaxWidth().metal(Surface, corner = 0.dp).navigationBarsPadding(),
         contentAlignment = Alignment.TopCenter,
     ) {
     Row(Modifier.widthIn(max = Spacing.maxContent).fillMaxWidth()) {

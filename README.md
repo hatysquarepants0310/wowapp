@@ -184,6 +184,9 @@ visible al sincronizar** (éxito o motivo del error); y **actualizador robusto**
 descarga, verificación de integridad del APK y ruta guiada si Android pide permiso para instalar
 (la causa del "error de paquete").
 
+**v5.0.0** — UI: se acabaron las chapas cuadradas. Paneles con radio amplio en
+toda la app; barras de chrome siguen a borde.
+
 **v1.9.0** — **Historias reorganizadas en jerarquía** estilo BtWQuests: temporada (con emblema y
 color propios) → categoría (campaña principal / historias de zona / otras) → historias **numeradas
 en orden** → misiones con ✓/○ y detalle al tocar (zona, nivel mínimo, recompensa, descripción).
