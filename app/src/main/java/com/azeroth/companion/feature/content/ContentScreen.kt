@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
@@ -42,6 +41,7 @@ import com.azeroth.companion.ui.components.WowTextField
 import com.azeroth.companion.ui.components.WowTextButton
 import com.azeroth.companion.ui.components.WowLoading
 import com.azeroth.companion.ui.components.Spacing
+import com.azeroth.companion.data.Affix
 import com.azeroth.companion.data.InstanceSummary
 
 /**
@@ -83,9 +83,9 @@ fun ContentScreen(
         // para que el jugador encuentre directamente lo que busca, como en Wowhead.
         val query = state.filterQuery
         if (query.isNotBlank()) {
-            val matchesAffixes = state.affixes.any { it.matches(query) }
-            val matchesDungeons = state.expansion?.dungeons?.any { it.matches(query) } == true
-            val matchesRaids = state.expansion?.raids?.any { it.matches(query) } == true
+            val matchesAffixes = state.affixes.any { it.nameHits(query) }
+            val matchesDungeons = state.expansion?.dungeons?.any { it.nameHits(query) } == true
+            val matchesRaids = state.expansion?.raids?.any { it.nameHits(query) } == true
             if (!matchesAffixes && matchesDungeons && tab != 1) tab = 1
             if (!matchesAffixes && matchesRaids && tab != 2) tab = 2
         }
@@ -111,17 +111,16 @@ fun ContentScreen(
     }
 }
 
-/** Un nombre de afijo o instancia coincide si el query aparece como subcadena. */
-private fun Affix.matches(query: String) = name.contains(query, ignoreCase = true)
+/** No se llama `matches`: choca con `CharSequence.matches` y el compilador no elige. */
+private fun Affix.nameHits(query: String) = name.contains(query, ignoreCase = true)
 
-/** Un nombre de instancia coincide si el query aparece como subcadena. */
-private fun InstanceSummary.matches(query: String) = name.contains(query, ignoreCase = true)
+private fun InstanceSummary.nameHits(query: String) = name.contains(query, ignoreCase = true)
 
 @Composable
 private fun AffixesTab(state: ContentState, viewModel: ContentViewModel) {
     if (state.loading && state.affixes.isEmpty()) { Loading(); return }
     val query = state.filterQuery
-    val affixes = if (query.isBlank()) state.affixes else state.affixes.filter { it.matches(query) }
+    val affixes = if (query.isBlank()) state.affixes else state.affixes.filter { it.nameHits(query) }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
             Text("Afijos de la semana", style = MaterialTheme.typography.titleMedium)
@@ -191,7 +190,7 @@ private fun InstancesTab(isRaid: Boolean, state: ContentState, viewModel: Conten
             return
         }
         val query = state.filterQuery
-        val filtered = if (query.isBlank()) instances else instances.filter { it.matches(query) }
+        val filtered = if (query.isBlank()) instances else instances.filter { it.nameHits(query) }
         if (filtered.isEmpty()) {
             Text(
                 stringResource(R.string.content_empty, query),
