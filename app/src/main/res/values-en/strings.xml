@@ -195,6 +195,7 @@
     <string name="live_no_quests_detail">Pick up quests in game and they show up here with their exact position.</string>
     <string name="live_map_note">Positions come from the client tables, the same ones TomTom uses.</string>
     <string name="live_map_loading">Loading zone map…</string>
+    <string name="live_map_error">Could not load this zone map.</string>
     <string name="more_auctions_desc">Market prices for your region and realm</string>
     <string name="more_news_desc">Official news without leaving the app</string>
     <string name="more_live_desc">Events and active quests on the map</string>

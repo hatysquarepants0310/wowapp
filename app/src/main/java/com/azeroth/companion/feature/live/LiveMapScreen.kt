@@ -58,6 +58,7 @@ import com.azeroth.companion.ui.components.StatusDot
 import com.azeroth.companion.ui.theme.Arcane
 import com.azeroth.companion.ui.theme.Gold
 import com.azeroth.companion.ui.theme.Positive
+import com.azeroth.companion.core.map.ZoneMapArtState
 
 @Composable
 fun LiveMapScreen(
@@ -151,10 +152,17 @@ fun LiveMapScreen(
                 }
             }
             item {
+                val art = state.maps[zone.uiMapId]
                 ZoneMap(
                     zone = zone,
-                    art = state.maps[zone.uiMapId],
-                    loadingArt = state.loadingMaps && state.maps[zone.uiMapId] == null,
+                    art = art,
+                    artState = ZoneMapArtState.resolve(
+                        hasBitmap = art != null,
+                        failedMessage = state.mapErrors[zone.uiMapId]?.let {
+                            stringResource(R.string.live_map_error)
+                        },
+                        fallback = zone.uiMapId in state.mapSkipped,
+                    ),
                     focused = focusedPin,
                     onPinTap = { focusedPin = it },
                 )
@@ -244,7 +252,7 @@ private fun ZoneChips(zones: List<LiveZone>, selected: Int, onSelect: (Int) -> U
 private fun ZoneMap(
     zone: LiveZone,
     art: android.graphics.Bitmap?,
-    loadingArt: Boolean,
+    artState: ZoneMapArtState,
     focused: MapPin?,
     onPinTap: (MapPin) -> Unit,
 ) {
@@ -258,7 +266,8 @@ private fun ZoneMap(
     // Dos misiones del mismo objetivo comparten coordenada casi exacta y se
     // dibujaban una encima de otra: se reparten en un pequeño abanico.
     val placed = remember(zone.uiMapId, zone.pins) { spread(zone.pins) }
-    val hasArt = art != null
+    val hasArt = artState is ZoneMapArtState.Ready && art != null
+    val showGrid = artState is ZoneMapArtState.Fallback
 
     // El mapa del juego manda en la proporción; sin arte, un 3:2 que es la
     // forma habitual de un mapa de zona.
@@ -271,19 +280,21 @@ private fun ZoneMap(
             .clip(RoundedCornerShape(Radius.none))
             .background(colors.surface),
     ) {
-        if (art != null) {
+        if (hasArt) {
             androidx.compose.foundation.Image(
                 bitmap = art.asImageBitmap(),
                 contentDescription = null,
                 contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
                 modifier = Modifier.fillMaxSize(),
             )
-        } else if (loadingArt) {
-            Text(
-                stringResource(R.string.live_map_loading),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.Center),
+        } else if (artState !is ZoneMapArtState.Fallback) {
+            ZoneMapStatusOverlay(
+                zoneName = zone.name,
+                message = when (artState) {
+                    is ZoneMapArtState.Failed -> artState.message
+                    else -> stringResource(R.string.live_map_loading)
+                },
+                error = artState is ZoneMapArtState.Failed,
             )
         }
         Canvas(
@@ -306,7 +317,7 @@ private fun ZoneMap(
         ) {
             // La rejilla rotulada solo tiene sentido cuando NO hay mapa: sobre
             // el arte real es ruido encima del dibujo.
-            if (!hasArt) {
+            if (showGrid) {
                 for (i in 1..4) {
                     val x = size.width * i / 5f
                     val y = size.height * i / 5f
@@ -374,6 +385,36 @@ private fun ZoneMap(
         }
     }
     Spacer(Modifier.height(Spacing.sm))
+}
+
+@Composable
+private fun ZoneMapStatusOverlay(
+    zoneName: String,
+    message: String?,
+    error: Boolean,
+) {
+    val colors = MaterialTheme.colorScheme
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(Spacing.lg),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            zoneName,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (error) colors.error else colors.onSurface,
+        )
+        if (message != null) {
+            Spacer(Modifier.height(Spacing.xs))
+            Text(
+                message,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (error) colors.onErrorContainer else colors.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 /**

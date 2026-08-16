@@ -195,6 +195,7 @@
     <string name="live_no_quests_detail">Acepta misiones en el juego y aparecerán aquí con su posición exacta.</string>
     <string name="live_map_note">Las posiciones salen de las tablas del cliente, las mismas que usa TomTom.</string>
     <string name="live_map_loading">Cargando mapa del juego…</string>
+    <string name="live_map_error">No se pudo cargar el mapa de esta zona.</string>
     <string name="more_auctions_desc">Precios del mercado de tu región y tu reino</string>
     <string name="more_news_desc">Las noticias oficiales, sin salir de la app</string>
     <string name="more_live_desc">Eventos y misiones activas sobre el mapa</string>

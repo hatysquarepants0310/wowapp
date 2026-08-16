@@ -17,3 +17,6 @@ captures/
 # El detector de UI se ejecuta con node; sus dependencias no van al repo.
 node_modules/
 package-lock.json
+
+# Worktrees del kanban: no son el producto.
+.worktrees/

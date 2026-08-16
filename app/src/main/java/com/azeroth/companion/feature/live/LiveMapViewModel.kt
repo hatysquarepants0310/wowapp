@@ -3,11 +3,14 @@ package com.azeroth.companion.feature.live
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.azeroth.companion.core.map.ZoneMapFailReason
+import com.azeroth.companion.core.map.ZoneMapLoadResult
 import com.azeroth.companion.core.map.ZoneMapLoader
 import com.azeroth.companion.data.LiveEvent
 import com.azeroth.companion.data.LiveMapRepository
 import com.azeroth.companion.data.LiveZone
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,10 @@ data class LiveMapUiState(
     val maps: Map<Int, Bitmap> = emptyMap(),
     /** Quedan zonas por traer; la pantalla lo indica sin bloquear nada. */
     val loadingMaps: Boolean = false,
+    /** Tile que falló al cargar o decodificar. Ausencia = todavía no se sabe. */
+    val mapErrors: Map<Int, ZoneMapFailReason> = emptyMap(),
+    /** Arte desactivado o no pedido: la rejilla, no un error. */
+    val mapSkipped: Set<Int> = emptySet(),
 )
 
 @HiltViewModel
@@ -64,30 +71,59 @@ class LiveMapViewModel @Inject constructor(
     /**
      * Trae el arte de TODAS las zonas del jugador en cuanto se sabe cuáles son.
      *
-     * Antes había que entrar en cada zona y pulsar actualizar, una por una, que
-     * es justo lo que nadie quiere hacer. Ahora se descargan solas nada más
-     * cargar la pantalla: la primera se compone ya, para que haya algo que
-     * mirar, y el resto va llegando de fondo.
+     * El snapshot (pines + lista) ya está en pantalla: esto no lo bloquea.
+     * La zona visible se va pintando tile a tile (caché primero); el resto
+     * se prefetch a disco y se compone de fondo.
      */
     private fun loadAllMaps(uiMapIds: List<Int>) {
         if (uiMapIds.isEmpty()) return
-        _state.update { it.copy(loadingMaps = true) }
+        _state.update {
+            it.copy(
+                loadingMaps = true,
+                maps = emptyMap(),
+                mapErrors = emptyMap(),
+                mapSkipped = emptySet(),
+            )
+        }
         viewModelScope.launch {
-            uiMapIds.firstOrNull()?.let { first ->
-                mapLoader.load(first)?.let { bitmap ->
-                    _state.update { it.copy(maps = it.maps + (first to bitmap)) }
+            try {
+                val first = uiMapIds.first()
+                val rest = uiMapIds.drop(1)
+                coroutineScope {
+                    launch {
+                        mapLoader.loadProgress(first).collect { applyMapResult(first, it) }
+                    }
+                    launch {
+                        mapLoader.prefetch(rest)
+                        rest.forEach { id ->
+                            mapLoader.loadProgress(id).collect { applyMapResult(id, it) }
+                        }
+                    }
                 }
+            } finally {
+                _state.update { it.copy(loadingMaps = false) }
             }
-            val rest = uiMapIds.drop(1)
-            // A disco en paralelo primero: componer va mucho más rápido cuando
-            // las texturas ya están, y así ninguna zona espera a la red sola.
-            mapLoader.prefetch(rest)
-            rest.forEach { id ->
-                mapLoader.load(id)?.let { bitmap ->
-                    _state.update { it.copy(maps = it.maps + (id to bitmap)) }
-                }
+        }
+    }
+
+    private fun applyMapResult(uiMapId: Int, result: ZoneMapLoadResult) {
+        _state.update { state ->
+            when (result) {
+                is ZoneMapLoadResult.Ready -> state.copy(
+                    maps = state.maps + (uiMapId to result.bitmap),
+                    mapErrors = state.mapErrors - uiMapId,
+                    mapSkipped = state.mapSkipped - uiMapId,
+                )
+                is ZoneMapLoadResult.Skipped -> state.copy(
+                    mapSkipped = state.mapSkipped + uiMapId,
+                    mapErrors = state.mapErrors - uiMapId,
+                )
+                is ZoneMapLoadResult.Failed -> state.copy(
+                    maps = state.maps - uiMapId,
+                    mapErrors = state.mapErrors + (uiMapId to result.reason),
+                    mapSkipped = state.mapSkipped - uiMapId,
+                )
             }
-            _state.update { it.copy(loadingMaps = false) }
         }
     }
 }
