@@ -7,6 +7,7 @@ import com.azeroth.companion.core.database.SnapshotEntity
 import com.azeroth.companion.core.datastore.SettingsRepository
 import com.azeroth.companion.core.detection.DetectionEngine
 import com.azeroth.companion.core.detection.SnapshotView
+import com.azeroth.companion.core.detection.ThisWeek
 import com.azeroth.companion.core.model.Region
 import com.azeroth.companion.core.network.BlizzardApiFactory
 import kotlinx.coroutines.flow.first
@@ -154,18 +155,23 @@ class SyncRepository @Inject constructor(
                 api.mythicPeriodIndex(region.namespaceDynamic).current_period?.id
             }.getOrNull()
             val profilePeriod = mythic?.current_period?.period?.id
-            val periodIsCurrent = livePeriod == null || profilePeriod == null ||
-                profilePeriod == livePeriod
-            val freshRuns = if (periodIsCurrent) {
-                mythic?.current_period?.best_runs.orEmpty()
-            } else {
-                emptyList()
+            val profileRuns = mythic?.current_period?.best_runs.orEmpty()
+            val mythicSlice = ThisWeek.mythicKeys(
+                livePeriodId = livePeriod,
+                profilePeriodId = profilePeriod,
+                lastLoginMillis = profile.last_login_timestamp,
+                lastResetMillis = lastReset.toEpochMilli(),
+                profileRunCount = profileRuns.size,
+                runTimestamps = profileRuns.map { it.completed_timestamp },
+            )
+            val freshRuns = when {
+                mythicSlice.stale -> emptyList()
+                livePeriod != null && profilePeriod != null && livePeriod == profilePeriod ->
+                    profileRuns
+                else -> profileRuns.filter { it.completed_timestamp >= lastReset.toEpochMilli() }
             }
             val runsThisWeek = freshRuns.size
-            // El perfil no refleja la semana en curso si el personaje no se ha
-            // conectado desde el reset: entonces no se puede afirmar nada.
-            val profileStale = !periodIsCurrent ||
-                (profile.last_login_timestamp?.let { it < lastReset.toEpochMilli() } ?: false)
+            val profileStale = mythicSlice.stale
             val raidKills = raids?.expansions?.flatMap { it.instances }
                 ?.associate { it.instance.id to it.modes.sumOf { m -> m.progress?.completed_count ?: 0 } }
                 ?: emptyMap()
@@ -333,6 +339,9 @@ class SyncRepository @Inject constructor(
             val kills = decodeList(
                 ListSerializer(RaidKillRecord.serializer()), latest.raidKillsThisWeekJson,
             ).distinctBy { it.instanceId to it.name }
+            val beforeQuests = preReset?.let {
+                decodeList(ListSerializer(Int.serializer()), it.completedQuestIdsJson).toSet()
+            }
             view.copy(
                 // Un jefe de mundo es una instancia de un solo jefe: si se cuenta
                 // junto a la banda, la fila de banda se marcaría por matar al de mundo.
@@ -340,15 +349,15 @@ class SyncRepository @Inject constructor(
                 worldBossKillsThisWeek = kills.count { it.instanceId in worldBossInstances },
                 statistics = decodeMap(latest.statisticsJson),
                 statisticsBeforeReset = preReset?.let { decodeMap(it.statisticsJson) }.orEmpty(),
-                questsBeforeReset = preReset?.let {
-                    decodeList(ListSerializer(Int.serializer()), it.completedQuestIdsJson).toSet()
-                },
+                questsBeforeReset = beforeQuests,
                 delvesThisWeek = preReset?.let {
                     (latest.delvesCompletedTotal - it.delvesCompletedTotal).coerceAtLeast(0)
                 } ?: 0,
-                // Una misión repetible que figura completada AHORA solo puede
-                // haberse hecho en el periodo actual: Blizzard las reinicia.
-                repeatableQuestsDoneThisWeek = view.completedQuestIds.count { it in repeatable },
+                repeatableQuestsDoneThisWeek = ThisWeek.questIdsDone(
+                    repeatable,
+                    view.completedQuestIds,
+                    beforeQuests,
+                ).size,
             )
         }
         weeklyRepository.tasks(includeLegacy = true).forEach { task ->

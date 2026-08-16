@@ -31,13 +31,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azeroth.companion.R
 import com.azeroth.companion.ui.components.WowChip
 import com.azeroth.companion.ui.components.WowTabs
+import com.azeroth.companion.ui.components.WowTextField
 import com.azeroth.companion.ui.components.WowTextButton
 import com.azeroth.companion.ui.components.WowLoading
+import com.azeroth.companion.ui.components.Spacing
 import com.azeroth.companion.data.InstanceSummary
 
 /**
@@ -49,6 +53,7 @@ import com.azeroth.companion.data.InstanceSummary
 fun ContentScreen(
     focusInstanceId: Int = 0,
     focusBossId: Int = 0,
+    header: (@Composable () -> Unit)? = null,
     viewModel: ContentViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -68,6 +73,30 @@ fun ContentScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
+        header?.let { slot ->
+            Box(Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.sm)) {
+                slot()
+            }
+        }
+        // Barra de búsqueda: filtra mazmorras, bandas y afijos por nombre en cliente.
+        // Si el query coincide en otra pestaña, se cambia de pestaña automáticamente
+        // para que el jugador encuentre directamente lo que busca, como en Wowhead.
+        val query = state.filterQuery
+        if (query.isNotBlank()) {
+            val matchesAffixes = state.affixes.any { it.matches(query) }
+            val matchesDungeons = state.expansion?.dungeons?.any { it.matches(query) } == true
+            val matchesRaids = state.expansion?.raids?.any { it.matches(query) } == true
+            if (!matchesAffixes && matchesDungeons && tab != 1) tab = 1
+            if (!matchesAffixes && matchesRaids && tab != 2) tab = 2
+        }
+        WowTextField(
+            value = query,
+            onValueChange = viewModel::setFilterQuery,
+            placeholder = stringResource(R.string.content_search),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.gutter, vertical = Spacing.sm),
+        )
         WowTabs(tabs, tab, onSelect = { tab = it })
 
         state.error?.let {
@@ -82,9 +111,17 @@ fun ContentScreen(
     }
 }
 
+/** Un nombre de afijo o instancia coincide si el query aparece como subcadena. */
+private fun Affix.matches(query: String) = name.contains(query, ignoreCase = true)
+
+/** Un nombre de instancia coincide si el query aparece como subcadena. */
+private fun InstanceSummary.matches(query: String) = name.contains(query, ignoreCase = true)
+
 @Composable
 private fun AffixesTab(state: ContentState, viewModel: ContentViewModel) {
     if (state.loading && state.affixes.isEmpty()) { Loading(); return }
+    val query = state.filterQuery
+    val affixes = if (query.isBlank()) state.affixes else state.affixes.filter { it.matches(query) }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
             Text("Afijos de la semana", style = MaterialTheme.typography.titleMedium)
@@ -94,18 +131,28 @@ private fun AffixesTab(state: ContentState, viewModel: ContentViewModel) {
             }
             Spacer(Modifier.height(4.dp))
         }
-        items(state.affixes) { affix ->
-            // Con el icono delante, la fila se reconoce sin leerla: el jugador
-            // ya sabe qué es Tiránica por su icono. Sin él eran cuatro párrafos
-            // idénticos de texto.
-            Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
-                Row(Modifier.padding(12.dp)) {
-                    GameIcon(affix.iconUrl, size = 44.dp, contentDescription = affix.name)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(affix.name, style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.secondary)
-                        Text(affix.description, style = MaterialTheme.typography.bodySmall)
+        if (affixes.isEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.content_empty, query),
+                    Modifier.padding(top = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            items(affixes) { affix ->
+                // Con el icono delante, la fila se reconoce sin leerla: el jugador
+                // ya sabe qué es Tiránica por su icono. Sin él eran cuatro párrafos
+                // idénticos de texto.
+                Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
+                    Row(Modifier.padding(12.dp)) {
+                        GameIcon(affix.iconUrl, size = 44.dp, contentDescription = affix.name)
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(affix.name, style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.secondary)
+                            Text(affix.description, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
@@ -143,9 +190,19 @@ private fun InstancesTab(isRaid: Boolean, state: ContentState, viewModel: Conten
                 Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             return
         }
+        val query = state.filterQuery
+        val filtered = if (query.isBlank()) instances else instances.filter { it.matches(query) }
+        if (filtered.isEmpty()) {
+            Text(
+                stringResource(R.string.content_empty, query),
+                Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            return
+        }
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(instances, key = { it.id }) { instance ->
+            items(filtered, key = { it.id }) { instance ->
                 InstanceCard(instance, state, viewModel)
             }
             item { Spacer(Modifier.height(12.dp)) }

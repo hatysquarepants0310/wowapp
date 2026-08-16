@@ -1,5 +1,6 @@
 package com.azeroth.companion.data
 
+import com.azeroth.companion.core.detection.ThisWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,9 +18,10 @@ import java.time.Instant
  *
  * La distinción correcta depende del periodo de reinicio de la tarea:
  *
- *  - **Semanal**: "completada" equivale a "hecha esta semana". Al pasar el reset
- *    Blizzard la saca de la lista y vuelve a estar disponible. Se muestra, y su
- *    marca es información útil.
+ *  - **Semanal**: Midnight no saca el ID de /quests/completed al reset.
+ *    "Hecha esta semana" es delta contra el snapshot anterior al reset, no
+ *    presencia absoluta. Se muestra, y su marca solo es útil si es de ESTA
+ *    semana.
  *  - **Una sola vez**: "completada" equivale a "hecha para siempre". No vuelve,
  *    así que no es una tarea pendiente y no debe ocupar la lista.
  *
@@ -30,6 +32,23 @@ class VaultQuestFilterTest {
 
     private fun quest(id: Int, done: Boolean) =
         VaultQuest(questId = id, name = "Misión $id", zone = "Zona", done = done)
+
+    @Test
+    fun `semanal en completed desde hace dos semanas no se marca hecha`() {
+        val ids = ThisWeek.questIdsDone(
+            candidates = listOf(1, 2),
+            completedNow = setOf(1, 2),
+            completedBeforeReset = setOf(1, 2),
+        )
+        val group = VaultQuestGroup(
+            taskId = "weekly",
+            title = "Semanal",
+            feedsVault = true,
+            quests = listOf(1, 2).map { quest(it, done = it in ids) },
+        )
+        assertEquals(0, group.doneCount)
+        assertEquals(2, group.pendingCount)
+    }
 
     @Test
     fun `lo pendiente es lo que se cuenta, no lo hecho`() {

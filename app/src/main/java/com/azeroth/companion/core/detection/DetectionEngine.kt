@@ -43,35 +43,17 @@ class DetectionEngine {
 
     fun evaluate(rule: DetectionRule, baseline: SnapshotView?, current: SnapshotView?): DetectionResult =
         when (rule) {
-            // Presencia ABSOLUTA, no diferencia contra la línea base. Blizzard
-            // borra la marca de completada de las misiones repetibles en cada
-            // reset: verificado con personajes reales, alguien que terminó toda
-            // Dragonflight no tiene ninguna de las "Aiding the Accord" en
-            // /quests/completed. Que aparezca ya significa "hecha esta semana".
-            // Con el cálculo por diferencia, quien sincronizaba por primera vez
-            // después de hacer la misión veía siempre 0 (el snapshot base y el
-            // actual eran el mismo).
+            // Midnight no saca el ID de /quests/completed al reset. Presencia
+            // absoluta es lifetime: una semanal hecha hace dos semanas seguía
+            // marcada. Hecha esta semana = está ahora y NO estaba en el
+            // snapshot anterior al reset. Sin ese snapshot no se afirma nada
+            // (PREDICTED), para no enseñar un 0 como si fuera un dato.
             is DetectionRule.QuestCompleted -> {
                 val now = current?.completedQuestIds.orEmpty()
                 val before = current?.questsBeforeReset
-                when {
-                    rule.repeatable -> {
-                        val done = now.count { it in rule.questIds }
-                        if (done <= 0) DetectionResult(0, Confidence.PREDICTED)
-                        else DetectionResult(
-                            done * rule.countsAs,
-                            if (before != null) Confidence.CONFIRMED else Confidence.ESTIMATED,
-                        )
-                    }
-                    before != null -> {
-                        val done = (now - before).count { it in rule.questIds }
-                        DetectionResult(
-                            (done * rule.countsAs).coerceAtLeast(0),
-                            if (done > 0) Confidence.CONFIRMED else Confidence.ESTIMATED,
-                        )
-                    }
-                    else -> DetectionResult(0, Confidence.PREDICTED)
-                }
+                val doneIds = ThisWeek.questIdsDone(rule.questIds, now, before)
+                val done = doneIds.size * rule.countsAs
+                DetectionResult(done.coerceAtLeast(0), ThisWeek.questConfidence(before, doneIds))
             }
 
             is DetectionRule.QuestDelta -> {

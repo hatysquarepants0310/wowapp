@@ -10,34 +10,42 @@ class DetectionEngineTest {
 
     private val engine = DetectionEngine()
 
-    private fun snapshot(quests: Set<Int> = emptySet(), reps: Map<Int, Int> = emptyMap(), runs: Int = 0) =
-        SnapshotView(completedQuestIds = quests, reputations = reps, mythicPlusRunsThisWeek = runs, raidKills = emptyMap())
+    private fun snapshot(
+        quests: Set<Int> = emptySet(),
+        reps: Map<Int, Int> = emptyMap(),
+        runs: Int = 0,
+        before: Set<Int>? = emptySet(),
+    ) = SnapshotView(
+        completedQuestIds = quests,
+        reputations = reps,
+        mythicPlusRunsThisWeek = runs,
+        raidKills = emptyMap(),
+        questsBeforeReset = before,
+    )
 
     @Test
-    fun `quest completed this week is ESTIMATED`() {
+    fun `quest completed this week is CONFIRMED`() {
         val result = engine.evaluate(
             DetectionRule.QuestCompleted(listOf(84001)),
             baseline = snapshot(),
-            current = snapshot(quests = setOf(84001)),
+            current = snapshot(quests = setOf(84001), before = emptySet()),
         )
         assertEquals(1, result.completions)
-        assertEquals(Confidence.ESTIMATED, result.confidence)
+        assertEquals(Confidence.CONFIRMED, result.confidence)
     }
 
     /**
-     * Blizzard borra la marca de completada de las misiones repetibles en cada
-     * reset semanal, así que la presencia en /quests/completed YA significa
-     * "hecha esta semana" aunque la línea base también la tuviera (el caso
-     * normal: el primer sync de la semana es posterior a haberla hecho).
+     * Midnight no limpia /quests/completed al reset. Si la semanal ya estaba
+     * en el snapshot anterior, no es de esta semana aunque siga en completed.
      */
     @Test
-    fun `weekly quest present in the profile counts even without a fresh baseline`() {
+    fun `weekly quest still in completed from last week does not count`() {
         val result = engine.evaluate(
             DetectionRule.QuestCompleted(listOf(84001)),
             baseline = snapshot(quests = setOf(84001)),
-            current = snapshot(quests = setOf(84001)),
+            current = snapshot(quests = setOf(84001), before = setOf(84001)),
         )
-        assertEquals(1, result.completions)
+        assertEquals(0, result.completions)
         assertEquals(Confidence.ESTIMATED, result.confidence)
     }
 
@@ -49,7 +57,7 @@ class DetectionEngineTest {
             current = snapshot(),
         )
         assertEquals(0, result.completions)
-        assertEquals(Confidence.PREDICTED, result.confidence)
+        assertEquals(Confidence.ESTIMATED, result.confidence)
     }
 
     @Test

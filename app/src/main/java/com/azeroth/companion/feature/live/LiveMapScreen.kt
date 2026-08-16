@@ -62,6 +62,7 @@ import com.azeroth.companion.ui.theme.Positive
 @Composable
 fun LiveMapScreen(
     onOpenQuest: (Int) -> Unit,
+    header: (@Composable () -> Unit)? = null,
     viewModel: LiveMapViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -69,6 +70,9 @@ fun LiveMapScreen(
     var focusedPin by remember { mutableStateOf<MapPin?>(null) }
 
     Screen {
+        if (header != null) {
+            item { header() }
+        }
         item {
             ScreenTitle(
                 stringResource(R.string.title_live),

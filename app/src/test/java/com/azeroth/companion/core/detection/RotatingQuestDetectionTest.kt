@@ -11,7 +11,8 @@ import org.junit.Test
  * Blizzard no dice si una misión es repetible, y las dos familias conviven en
  * la lista de semanales de Midnight:
  *
- *  - Repetible: la marca de completada desaparece en cada reset.
+ *  - Repetible: en Midnight el ID se queda en completed. Hecha esta semana
+ *    solo si aparece ahora y no estaba antes del reset.
  *  - Rotatoria: cada semana es una misión distinta, que queda completada para
  *    siempre.
  *
@@ -34,12 +35,42 @@ class RotatingQuestDetectionTest {
         questsBeforeReset = before,
     )
 
+    /**
+     * Midnight ya no saca el ID de /quests/completed al reset. Si la semanal
+     * sigue en completed desde hace dos semanas, presencia absoluta la marca
+     * hecha para siempre. Hecha esta semana = está ahora Y no estaba en el
+     * snapshot anterior al reset.
+     */
     @Test
-    fun `repetible presente sin línea base cuenta como hecha`() {
+    fun `semanal en completed desde hace dos semanas no cuenta esta semana`() {
+        val rule = DetectionRule.QuestCompleted(listOf(84001), repeatable = true)
+        val result = engine.evaluate(
+            rule,
+            null,
+            view(completed = setOf(84001), before = setOf(84001)),
+        )
+        assertEquals(0, result.completions)
+        assertEquals(Confidence.ESTIMATED, result.confidence)
+    }
+
+    @Test
+    fun `semanal nueva esta semana se confirma`() {
+        val rule = DetectionRule.QuestCompleted(listOf(84001), repeatable = true)
+        val result = engine.evaluate(
+            rule,
+            null,
+            view(completed = setOf(84001), before = emptySet()),
+        )
+        assertEquals(1, result.completions)
+        assertEquals(Confidence.CONFIRMED, result.confidence)
+    }
+
+    @Test
+    fun `repetible sin línea base no se afirma`() {
         val rule = DetectionRule.QuestCompleted(listOf(100), repeatable = true)
         val result = engine.evaluate(rule, null, view(setOf(100)))
-        assertEquals(1, result.completions)
-        assertEquals(Confidence.ESTIMATED, result.confidence)
+        assertEquals(0, result.completions)
+        assertEquals(Confidence.PREDICTED, result.confidence)
     }
 
     @Test
@@ -70,10 +101,10 @@ class RotatingQuestDetectionTest {
     }
 
     @Test
-    fun `repetible con línea base usa presencia actual`() {
+    fun `repetible con línea base solo cuenta las nuevas de esta semana`() {
         val rule = DetectionRule.QuestCompleted(listOf(100, 101), repeatable = true)
         val result = engine.evaluate(rule, null, view(setOf(100, 101), before = setOf(100)))
-        assertEquals(2, result.completions)
+        assertEquals(1, result.completions)
         assertEquals(Confidence.CONFIRMED, result.confidence)
     }
 }

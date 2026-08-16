@@ -116,7 +116,7 @@ object Spacing {
  */
 object Radius {
     val none: Dp = 0.dp
-    val soft: Dp = 10.dp
+    val soft: Dp = 2.dp
     val panel: Dp = 20.dp
     val round: Dp = 999.dp
 }

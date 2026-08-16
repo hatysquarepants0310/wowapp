@@ -4,6 +4,8 @@ import android.content.Context
 import com.azeroth.companion.core.database.SnapshotDao
 import com.azeroth.companion.core.datastore.LanguagePref
 import com.azeroth.companion.core.datastore.SettingsRepository
+import com.azeroth.companion.core.detection.ThisWeek
+import com.azeroth.companion.core.model.WeekTrust
 import com.azeroth.companion.core.network.BlizzardApiFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +59,7 @@ data class WeeklyActivity(
      * significa "no has hecho nada", sino "no se puede saber todavía".
      */
     val profileStale: Boolean = false,
+    val weekTrust: WeekTrust = WeekTrust.ESTIMATED,
 )
 
 @Singleton
@@ -101,11 +104,10 @@ class WeeklyActivityRepository @Inject constructor(
             ?.toSet()
         val newQuests = questIdsBefore?.let { (questIdsNow - it).sorted() }.orEmpty()
 
-        // Una repetible que figura completada AHORA se hizo necesariamente en el
-        // periodo actual, porque Blizzard las reinicia en cada reset. No hace
-        // falta línea base ni acertar ningún ID a mano.
+        // Midnight no saca el ID al reset: presencia en completed es lifetime.
+        // Hecha esta semana = está ahora y no estaba antes del reset.
         val repeatable = repeatableQuestDao.ids().toSet()
-        val repeatableDone = questIdsNow.filter { it in repeatable }.sorted()
+        val repeatableDone = ThisWeek.questIdsDone(repeatable, questIdsNow, questIdsBefore).sorted()
 
         return WeeklyActivity(
             mythicRuns = runs.sortedByDescending { it.level },
@@ -120,6 +122,11 @@ class WeeklyActivityRepository @Inject constructor(
             repeatableDone = resolveNames(repeatableDone),
             learnedRepeatables = repeatable.size,
             profileStale = current.profileStale,
+            weekTrust = ThisWeek.trust(
+                profileStale = current.profileStale,
+                hasBaseline = baseline != null,
+                snapshotBeforeReset = current.takenAt.isBefore(lastReset),
+            ),
         )
     }
 

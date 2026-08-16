@@ -105,3 +105,16 @@ El paso de mirar capturas reales a 390 / 768 / 1440 **sigue pendiente**: este
 entorno no tiene emulador ni dispositivo. Lo comprobado es que compila, que
 pasan las pruebas y que los contrastes están calculados. Quien tenga el móvil
 delante debería mirarlo antes de darlo por bueno.
+
+## Evolución reciente (v6.0.0)
+
+v6 deja de usar **hubs-índice**: ya no hay pestañas que sean listas de enlaces
+que abren otra pantalla. Cada pestaña ahora es el contenido directamente:
+
+- **Mundo = mapa.** La fila de WorldMap no es un índice; es el mapa activo con
+  sus pestañas de eventos y noticias.
+- **Contenido = enciclopedia.** La fila de WowChip no es un índice; filtra y
+  muestra directamente mazmorras, bandas, botín e historias.
+- **Hoy = héroe + reloj + tareas.** El countdown del próximo evento vive en el
+  héroe; la semana es un ticker; las misiones de la semana se renderizan como
+  tareas concretas.

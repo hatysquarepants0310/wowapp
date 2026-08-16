@@ -27,6 +27,8 @@ data class ContentState(
     /** Jefe al que se ha llegado desde un objeto del botín: se resalta y se abre. */
     val focusBossId: Int = 0,
     val focusInstanceId: Int = 0,
+    /** Texto de búsqueda en Contenido, filtra mazmorras/bandas/afijos en cliente. */
+    val filterQuery: String = "",
 )
 
 @HiltViewModel
@@ -97,6 +99,11 @@ class ContentViewModel @Inject constructor(
 
     fun togglePastExpansions() {
         _state.value = _state.value.copy(showPastExpansions = !_state.value.showPastExpansions)
+    }
+
+    /** Filtra mazmorras, bandas y afijos por nombre en cliente, sin pedir nada a la red. */
+    fun setFilterQuery(query: String) {
+        _state.value = _state.value.copy(filterQuery = query)
     }
 
     fun loadBosses(instanceId: Int) {

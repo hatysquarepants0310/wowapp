@@ -37,6 +37,19 @@ fun ConfidenceBadge(confidence: Confidence, modifier: Modifier = Modifier) {
     Pill(label, modifier, color = color)
 }
 
+@Composable
+fun WeekTrustBadge(trust: com.azeroth.companion.core.model.WeekTrust, modifier: Modifier = Modifier) {
+    val (label, color) = when (trust) {
+        com.azeroth.companion.core.model.WeekTrust.CONFIRMED ->
+            androidx.compose.ui.res.stringResource(com.azeroth.companion.R.string.week_trust_confirmed) to Positive
+        com.azeroth.companion.core.model.WeekTrust.ESTIMATED ->
+            androidx.compose.ui.res.stringResource(com.azeroth.companion.R.string.week_trust_estimated) to Warning
+        com.azeroth.companion.core.model.WeekTrust.STALE ->
+            androidx.compose.ui.res.stringResource(com.azeroth.companion.R.string.week_trust_stale) to TextLow
+    }
+    Pill(label, modifier, color = color)
+}
+
 /**
  * Cuenta regresiva que se refresca cada segundo (§9.1).
  *

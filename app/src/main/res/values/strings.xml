@@ -5,6 +5,8 @@
     <string name="nav_events">Eventos</string>
     <string name="nav_weekly">Semanal</string>
     <string name="nav_content">Contenido</string>
+    <string name="content_search">Buscar mazmorras, bandas o afijos</string>
+    <string name="content_empty">Nada coincide con %1$s</string>
     <string name="nav_character">Personaje</string>
     <string name="nav_more">Más</string>
     <string name="settings_language">Idioma</string>
@@ -222,6 +224,16 @@
     <string name="score_unavailable">Sin datos de Raider.IO</string>
     <string name="more_score_desc">Tu puntuación M+, tus llaves y el progreso de banda</string>
     <string name="week_stale">Blizzard todavía no publica tu semana: refresca el perfil conectándote al juego y volviendo a sincronizar. Hasta entonces estas cifras no son concluyentes.</string>
+    <string name="week_trust_confirmed">Confirmado</string>
+    <string name="week_trust_estimated">Estimado</string>
+    <string name="week_trust_stale">Perfil desfasado</string>
+    <string name="weekly_none_mplus_stale">Entra al juego y sincroniza: el perfil aún no publica las llaves de esta semana.</string>
+    <string name="weekly_none_raid_stale">Entra al juego y sincroniza: el perfil aún no publica los jefes de esta semana.</string>
+    <string name="weekly_repeatable_unknown">Sin una lectura de antes del reset no se puede saber si estas repetibles son de esta semana.</string>
+    <string name="week_ticker">%1$s jefes · %2$s · %3$s bóveda · reset %4$s</string>
+    <string name="week_ticker_keys">%1$d llaves</string>
+    <string name="week_ticker_keys_best">%1$d llaves (+%2$d)</string>
+    <string name="dashboard_pending">Pendiente esta semana</string>
     <string name="tab_today">Hoy</string>
     <string name="tab_character">Personaje</string>
     <string name="tab_world">Mundo</string>

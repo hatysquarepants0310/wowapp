@@ -5,6 +5,8 @@
     <string name="nav_events">Events</string>
     <string name="nav_weekly">Weekly</string>
     <string name="nav_content">Content</string>
+    <string name="content_search">Search dungeons, raids or affixes</string>
+    <string name="content_empty">Nothing matches %1$s</string>
     <string name="nav_character">Character</string>
     <string name="nav_more">More</string>
     <string name="settings_language">Language</string>
@@ -222,6 +224,16 @@
     <string name="score_unavailable">No Raider.IO data</string>
     <string name="more_score_desc">Your M+ score, your keys and raid progress</string>
     <string name="week_stale">Blizzard has not published your week yet: log into the game and sync again to refresh your profile. Until then these numbers are not conclusive.</string>
+    <string name="week_trust_confirmed">Confirmed</string>
+    <string name="week_trust_estimated">Estimated</string>
+    <string name="week_trust_stale">Stale profile</string>
+    <string name="weekly_none_mplus_stale">Log into the game and sync: the profile has not published this week\'s keys yet.</string>
+    <string name="weekly_none_raid_stale">Log into the game and sync: the profile has not published this week\'s bosses yet.</string>
+    <string name="weekly_repeatable_unknown">Without a reading from before the reset, these repeatables cannot be dated to this week.</string>
+    <string name="week_ticker">%1$s bosses · %2$s · %3$s vault · reset %4$s</string>
+    <string name="week_ticker_keys">%1$d keys</string>
+    <string name="week_ticker_keys_best">%1$d keys (+%2$d)</string>
+    <string name="dashboard_pending">Due this week</string>
     <string name="tab_today">Today</string>
     <string name="tab_character">Character</string>
     <string name="tab_world">World</string>

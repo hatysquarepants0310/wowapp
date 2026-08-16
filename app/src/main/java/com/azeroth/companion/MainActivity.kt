@@ -344,6 +344,7 @@ private fun AppScaffold(startEventId: String?) {
             composable("worldHub") {
                 com.azeroth.companion.feature.hub.WorldHubScreen(
                     onNavigate = { navController.navigate(it) },
+                    onOpenQuest = { navController.navigate("quest/$it") },
                 )
             }
             composable("contentHub") {

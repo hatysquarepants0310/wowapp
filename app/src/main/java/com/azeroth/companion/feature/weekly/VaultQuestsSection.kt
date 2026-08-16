@@ -37,6 +37,7 @@ import com.azeroth.companion.ui.components.ProgressTrack
 import com.azeroth.companion.ui.components.Radius
 import com.azeroth.companion.ui.components.SectionHeader
 import com.azeroth.companion.ui.components.Spacing
+import com.azeroth.companion.ui.components.WeekTrustBadge
 import com.azeroth.companion.ui.theme.Gold
 import com.azeroth.companion.ui.theme.Positive
 import com.azeroth.companion.ui.theme.Warning
@@ -65,6 +66,8 @@ fun LazyListScope.vaultQuestsSection(
     if (snapshot.vaultTotal > 0) {
         item {
             Panel(padding = PaddingValues(Spacing.lg)) {
+                WeekTrustBadge(snapshot.weekTrust)
+                Spacer(Modifier.height(Spacing.sm))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(

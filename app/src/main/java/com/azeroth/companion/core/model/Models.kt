@@ -43,6 +43,12 @@ data class Character(
 @Serializable
 enum class Confidence { CONFIRMED, ESTIMATED, PREDICTED }
 
+/**
+ * Confianza de las cifras de "esta semana" en Hoy / Esta semana.
+ * STALE no es un 0: el perfil de Blizzard no refleja el reset.
+ */
+enum class WeekTrust { CONFIRMED, ESTIMATED, STALE }
+
 // ---------- Cadencias de eventos ----------
 
 @Serializable
@@ -186,8 +192,10 @@ sealed interface DetectionRule {
      * Misiones que marcan la tarea. [repeatable] distingue dos comportamientos
      * que la API NO deja diferenciar y que se confundían hasta ahora:
      *
-     *  - Repetible (por defecto): Blizzard borra la marca de completada en cada
-     *    reset, así que verla presente ya significa "hecha esta semana".
+     *  - Repetible (por defecto): en Midnight el ID se queda en completed
+     *    para siempre. Verla presente NO significa "hecha esta semana"; hay
+     *    que compararla con el snapshot anterior al reset, igual que las
+     *    no repetibles.
      *  - No repetible: series rotatorias como "Búsqueda de conocimiento semana
      *    N de 5", donde cada semana es una misión DISTINTA que queda completada
      *    para siempre. Con presencia absoluta, la tarea se quedaba marcada el

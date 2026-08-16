@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import com.azeroth.companion.R
 import com.azeroth.companion.data.WeeklyActivity
+import com.azeroth.companion.ui.components.WeekTrustBadge
 
 /**
  * Actividad de la semana en curso, sin nada que marcar a mano.
@@ -119,11 +120,12 @@ fun WeeklyScreen(
             }
         }
 
-        section(titleMplus, a.mythicRuns.size) {
-            if (a.mythicRuns.isEmpty()) {
-                Empty(stringResource(R.string.weekly_none_mplus))
-            } else {
-                a.mythicRuns.forEach { run ->
+        section(titleMplus, if (a.profileStale) -1 else a.mythicRuns.size) {
+            when {
+                a.profileStale && a.mythicRuns.isEmpty() ->
+                    Empty(stringResource(R.string.weekly_none_mplus_stale))
+                a.mythicRuns.isEmpty() -> Empty(stringResource(R.string.weekly_none_mplus))
+                else -> a.mythicRuns.forEach { run ->
                     LineRow(
                         icon = if (run.inTime) "⏱" else "✔",
                         title = run.name.ifBlank { "Mazmorra" },
@@ -133,11 +135,12 @@ fun WeeklyScreen(
             }
         }
 
-        section(titleRaids, a.raidKills.size) {
-            if (a.raidKills.isEmpty()) {
-                Empty(stringResource(R.string.weekly_none_raid))
-            } else {
-                a.raidKills.forEach { kill ->
+        section(titleRaids, if (a.profileStale) -1 else a.raidKills.size) {
+            when {
+                a.profileStale && a.raidKills.isEmpty() ->
+                    Empty(stringResource(R.string.weekly_none_raid_stale))
+                a.raidKills.isEmpty() -> Empty(stringResource(R.string.weekly_none_raid))
+                else -> a.raidKills.forEach { kill ->
                     LineRow("☠", kill.name.ifBlank { "Jefe" }, difficultyLabel(kill.difficulty))
                 }
             }
@@ -163,6 +166,9 @@ fun WeeklyScreen(
             when {
                 a.learnedRepeatables == 0 -> Empty(
                     stringResource(R.string.weekly_learning),
+                )
+                !a.hasBaseline -> Empty(
+                    stringResource(R.string.weekly_repeatable_unknown),
                 )
                 a.repeatableDone.isEmpty() -> Empty(
                     stringResource(R.string.weekly_none_repeatable, a.learnedRepeatables),
@@ -198,7 +204,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
             ) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    count.toString(),
+                    if (count < 0) "—" else count.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -302,14 +308,32 @@ private fun WeeklyTaskRow(
 @Composable
 private fun Summary(a: WeeklyActivity) {
     Panel(Modifier.fillMaxWidth(), padding = PaddingValues(0.dp)) {
-        Row(
-            Modifier.fillMaxWidth().padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-        ) {
-            Stat(a.mythicRuns.size.toString(), stringResource(R.string.stat_mplus))
-            Stat(a.raidKills.size.toString(), stringResource(R.string.stat_bosses))
-            Stat(a.delves?.toString() ?: "—", stringResource(R.string.stat_delves))
-            Stat(if (a.hasBaseline) a.quests.size.toString() else "—", stringResource(R.string.stat_quests))
+        Column {
+            Row(
+                Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                WeekTrustBadge(a.weekTrust)
+            }
+            Row(
+                Modifier.fillMaxWidth().padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+            ) {
+                Stat(
+                    com.azeroth.companion.core.detection.ThisWeek.countLabel(
+                        a.mythicRuns.size, a.profileStale,
+                    ),
+                    stringResource(R.string.stat_mplus),
+                )
+                Stat(
+                    com.azeroth.companion.core.detection.ThisWeek.countLabel(
+                        a.raidKills.size, a.profileStale,
+                    ),
+                    stringResource(R.string.stat_bosses),
+                )
+                Stat(a.delves?.toString() ?: "—", stringResource(R.string.stat_delves))
+                Stat(if (a.hasBaseline) a.quests.size.toString() else "—", stringResource(R.string.stat_quests))
+            }
         }
     }
 }

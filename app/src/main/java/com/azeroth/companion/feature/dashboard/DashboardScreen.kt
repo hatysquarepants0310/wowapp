@@ -1,9 +1,6 @@
 package com.azeroth.companion.feature.dashboard
 
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,60 +9,52 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.azeroth.companion.R
-import com.azeroth.companion.ui.components.ConfidenceBadge
-import com.azeroth.companion.ui.components.ProgressTrack
-import com.azeroth.companion.ui.components.CountdownText
-import com.azeroth.companion.ui.components.Divider
+import com.azeroth.companion.core.detection.ThisWeek
+import com.azeroth.companion.core.model.TrackedTask
+import com.azeroth.companion.core.model.WeekTrust
 import com.azeroth.companion.ui.components.CharacterHero
-import com.azeroth.companion.ui.components.DataRow
+import com.azeroth.companion.ui.components.CountdownText
+import com.azeroth.companion.ui.components.ListRow
+import com.azeroth.companion.ui.components.WeekTrustBadge
 import com.azeroth.companion.ui.components.LootRow
-import com.azeroth.companion.ui.components.StatTile
-import com.azeroth.companion.ui.components.StatRowOf
 import com.azeroth.companion.ui.components.Panel
 import com.azeroth.companion.ui.components.PanelTone
-import com.azeroth.companion.ui.components.Pill
-import com.azeroth.companion.ui.components.Radius
 import com.azeroth.companion.ui.components.Screen
 import com.azeroth.companion.ui.components.SectionHeader
 import com.azeroth.companion.ui.components.Spacing
 import com.azeroth.companion.ui.components.StatusDot
-import com.azeroth.companion.ui.theme.Gold
+import com.azeroth.companion.ui.components.formatDuration
 import com.azeroth.companion.ui.theme.Positive
+import com.azeroth.companion.ui.theme.TextHigh
 import com.azeroth.companion.ui.theme.Warning
 import java.time.Duration
 import java.time.Instant
+import java.util.Locale
+import kotlinx.coroutines.delay
 
 /**
- * Inicio.
- *
- * Una sola pregunta manda: ¿qué tengo que hacer ahora? Por eso arriba va el
- * próximo evento con su cuenta atrás —lo único que caduca— y justo debajo la
- * Gran Bóveda, que es lo que decide la semana. Lo demás va cediendo peso hacia
- * abajo. Antes todo estaba en tarjetas del mismo tamaño y no había forma de
- * saber qué mirar primero.
- */
-/**
- * Un bloque con el margen lateral de la app.
- *
- * Existe para que el banner del personaje pueda NO tenerlo. Un banner que llega
- * al borde se lee como una imagen; con 16dp de negro alrededor se lee como una
- * tarjeta con una foto dentro, que es justo lo contrario de lo que se busca.
+ * Hoy: Operate + Monitor. El personaje preside, el reloj del próximo evento
+ * vive en el héroe, y la semana es una línea + una lista de tareas. Nada de
+ * tres StatTiles ni de un panel de countdown debajo del retrato.
  */
 private fun LazyListScope.gutterItem(content: @Composable () -> Unit) = item {
     Box(Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter)) { content() }
@@ -80,11 +69,8 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val localeKey = if (Locale.getDefault().language.startsWith("es")) "es_MX" else "en_US"
 
-    // Sin margen lateral en el contenedor: lo aplica cada bloque con
-    // `gutterItem`. Es lo que permite que el banner del personaje llegue hasta
-    // el borde de la pantalla en vez de quedarse con 16dp de negro a los lados,
-    // que es lo que separa un banner de una tarjeta más.
     Screen(
         contentPadding = PaddingValues(top = 0.dp, bottom = Spacing.xxl),
     ) {
@@ -100,16 +86,11 @@ fun DashboardScreen(
             }
         }
 
-        // ---- Tu personaje preside -----------------------------------------
-        //
-        // Blizzard publica un render de cuerpo entero de cada personaje. Es lo
-        // que hace que esto no sea una plantilla: en la pantalla está TU gnomo
-        // con su equipo puesto, y el acento de toda la app sale del color de su
-        // clase. Por eso el resto de la interfaz puede estar callada.
-        state.activeCharacterName?.let { name ->
+        val activeName = state.activeCharacterName
+        if (activeName != null) {
             item {
                 CharacterHero(
-                    name = name,
+                    name = activeName,
                     realm = state.activeCharacterRealm,
                     className = state.activeCharacterClass,
                     spec = state.activeCharacterSpec,
@@ -117,84 +98,33 @@ fun DashboardScreen(
                     renderUrl = state.activeCharacterRender,
                     onClick = onOpenRoster,
                     trailing = { SyncFreshness(state.lastSyncedAt) },
+                    overlay = {
+                        if (state.nextEventStartsAt != null) {
+                            NextEventOverlay(
+                                name = state.nextEventName,
+                                zone = state.nextEventZone,
+                                startsAt = state.nextEventStartsAt,
+                                onPrepare = state.nextEventId?.let { id -> { onOpenChecklist(id) } },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(Spacing.lg)
+                                    .fillMaxWidth(0.48f),
+                            )
+                        }
+                    },
+                )
+            }
+        } else if (state.nextEventStartsAt != null) {
+            gutterItem {
+                NextEventOverlay(
+                    name = state.nextEventName,
+                    zone = state.nextEventZone,
+                    startsAt = state.nextEventStartsAt,
+                    onPrepare = state.nextEventId?.let { id -> { onOpenChecklist(id) } },
                 )
             }
         }
 
-        // ---- Lo que caduca: el próximo evento y el reset -------------------
-        gutterItem {
-            Panel(padding = PaddingValues(Spacing.md)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.next_event).uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        if (state.nextEventStartsAt != null) {
-                            Text(
-                                state.nextEventName,
-                                style = MaterialTheme.typography.titleLarge,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                state.nextEventZone,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        } else {
-                            Text(
-                                stringResource(R.string.dashboard_no_events),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                        }
-                    }
-                    if (state.nextEventStartsAt != null) {
-                        Spacer(Modifier.width(Spacing.md))
-                        Column(horizontalAlignment = Alignment.End) {
-                            CountdownText(
-                                state.nextEventStartsAt!!,
-                                style = MaterialTheme.typography.headlineSmall,
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
-                            Pill(
-                                stringResource(R.string.prepare),
-                                color = MaterialTheme.colorScheme.primary,
-                                filled = true,
-                                modifier = Modifier.clickable {
-                                    state.nextEventId?.let(onOpenChecklist)
-                                },
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(Spacing.sm))
-                Divider()
-                Spacer(Modifier.height(Spacing.sm))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        stringResource(R.string.weekly_reset),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
-                    state.weeklyResetAt?.let {
-                        CountdownText(it, style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-            }
-        }
-
-
-        // ---- Tu semana ---------------------------------------------------
-        //
-        // Antes aquí había una rejilla 3x3 de Gran Bóveda con el ilvl que iba a
-        // tocar en cada casilla. Era mentira: ni la API de Blizzard ni Raider.IO
-        // exponen la Bóveda, así que aquello se deducía comparando lecturas
-        // guardadas y acertaba de casualidad. Ahora se enseña solo lo que la
-        // API afirma con fecha propia, y para saber qué falta por hacer está la
-        // lista de misiones de la semana.
         gutterItem {
             SectionHeader(
                 stringResource(R.string.your_week),
@@ -203,100 +133,161 @@ fun DashboardScreen(
             )
         }
         gutterItem {
-            Panel(padding = PaddingValues(Spacing.lg)) {
-                // Las tres cifras de la semana, grandes y en fila: son lo que se
-                // viene a mirar y antes iban como renglones finos indistinguibles
-                // del resto del texto de la pantalla.
-                StatRowOf {
-                    StatTile(
-                        stringResource(R.string.week_raid_bosses),
-                        state.raidBossesThisWeek.toString(),
-                        modifier = Modifier.weight(1f),
-                    )
-                    StatTile(
-                        stringResource(R.string.week_mplus),
-                        state.mythicRunsThisWeek.toString(),
-                        modifier = Modifier.weight(1f),
-                        hint = state.bestKeyThisWeek.takeIf { it > 0 }
-                            ?.let { stringResource(R.string.week_best_key, it) },
-                    )
-                    StatTile(
-                        stringResource(R.string.week_vault_quests),
-                        "${state.vaultQuestsDone}/${state.vaultQuestsTotal}",
-                        modifier = Modifier.weight(1f),
-                        valueColor = Gold,
-                    )
-                }
-                if (state.vaultQuestsTotal > 0) {
-                    Spacer(Modifier.height(Spacing.lg))
-                    ProgressTrack(
-                        state.vaultQuestsDone.toFloat() / state.vaultQuestsTotal,
-                        color = Gold,
-                    )
-                }
-                Spacer(Modifier.height(Spacing.md))
-                Text(
-                    // Un 0 porque Blizzard todavía no publica la semana NO es
-                    // lo mismo que un 0 porque no has hecho nada, y confundirlo
-                    // era justo lo que hacía parecer roto el contador.
-                    if (state.weekStale) {
-                        stringResource(R.string.week_stale)
-                    } else {
-                        stringResource(R.string.week_note)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            WeekTicker(
+                bosses = state.raidBossesThisWeek,
+                keys = state.mythicRunsThisWeek,
+                bestKey = state.bestKeyThisWeek,
+                vaultDone = state.vaultQuestsDone,
+                vaultTotal = state.vaultQuestsTotal,
+                resetAt = state.weeklyResetAt,
+                stale = state.weekStale || state.weekTrust == WeekTrust.STALE,
+                trust = state.weekTrust,
+                onClick = onOpenWeekly,
+            )
+        }
+        gutterItem {
+            Text(
+                if (state.weekStale) {
+                    stringResource(R.string.week_stale)
+                } else {
+                    stringResource(R.string.week_note)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (state.topPending.isNotEmpty()) {
+            gutterItem {
+                SectionHeader(stringResource(R.string.dashboard_pending))
+            }
+            items(state.topPending.size) { index ->
+                PendingTaskRow(state.topPending[index], localeKey, onOpenWeekly)
             }
         }
 
-        // ---- Exclusivo de temporada --------------------------------------
         if (state.seasonMounts.isNotEmpty()) {
-            item {
+            gutterItem {
                 SectionHeader(
                     stringResource(R.string.season_exclusive),
                     action = stringResource(R.string.season_see_all),
                     onAction = onOpenSeasonLoot,
                 )
             }
-            item {
-                // Sí se puede saber qué monturas tienes: la colección del
-                // personaje viene en /collections/mounts, así que el check y el
-                // porcentaje son datos reales, no una estimación.
-                val owned = state.seasonMounts.count { it.owned }
-                val total = state.seasonMounts.size
-                Panel(padding = PaddingValues(Spacing.lg)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            stringResource(R.string.season_owned, owned, total),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            "${if (total == 0) 0 else owned * 100 / total}%",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = Gold,
-                        )
-                    }
-                    Spacer(Modifier.height(Spacing.md))
-                    ProgressTrack(
-                        if (total == 0) 0f else owned.toFloat() / total,
-                        color = Gold,
-                    )
-                    Spacer(Modifier.height(Spacing.md))
-                    Text(
-                        stringResource(R.string.season_exclusive_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            // Primero lo que falta: lo ya conseguido no es una tarea pendiente.
             val pending = state.seasonMounts.sortedBy { it.owned }
             items(minOf(3, pending.size)) { index ->
                 LootRow(pending[index], onClick = { onOpenSeasonLoot() })
             }
         }
+    }
+}
+
+@Composable
+private fun NextEventOverlay(
+    name: String,
+    zone: String,
+    startsAt: Instant?,
+    onPrepare: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier.let { base ->
+            if (onPrepare != null) base.clickable(onClick = onPrepare) else base
+        },
+        horizontalAlignment = Alignment.End,
+    ) {
+        Text(
+            stringResource(R.string.next_event).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (startsAt != null) {
+            Text(
+                name,
+                style = MaterialTheme.typography.titleMedium,
+                color = TextHigh,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+            )
+            if (zone.isNotBlank()) {
+                Text(
+                    zone,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
+                )
+            }
+            CountdownText(startsAt, style = MaterialTheme.typography.headlineSmall)
+            if (onPrepare != null) {
+                Spacer(Modifier.height(Spacing.xs))
+                Text(
+                    stringResource(R.string.prepare),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        } else {
+            Text(
+                stringResource(R.string.dashboard_no_events),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.End,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeekTicker(
+    bosses: Int,
+    keys: Int,
+    bestKey: Int,
+    vaultDone: Int,
+    vaultTotal: Int,
+    resetAt: Instant?,
+    stale: Boolean,
+    trust: WeekTrust,
+    onClick: () -> Unit,
+) {
+    var now by remember { mutableStateOf(Instant.now()) }
+    LaunchedEffect(resetAt) {
+        while (true) {
+            now = Instant.now()
+            delay(1000)
+        }
+    }
+    val resetText = resetAt?.let { target ->
+        val remaining = Duration.between(now, target)
+        if (remaining.isNegative) "—" else formatDuration(remaining)
+    } ?: "—"
+    val bossesLabel = ThisWeek.countLabel(bosses, stale)
+    val keysText = when {
+        stale -> ThisWeek.countLabel(keys, true)
+        bestKey > 0 -> stringResource(R.string.week_ticker_keys_best, keys, bestKey)
+        else -> stringResource(R.string.week_ticker_keys, keys)
+    }
+    val vaultLabel = if (stale) "—" else "$vaultDone/$vaultTotal"
+    Column(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        WeekTrustBadge(trust)
+        Spacer(Modifier.height(Spacing.xs))
+        Text(
+            stringResource(R.string.week_ticker, bossesLabel, keysText, vaultLabel, resetText),
+            style = MaterialTheme.typography.titleMedium,
+            color = TextHigh,
+        )
+    }
+}
+
+@Composable
+private fun PendingTaskRow(task: TrackedTask, localeKey: String, onOpenWeekly: () -> Unit) {
+    Box(Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter)) {
+        ListRow(
+            title = task.title[localeKey] ?: task.title.values.firstOrNull().orEmpty(),
+            subtitle = task.zone,
+            onClick = onOpenWeekly,
+        )
     }
 }
 
@@ -326,5 +317,3 @@ private fun SyncFreshness(syncedAt: Instant?) {
         )
     }
 }
-
-/** Un dato de la semana: cifra grande y etiqueta pequeña encima. */

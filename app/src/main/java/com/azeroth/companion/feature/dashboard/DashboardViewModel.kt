@@ -46,6 +46,8 @@ data class DashboardState(
     val vaultQuestsTotal: Int = 0,
     /** Blizzard aún no publica la semana en curso para este personaje. */
     val weekStale: Boolean = false,
+    val weekTrust: com.azeroth.companion.core.model.WeekTrust =
+        com.azeroth.companion.core.model.WeekTrust.ESTIMATED,
     /** Monturas exclusivas de la temporada, para la tarjeta de Inicio. */
     val seasonMounts: List<com.azeroth.companion.data.LootEntry> = emptyList(),
 )
@@ -106,6 +108,11 @@ class DashboardViewModel @Inject constructor(
                     mythicRunsThisWeek = activity?.mythicRuns?.size ?: 0,
                     bestKeyThisWeek = activity?.mythicRuns?.maxOfOrNull { it.level } ?: 0,
                     weekStale = activity?.profileStale ?: false,
+                    weekTrust = com.azeroth.companion.core.detection.ThisWeek.trust(
+                        profileStale = activity?.profileStale == true,
+                        hasBaseline = activity?.hasBaseline == true,
+                        snapshotBeforeReset = vaultQuests?.staleForThisWeek == true,
+                    ),
                     vaultQuestsDone = vaultQuests?.vaultDone ?: 0,
                     vaultQuestsTotal = vaultQuests?.vaultTotal ?: 0,
                     seasonMounts = mounts,

@@ -4,9 +4,11 @@ import android.content.Context
 import com.azeroth.companion.core.catalog.CatalogRepository
 import com.azeroth.companion.core.database.SnapshotDao
 import com.azeroth.companion.core.datastore.LanguagePref
+import com.azeroth.companion.core.detection.ThisWeek
 import com.azeroth.companion.core.model.DetectionRule
 import com.azeroth.companion.core.model.ResetPeriod
 import com.azeroth.companion.core.model.TrackedTask
+import com.azeroth.companion.core.model.WeekTrust
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,9 +25,9 @@ data class VaultQuest(
     val name: String,
     val zone: String?,
     /**
-     * Hecha **en esta semana de reset**. Para una misión semanal es lo que
-     * dice la API: al pasar el reset deja de estar en completadas y vuelve a
-     * aparecer aquí como pendiente.
+     * Hecha **en esta semana de reset**. No basta con que figure en
+     * /quests/completed: Midnight no saca el ID al reset, así que esa lista
+     * es lifetime. Hecha esta semana = está ahora y no estaba antes del reset.
      */
     val done: Boolean,
 )
@@ -52,6 +54,7 @@ data class VaultQuestsSnapshot(
     val lastReset: Instant? = null,
     /** Misiones de una sola vez que ya están hechas y por tanto se ocultaron. */
     val hiddenForever: Int = 0,
+    val weekTrust: WeekTrust = WeekTrust.ESTIMATED,
 ) {
     /** Actividades hechas que aportan a la bóveda. */
     val vaultDone: Int get() = groups.filter { it.feedsVault }.sumOf { it.doneCount }
@@ -133,23 +136,12 @@ class VaultQuestsRepository @Inject constructor(
             }
 
             val title = task.localizedTitle(spanish)
-            val repeatable = isRepeatable(task.detectionRule)
-            val thisWeekIds = if (repeatable) {
-                ids.filter { it in completed }.toSet()
-            } else {
-                if (before == null) emptySet() else (completed - before).intersect(ids.toSet())
-            }
+            val thisWeekIds = ThisWeek.questIdsDone(ids, completed, before)
 
-            val quests = when {
-                thisWeekIds.isNotEmpty() -> thisWeekIds.mapNotNull { id ->
-                    namedQuest(id, done = true)
-                }
-                repeatable || before != null -> listOf(
-                    VaultQuest(ids.first(), title, null, done = false),
-                )
-                else -> listOf(
-                    VaultQuest(ids.first(), title, null, done = false),
-                )
+            val quests = if (thisWeekIds.isNotEmpty()) {
+                thisWeekIds.mapNotNull { id -> namedQuest(id, done = true) }
+            } else {
+                listOf(VaultQuest(ids.first(), title, null, done = false))
             }
             if (quests.isEmpty()) return@mapNotNull null
             VaultQuestGroup(
@@ -174,6 +166,14 @@ class VaultQuestsRepository @Inject constructor(
             syncedAt = snapshot.takenAt,
             lastReset = lastReset,
             hiddenForever = hiddenForever,
+            weekTrust = ThisWeek.trust(
+                profileStale = false,
+                hasBaseline = before != null,
+                snapshotBeforeReset = run {
+                    val visto = snapshot.takenAt
+                    lastReset != null && visto.isBefore(lastReset)
+                },
+            ),
         )
     }
 
@@ -184,13 +184,6 @@ class VaultQuestsRepository @Inject constructor(
     private suspend fun namedQuest(id: Int, done: Boolean): VaultQuest? {
         val name = storylinesRepository.questName(id) ?: return null
         return VaultQuest(id, name, storylinesRepository.questZoneName(id), done)
-    }
-
-    private fun isRepeatable(rule: DetectionRule): Boolean = when (rule) {
-        is DetectionRule.QuestCompleted -> rule.repeatable
-        is DetectionRule.AnyOf -> rule.rules.any { isRepeatable(it) }
-        is DetectionRule.AllOf -> rule.rules.any { isRepeatable(it) }
-        else -> true
     }
 
     private fun questIdsOf(rule: DetectionRule): List<Int> = when (rule) {

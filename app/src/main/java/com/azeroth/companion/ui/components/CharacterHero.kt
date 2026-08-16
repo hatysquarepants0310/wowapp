@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +63,7 @@ fun CharacterHero(
     renderUrl: String? = null,
     onClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
+    overlay: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     val accent = LocalAccent.current
     Box(
@@ -193,6 +195,8 @@ fun CharacterHero(
                 trailing()
             }
         }
+
+        overlay?.invoke(this)
     }
 }
 
